@@ -670,16 +670,16 @@ export default function SellSmartPortfolioScreen() {
     const portfolioAlert =
       overallRisk >= 40
         ? [
-            {
-              id: "portfolio-risk",
-              title: "Portfolio risk requires attention",
-              message: `Overall portfolio risk is ${overallRisk}/100. Review high-risk positions before adding more exposure.`,
-              severity: overallRisk >= 70 ? ("high" as AlertSeverity) : ("medium" as AlertSeverity),
-              type: "portfolio" as const,
-              createdAt: now,
-              read: readAlertIds.includes("portfolio-risk"),
-            },
-          ]
+          {
+            id: "portfolio-risk",
+            title: "Portfolio risk requires attention",
+            message: `Overall portfolio risk is ${overallRisk}/100. Review high-risk positions before adding more exposure.`,
+            severity: overallRisk >= 70 ? ("high" as AlertSeverity) : ("medium" as AlertSeverity),
+            type: "portfolio" as const,
+            createdAt: now,
+            read: readAlertIds.includes("portfolio-risk"),
+          },
+        ]
         : [];
 
     return [...portfolioAlert, ...highRiskAlerts, ...actionAlerts, ...newsAlerts];
@@ -826,18 +826,18 @@ export default function SellSmartPortfolioScreen() {
               Import Demo
             </button>
 
-           <button
-          type="button"
-          className="icon-button top-alert-button"
-          onClick={() => setActiveView("alerts")}
-          aria-label="Open alerts"
-        >
-          <Bell size={20} />
+            <button
+              type="button"
+              className="icon-button top-alert-button"
+              onClick={() => setActiveView("alerts")}
+              aria-label="Open alerts"
+            >
+              <Bell size={20} />
 
-          {unreadAlertsCount > 0 && (
-            <span className="top-alert-badge" aria-hidden="true" />
-          )}
-        </button>
+              {unreadAlertsCount > 0 && (
+                <span className="top-alert-badge" aria-hidden="true" />
+              )}
+            </button>
 
             <button className="avatar">AS</button>
           </div>
@@ -1057,136 +1057,113 @@ export default function SellSmartPortfolioScreen() {
               )}
             </div>
           </section>
-         ) : activeView === "reports" ? (
+        ) : activeView === "reports" ? (
           <section className="reports-page">
-            <div className="panel-header">
+            <div className="panel-header no-print">
               <div>
                 <h2>Weekly AI Risk Report</h2>
                 <p className="muted-text">
-                  Generated {reportGeneratedAt.toLocaleDateString()} · Based on current SellSmart AI signals.
+                  Generated {new Date().toLocaleDateString()} · Based on current SellSmart AI signals.
                 </p>
               </div>
 
               <button className="secondary-button" onClick={() => window.print()}>
-                <FileText size={18} />
+                <FileText size={17} />
                 Export PDF
               </button>
             </div>
 
-            <section className="reports-grid">
-              <article className="report-card">
-                <span>Portfolio Risk</span>
-                <strong>{overallRisk}/100</strong>
-                <p>
-                  {overallRiskLevel === "high"
-                    ? "High risk"
-                    : overallRiskLevel === "moderate"
-                      ? "Moderate risk"
-                      : "Low risk"}
-                </p>
-              </article>
-
-              <article className="report-card">
-                <span>High-Risk Positions</span>
-                <strong>{highRiskPositions.length}</strong>
-                <p>Positions with elevated downside risk</p>
-              </article>
-
-              <article className="report-card">
-                <span>Reduce Signals</span>
-                <strong>{reduceSignals.length}</strong>
-                <p>Positions requiring review</p>
-              </article>
-            </section>
-
-            <article className="report-preview">
-              <div className="report-preview-header">
-                <div>
-                  <h3>Portfolio Risk Summary</h3>
-                  <p className="muted-text">
-                    AI-generated report for your current portfolio snapshot.
+            <div className="printable-report">
+              <section className="reports-grid">
+                <article className="report-card">
+                  <span>Portfolio Risk</span>
+                  <strong>{overallRisk}/100</strong>
+                  <p>
+                    {overallRiskLevel === "high"
+                      ? "High risk"
+                      : overallRiskLevel === "moderate"
+                        ? "Moderate risk"
+                        : "Low risk"}
                   </p>
+                </article>
+
+                <article className="report-card">
+                  <span>High-Risk Positions</span>
+                  <strong>{highRiskPositions.length}</strong>
+                  <p>Positions with elevated downside risk</p>
+                </article>
+
+                <article className="report-card">
+                  <span>Reduce Signals</span>
+                  <strong>{reduceSignals.length}</strong>
+                  <p>Positions requiring review</p>
+                </article>
+              </section>
+
+              <article className="report-preview">
+                <div className="report-preview-header">
+                  <div>
+                    <h3>Portfolio Risk Summary</h3>
+                    <p className="muted-text">AI-generated report for your current portfolio snapshot.</p>
+                  </div>
+                  <FileText size={30} />
                 </div>
 
-                <FileText size={30} />
-              </div>
-
-              <section className="report-section first">
-                <h4>Executive summary</h4>
-                <p>{portfolioInsight}</p>
-              </section>
-
-              {topRiskPosition && (
                 <section className="report-section">
-                  <h4>Main risk contributor</h4>
-                  <p>
-                    <strong>{topRiskPosition.ticker}</strong> has a risk score of{" "}
-                    <strong>{topRiskPosition.riskScore}/100</strong>. Suggested action:{" "}
-                    <strong>{topRiskPosition.action}</strong>.
-                  </p>
+                  <h4>Executive summary</h4>
+                  <p>{portfolioInsight}</p>
                 </section>
-              )}
 
-              <section className="report-section">
-                <h4>Positions requiring attention</h4>
-
-                {reduceSignals.length > 0 ? (
-                  <div className="report-table">
-                    {reduceSignals.map((position) => (
-                      <div key={position.ticker} className="report-row">
-                        <span>{position.ticker}</span>
-                        <strong>{position.riskScore}/100</strong>
-                        <em>{position.action}</em>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="muted-text">No reduce signals at this time.</p>
+                {topRiskPosition && (
+                  <section className="report-section">
+                    <h4>Main risk contributor</h4>
+                    <p>
+                      <strong>{topRiskPosition.ticker}</strong> has a risk score of{" "}
+                      <strong>{topRiskPosition.riskScore}/100</strong>. Suggested action:{" "}
+                      <strong>{topRiskPosition.action}</strong>.
+                    </p>
+                  </section>
                 )}
-              </section>
 
-              <section className="report-section">
-                <h4>Top risk drivers</h4>
+                <section className="report-section">
+                  <h4>Positions requiring attention</h4>
 
-                {topDrivers.length > 0 ? (
-                  <div className="report-driver-list">
-                    {topDrivers.map((driver) => (
-                      <div key={`${driver.ticker}-${driver.feature}`} className="report-driver">
-                        <div>
-                          <strong>{driver.ticker}: {driver.label}</strong>
-                          <p>{driver.message}</p>
+                  {reduceSignals.length > 0 ? (
+                    <div className="report-table">
+                      {reduceSignals.map((position) => (
+                        <div key={position.ticker} className="report-row">
+                          <span>{position.ticker}</span>
+                          <strong>{position.riskScore}/100</strong>
+                          <em>{position.action}</em>
                         </div>
-                        <span className={`alert-severity ${driver.impact}`}>{driver.impact}</span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="muted-text">No reduce signals at this time.</p>
+                  )}
+                </section>
+
+                <section className="report-section">
+                  <h4>Top risk drivers</h4>
+
+                  {topDrivers.length > 0 ? (
+                    topDrivers.map((driver) => (
+                      <div key={`${driver.ticker}-${driver.feature}`} className="report-driver">
+                        <strong>{driver.ticker}: {driver.label}</strong>
+                        <p>{driver.message}</p>
+                        <span>{driver.impact.toUpperCase()}</span>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="muted-text">Risk drivers are still loading.</p>
-                )}
-              </section>
+                    ))
+                  ) : (
+                    <p className="muted-text">No major risk drivers available.</p>
+                  )}
+                </section>
 
-              <section className="report-section">
-                <h4>Suggested review actions</h4>
-
-                {reduceSignals.length > 0 ? (
-                  <ul className="report-actions-list">
-                    {reduceSignals.slice(0, 5).map((position) => (
-                      <li key={`action-${position.ticker}`}>
-                        Review <strong>{position.ticker}</strong> exposure and check the latest risk drivers before adding more capital.
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="muted-text">
-                    No urgent review actions. Continue monitoring your portfolio risk score and alerts.
-                  </p>
-                )}
-              </section>
-
-              <div className="report-disclaimer">
-                SellSmart provides AI-powered risk analysis and insights only. This report is not financial advice.
-              </div>
-            </article>
+                <section className="report-disclaimer">
+                  SellSmart provides AI-powered risk analysis and insights only. Not financial advice.
+                </section>
+              </article>
+            </div>
           </section>
         ) : activeView === "alerts" ? (
           <section className="alerts-page">
@@ -1371,25 +1348,25 @@ export default function SellSmartPortfolioScreen() {
                 <div className="position-list">
                   {activeView === "portfolio"
                     ? sortedPositions.map((position) => (
-                        <PositionRow
-                          key={position.ticker}
-                          position={position}
-                          isExpanded={expandedTicker === position.ticker}
-                          onToggle={() =>
-                            setExpandedTicker(expandedTicker === position.ticker ? null : position.ticker)
-                          }
-                        />
-                      ))
+                      <PositionRow
+                        key={position.ticker}
+                        position={position}
+                        isExpanded={expandedTicker === position.ticker}
+                        onToggle={() =>
+                          setExpandedTicker(expandedTicker === position.ticker ? null : position.ticker)
+                        }
+                      />
+                    ))
                     : sortedWatchlist.map((item) => (
-                        <WatchlistRow
-                          key={item.ticker}
-                          item={item}
-                          isExpanded={expandedTicker === item.ticker}
-                          onToggle={() =>
-                            setExpandedTicker(expandedTicker === item.ticker ? null : item.ticker)
-                          }
-                        />
-                      ))}
+                      <WatchlistRow
+                        key={item.ticker}
+                        item={item}
+                        isExpanded={expandedTicker === item.ticker}
+                        onToggle={() =>
+                          setExpandedTicker(expandedTicker === item.ticker ? null : item.ticker)
+                        }
+                      />
+                    ))}
                 </div>
               </section>
 

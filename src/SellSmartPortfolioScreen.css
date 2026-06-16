@@ -1790,3 +1790,136 @@ button {
   }
 }
 
+.reports-page {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.reports-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.report-card,
+.report-preview {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  background: rgba(15, 23, 42, 0.72);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
+}
+
+.report-card {
+  padding: 20px;
+}
+
+.report-card span {
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.report-card strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 32px;
+  color: #fff;
+}
+
+.report-card p {
+  margin: 8px 0 0;
+  color: #94a3b8;
+}
+
+.report-preview {
+  padding: 30px;
+}
+
+.report-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 26px;
+}
+
+.report-preview h3 {
+  margin: 0;
+  font-size: 24px;
+  color: #fff;
+}
+
+.report-section {
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.report-section h4 {
+  margin: 0 0 12px;
+  color: #fff;
+}
+
+.report-section p {
+  color: #cbd5e1;
+  line-height: 1.7;
+}
+
+.report-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.report-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 18px;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.report-row span {
+  color: #fff;
+  font-weight: 700;
+}
+
+.report-row strong {
+  color: #f87171;
+}
+
+.report-row em {
+  font-style: normal;
+  color: #c4b5fd;
+  font-weight: 700;
+}
+
+.report-driver {
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  margin-bottom: 12px;
+}
+
+.report-driver strong {
+  color: #fff;
+}
+
+.report-driver p {
+  margin: 8px 0;
+}
+
+.report-driver span {
+  font-size: 11px;
+  font-weight: 800;
+  color: #f87171;
+}
+
+.report-disclaimer {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  font-size: 13px;
+}
+

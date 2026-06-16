@@ -1,0 +1,1162 @@
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Bell,
+  Brain,
+  ChevronRight,
+  CircleHelp,
+  FileText,
+  Grid2X2,
+  Home,
+  Import,
+  LayoutDashboard,
+  LineChart,
+  List,
+  LogOut,
+  Plus,
+  Settings,
+  ShieldCheck,
+  SlidersHorizontal,
+  TrendingDown,
+  WalletCards,
+} from "lucide-react";
+
+import "./SellSmartPortfolioScreen.css";
+
+type RiskLevel = "high" | "moderate" | "low";
+type ActionType = "Reduce" | "Watch" | "Hold";
+type ViewType = "portfolio" | "watchlist";
+
+type ApiDriver = {
+  label: string;
+  value: number;
+  impact: "high" | "medium" | "low";
+  feature: string;
+  message: string;
+  direction: "negative" | "positive";
+};
+
+type ApiPrediction = {
+  action: string;
+  action_label?: string;
+  action_explanation?: string;
+  ticker: string;
+  drivers?: ApiDriver[];
+  stress_signals?: ApiDriver[];
+  supportive_signals?: ApiDriver[];
+  summary?: string;
+  category?: string;
+  confidence?: string;
+  risk_score: number;
+  current_price?: number;
+  market_regime?: string;
+  probability_of_drop?: number;
+  cache_status?: string;
+  cache_generated_at?: string;
+};
+
+type RiskAsset = {
+  ticker: string;
+  company: string;
+  riskScore: number;
+  riskLevel: RiskLevel;
+  action: ActionType;
+  explanation: string;
+  logo: string;
+  logoClass: string;
+  chart: number[];
+  currentPrice?: number;
+  marketRegime?: string;
+  confidence?: string;
+  probabilityOfDrop?: number;
+  cacheStatus?: string;
+  cacheGeneratedAt?: string;
+  drivers: ApiDriver[];
+  supportiveSignals: ApiDriver[];
+};
+
+type Position = RiskAsset & {
+  shares: number;
+  avgBuyPrice: number;
+  value: number;
+  pnl: number;
+  pnlPct: number;
+};
+
+type WatchItem = RiskAsset;
+
+const API_BASE_URL = "https://sellsmart-ml-api.onrender.com";
+const POSITIONS_STORAGE_KEY = "sellsmart_positions";
+const WATCHLIST_STORAGE_KEY = "sellsmart_watchlist";
+
+const money = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+});
+
+const mapRiskLevel = (category?: string, score?: number): RiskLevel => {
+  if (category === "high" || category === "moderate" || category === "low") return category;
+
+  const value = score ?? 50;
+  if (value >= 70) return "high";
+  if (value >= 40) return "moderate";
+  return "low";
+};
+
+const mapAction = (action?: string): ActionType => {
+  const value = action?.toLowerCase() ?? "";
+
+  if (value.includes("reduce") || value.includes("exit") || value.includes("sell")) return "Reduce";
+  if (value.includes("hold")) return "Hold";
+
+  return "Watch";
+};
+
+const getCompanyName = (ticker: string) => {
+  const known: Record<string, string> = {
+    AAPL: "Apple Inc.",
+    AMD: "Advanced Micro Devices, Inc.",
+    NVDA: "NVIDIA Corporation",
+    TSLA: "Tesla, Inc.",
+    MSFT: "Microsoft Corporation",
+    META: "Meta Platforms, Inc.",
+    AMZN: "Amazon.com, Inc.",
+    GOOGL: "Alphabet Inc.",
+    JPM: "JPMorgan Chase & Co.",
+    NFLX: "Netflix, Inc.",
+    CRM: "Salesforce, Inc.",
+    ADBE: "Adobe Inc.",
+    INTC: "Intel Corporation",
+    QCOM: "Qualcomm Incorporated",
+    PYPL: "PayPal Holdings, Inc.",
+  };
+
+  return known[ticker] ?? `${ticker} Corporation`;
+};
+
+const getLogoClass = (ticker: string) => {
+  const known: Record<string, string> = {
+    NVDA: "logo-nvda",
+    TSLA: "logo-tsla",
+    AAPL: "logo-aapl",
+  };
+
+  return known[ticker] ?? "logo-jpm";
+};
+
+const createBaseRiskAsset = (ticker: string): RiskAsset => ({
+  ticker,
+  company: getCompanyName(ticker),
+  riskScore: 50,
+  riskLevel: "moderate",
+  action: "Watch",
+  explanation: "Loading SellSmart AI prediction...",
+  logo: ticker.slice(0, 3),
+  logoClass: getLogoClass(ticker),
+  chart: [18, 24, 20, 28, 26, 31, 29, 34, 32, 38, 35, 40],
+  drivers: [],
+  supportiveSignals: [],
+});
+
+const createBasePosition = (ticker: string, shares: number, avgBuyPrice: number): Position => ({
+  ...createBaseRiskAsset(ticker),
+  shares,
+  avgBuyPrice,
+  value: shares * avgBuyPrice,
+  pnl: 0,
+  pnlPct: 0,
+});
+
+const createBaseWatchItem = (ticker: string): WatchItem => ({
+  ...createBaseRiskAsset(ticker),
+});
+
+const normalizePosition = (position: Partial<Position>): Position => {
+  const ticker = (position.ticker ?? "AMD").toUpperCase();
+  const shares = Number(position.shares ?? 1);
+  const avgBuyPrice =
+    Number(position.avgBuyPrice) ||
+    (Number(position.value) && shares > 0 ? Number(position.value) / shares : 100);
+
+  return {
+    ...createBasePosition(ticker, shares, avgBuyPrice),
+    ...position,
+    ticker,
+    company: position.company ?? getCompanyName(ticker),
+    shares,
+    avgBuyPrice,
+    value: Number(position.value ?? shares * avgBuyPrice),
+    pnl: Number(position.pnl ?? 0),
+    pnlPct: Number(position.pnlPct ?? 0),
+    riskScore: Number(position.riskScore ?? 50),
+    riskLevel: mapRiskLevel(position.riskLevel, position.riskScore),
+    action: position.action ?? "Watch",
+    drivers: position.drivers ?? [],
+    supportiveSignals: position.supportiveSignals ?? [],
+  };
+};
+
+const normalizeWatchItem = (item: Partial<WatchItem>): WatchItem => {
+  const ticker = (item.ticker ?? "TSLA").toUpperCase();
+
+  return {
+    ...createBaseWatchItem(ticker),
+    ...item,
+    ticker,
+    company: item.company ?? getCompanyName(ticker),
+    riskScore: Number(item.riskScore ?? 50),
+    riskLevel: mapRiskLevel(item.riskLevel, item.riskScore),
+    action: item.action ?? "Watch",
+    drivers: item.drivers ?? [],
+    supportiveSignals: item.supportiveSignals ?? [],
+  };
+};
+
+const demoPositions: Position[] = [
+  createBasePosition("NVDA", 10, 180),
+  createBasePosition("AMD", 10, 120),
+  createBasePosition("AAPL", 5, 180),
+];
+
+const demoWatchlist: WatchItem[] = [
+  createBaseWatchItem("TSLA"),
+  createBaseWatchItem("META"),
+  createBaseWatchItem("GOOGL"),
+  createBaseWatchItem("NFLX"),
+];
+
+const fetchPrediction = async (ticker: string): Promise<ApiPrediction> => {
+  const response = await fetch(
+    `${API_BASE_URL}/predict?ticker=${encodeURIComponent(ticker)}&live=false`
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to load prediction for ${ticker}`);
+  }
+
+  return response.json();
+};
+
+const applyPredictionToAsset = <T extends RiskAsset>(asset: T, data: ApiPrediction): T => ({
+  ...asset,
+  company: getCompanyName(asset.ticker),
+  currentPrice: data.current_price ?? asset.currentPrice,
+  riskScore: data.risk_score,
+  riskLevel: mapRiskLevel(data.category, data.risk_score),
+  action: mapAction(data.action_label ?? data.action),
+  explanation: data.summary ?? data.action_explanation ?? "SellSmart AI prediction loaded.",
+  marketRegime: data.market_regime,
+  confidence: data.confidence,
+  probabilityOfDrop: data.probability_of_drop,
+  cacheStatus: data.cache_status,
+  cacheGeneratedAt: data.cache_generated_at,
+  drivers: [...(data.drivers ?? []), ...(data.stress_signals ?? [])],
+  supportiveSignals: data.supportive_signals ?? [],
+});
+
+const enrichPositionWithApi = async (position: Position): Promise<Position> => {
+  const data = await fetchPrediction(position.ticker);
+  const currentPrice = data.current_price ?? position.currentPrice ?? position.avgBuyPrice;
+  const value = position.shares * currentPrice;
+  const costBasis = position.shares * position.avgBuyPrice;
+  const pnl = value - costBasis;
+  const pnlPct = costBasis > 0 ? (pnl / costBasis) * 100 : 0;
+
+  return {
+    ...applyPredictionToAsset(position, data),
+    currentPrice,
+    value,
+    pnl,
+    pnlPct,
+  };
+};
+
+const enrichWatchItemWithApi = async (item: WatchItem): Promise<WatchItem> => {
+  const data = await fetchPrediction(item.ticker);
+  return applyPredictionToAsset(item, data);
+};
+
+export default function SellSmartPortfolioScreen() {
+  const [activeView, setActiveView] = useState<ViewType>("portfolio");
+
+  const [positions, setPositions] = useState<Position[]>([]);
+  const [watchlist, setWatchlist] = useState<WatchItem[]>([]);
+
+  const [sortBy, setSortBy] = useState("risk");
+  const [expandedTicker, setExpandedTicker] = useState<string | null>(null);
+  const [isLoadingPredictions, setIsLoadingPredictions] = useState(false);
+
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newTicker, setNewTicker] = useState("");
+  const [newShares, setNewShares] = useState("");
+  const [newAvgBuyPrice, setNewAvgBuyPrice] = useState("");
+
+  const [isWatchModalOpen, setIsWatchModalOpen] = useState(false);
+  const [newWatchTicker, setNewWatchTicker] = useState("");
+
+  const savePositions = (nextPositions: Position[]) => {
+    setPositions(nextPositions);
+    localStorage.setItem(POSITIONS_STORAGE_KEY, JSON.stringify(nextPositions));
+  };
+
+  const saveWatchlist = (nextWatchlist: WatchItem[]) => {
+    setWatchlist(nextWatchlist);
+    localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(nextWatchlist));
+  };
+
+  const refreshPositions = async (basePositions: Position[]) => {
+    setIsLoadingPredictions(true);
+
+    try {
+      const enriched = await Promise.all(
+        basePositions.map(async (position) => {
+          try {
+            return await enrichPositionWithApi(position);
+          } catch (error) {
+            console.error(error);
+            return {
+              ...position,
+              explanation: `Could not load API prediction for ${position.ticker}.`,
+            };
+          }
+        })
+      );
+
+      savePositions(enriched);
+    } finally {
+      setIsLoadingPredictions(false);
+    }
+  };
+
+  const refreshWatchlist = async (baseWatchlist: WatchItem[]) => {
+    setIsLoadingPredictions(true);
+
+    try {
+      const enriched = await Promise.all(
+        baseWatchlist.map(async (item) => {
+          try {
+            return await enrichWatchItemWithApi(item);
+          } catch (error) {
+            console.error(error);
+            return {
+              ...item,
+              explanation: `Could not load API prediction for ${item.ticker}.`,
+            };
+          }
+        })
+      );
+
+      saveWatchlist(enriched);
+    } finally {
+      setIsLoadingPredictions(false);
+    }
+  };
+
+  useEffect(() => {
+    const savedPositions = localStorage.getItem(POSITIONS_STORAGE_KEY);
+    const rawPositions = savedPositions ? JSON.parse(savedPositions) : demoPositions;
+    const basePositions: Position[] = rawPositions.map(normalizePosition);
+
+    const savedWatchlist = localStorage.getItem(WATCHLIST_STORAGE_KEY);
+    const rawWatchlist = savedWatchlist ? JSON.parse(savedWatchlist) : demoWatchlist;
+    const baseWatchlist: WatchItem[] = rawWatchlist.map(normalizeWatchItem);
+
+    setPositions(basePositions);
+    setWatchlist(baseWatchlist);
+
+    localStorage.setItem(POSITIONS_STORAGE_KEY, JSON.stringify(basePositions));
+    localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(baseWatchlist));
+
+    refreshPositions(basePositions);
+    refreshWatchlist(baseWatchlist);
+  }, []);
+
+  const importDemoPortfolio = () => {
+    savePositions(demoPositions);
+    saveWatchlist(demoWatchlist);
+    refreshPositions(demoPositions);
+    refreshWatchlist(demoWatchlist);
+  };
+
+  const addPosition = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const ticker = newTicker.trim().toUpperCase();
+    const shares = Number(newShares);
+    const avgBuyPrice = Number(newAvgBuyPrice);
+
+    if (!ticker || shares <= 0 || avgBuyPrice <= 0) {
+      alert("Please fill ticker, shares and average buy price.");
+      return;
+    }
+
+    const basePosition = createBasePosition(ticker, shares, avgBuyPrice);
+    const nextPositions = [...positions.filter((p) => p.ticker !== ticker), basePosition];
+
+    savePositions(nextPositions);
+
+    setNewTicker("");
+    setNewShares("");
+    setNewAvgBuyPrice("");
+    setIsAddModalOpen(false);
+    setExpandedTicker(ticker);
+    setActiveView("portfolio");
+
+    try {
+      const enrichedPosition = await enrichPositionWithApi(basePosition);
+      savePositions(
+        nextPositions.map((position) =>
+          position.ticker === ticker ? enrichedPosition : position
+        )
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const addWatchItem = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const ticker = newWatchTicker.trim().toUpperCase();
+
+    if (!ticker) {
+      alert("Please enter ticker.");
+      return;
+    }
+
+    const baseItem = createBaseWatchItem(ticker);
+    const nextWatchlist = [...watchlist.filter((item) => item.ticker !== ticker), baseItem];
+
+    saveWatchlist(nextWatchlist);
+
+    setNewWatchTicker("");
+    setIsWatchModalOpen(false);
+    setExpandedTicker(ticker);
+    setActiveView("watchlist");
+
+    try {
+      const enrichedItem = await enrichWatchItemWithApi(baseItem);
+      saveWatchlist(
+        nextWatchlist.map((item) => (item.ticker === ticker ? enrichedItem : item))
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const sortedPositions = useMemo(() => {
+    return [...positions].sort((a, b) => {
+      if (sortBy === "risk") return b.riskScore - a.riskScore;
+      if (sortBy === "value") return b.value - a.value;
+      return b.pnlPct - a.pnlPct;
+    });
+  }, [positions, sortBy]);
+
+  const sortedWatchlist = useMemo(() => {
+    return [...watchlist].sort((a, b) => b.riskScore - a.riskScore);
+  }, [watchlist]);
+
+  const totalValue = positions.reduce((sum, item) => sum + item.value, 0);
+  const totalPnl = positions.reduce((sum, item) => sum + item.pnl, 0);
+  const totalCostBasis = positions.reduce((sum, item) => sum + item.shares * item.avgBuyPrice, 0);
+  const totalPnlPct = totalCostBasis > 0 ? (totalPnl / totalCostBasis) * 100 : 0;
+
+  const overallRisk =
+    positions.length > 0
+      ? Math.round(positions.reduce((sum, item) => sum + item.riskScore, 0) / positions.length)
+      : 0;
+
+  const overallRiskLevel: RiskLevel =
+    overallRisk >= 70 ? "high" : overallRisk >= 40 ? "moderate" : "low";
+
+  const riskDistribution = useMemo(() => {
+    const source = activeView === "portfolio" ? positions : watchlist;
+    const total = source.length || 1;
+    const high = source.filter((p) => p.riskLevel === "high").length;
+    const moderate = source.filter((p) => p.riskLevel === "moderate").length;
+    const low = source.filter((p) => p.riskLevel === "low").length;
+
+    return [
+      { value: Math.round((high / total) * 100), level: "high" as RiskLevel },
+      { value: Math.round((moderate / total) * 100), level: "moderate" as RiskLevel },
+      { value: Math.round((low / total) * 100), level: "low" as RiskLevel },
+    ];
+  }, [activeView, positions, watchlist]);
+
+  const topDrivers = useMemo(() => {
+    const source = activeView === "portfolio" ? positions : watchlist;
+
+    return source
+      .flatMap((asset) => asset.drivers.map((driver) => ({ ...driver, ticker: asset.ticker })))
+      .sort((a, b) => {
+        const rank = { high: 3, medium: 2, low: 1 };
+        return rank[b.impact] - rank[a.impact];
+      })
+      .slice(0, 4);
+  }, [activeView, positions, watchlist]);
+
+  const portfolioInsight = useMemo(() => {
+    const highRisk = positions.filter((p) => p.riskLevel === "high");
+    const highest = [...positions].sort((a, b) => b.riskScore - a.riskScore)[0];
+
+    if (!positions.length) return "Add positions to start AI-powered portfolio risk analysis.";
+
+    if (highRisk.length > 0 && highest) {
+      return `${highRisk.length} of ${positions.length} positions currently show elevated downside risk. ${highest.ticker} is the main risk contributor with a score of ${highest.riskScore}/100.`;
+    }
+
+    return `Portfolio risk is currently controlled. ${positions.length} positions are monitored by SellSmart AI.`;
+  }, [positions]);
+
+  return (
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="brand">
+          <div className="brand-mark">
+            <span />
+            <span />
+            <span />
+            <span />
+          </div>
+          <strong>
+            Sell<span>Smart</span>
+          </strong>
+        </div>
+
+        <nav className="nav-list">
+          {[
+            { label: "Dashboard", icon: Home },
+            { label: "Portfolio", icon: WalletCards, view: "portfolio" as ViewType },
+            { label: "Watchlist", icon: ShieldCheck, view: "watchlist" as ViewType },
+            { label: "Alerts", icon: Bell },
+            { label: "Insights", icon: LineChart },
+            { label: "Reports", icon: FileText },
+            { label: "Settings", icon: Settings },
+          ].map((item) => {
+            const Icon = item.icon;
+            const isActive = item.view === activeView;
+
+            return (
+              <button
+                key={item.label}
+                className={`nav-item ${isActive ? "active" : ""}`}
+                onClick={() => item.view && setActiveView(item.view)}
+              >
+                <Icon size={19} />
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="demo-card">
+          <div className="demo-icon">♙</div>
+          <div>
+            <strong>{isLoadingPredictions ? "Loading AI" : "SellSmart AI"}</strong>
+            <p>
+              <span /> Risk Intelligence
+            </p>
+          </div>
+        </div>
+
+        <div className="sidebar-footer">
+          <button className="nav-item">
+            <CircleHelp size={18} />
+            Help Center
+          </button>
+          <button className="nav-item">
+            <LogOut size={18} />
+            Log out
+          </button>
+        </div>
+      </aside>
+
+      <main className="main-content">
+        <header className="topbar">
+          <div />
+          <div className="topbar-actions">
+            {activeView === "portfolio" ? (
+              <button className="secondary-button" onClick={() => setIsAddModalOpen(true)}>
+                <Plus size={18} />
+                Add Position
+              </button>
+            ) : (
+              <button className="secondary-button" onClick={() => setIsWatchModalOpen(true)}>
+                <Plus size={18} />
+                Add Ticker
+              </button>
+            )}
+
+            <button className="secondary-button" onClick={importDemoPortfolio}>
+              <Import size={16} />
+              Import Demo
+            </button>
+
+            <button className="icon-button">
+              <Bell size={20} />
+            </button>
+            <button className="avatar">AS</button>
+          </div>
+        </header>
+
+        <section className="page-header">
+          <div>
+            <h1>{activeView === "portfolio" ? "My Portfolio" : "Watchlist"}</h1>
+            <p>
+              {activeView === "portfolio"
+                ? "AI-powered risk analysis of your investments"
+                : "Track stocks before adding them to your portfolio"}
+            </p>
+          </div>
+          <div className="market-status">
+            <strong>
+              <span /> Market Analysis Ready
+            </strong>
+            <p>Real-time portfolio risk insights</p>
+          </div>
+        </section>
+
+        {activeView === "portfolio" ? (
+          <>
+            <section className="summary-grid">
+              <SummaryCard title="Portfolio Value">
+                <h2>{money.format(totalValue)}</h2>
+                <p className={totalPnl >= 0 ? "positive" : "negative"}>
+                  {totalPnl >= 0 ? "+" : ""}
+                  {money.format(totalPnl)} ({totalPnlPct.toFixed(2)}%)
+                </p>
+                <Sparkline
+                  data={[12, 16, 24, 19, 28, 32, 27, 20, 17, 22, 36, 42, 39, 31, 36, 47, 50]}
+                  tone="purple"
+                />
+              </SummaryCard>
+
+              <SummaryCard title="Overall Risk ⓘ">
+                <div className="score-line">
+                  <strong>{overallRisk}</strong>
+                  <span>/100</span>
+                </div>
+                <p className={overallRiskLevel === "high" ? "negative" : "warning"}>
+                  {overallRiskLevel === "high"
+                    ? "High Risk"
+                    : overallRiskLevel === "moderate"
+                      ? "Moderate Risk"
+                      : "Low Risk"}
+                </p>
+                <div className="risk-meter">
+                  <span style={{ width: `${overallRisk}%` }} />
+                </div>
+                <div className="meter-labels">
+                  <span>0</span>
+                  <span>100</span>
+                </div>
+              </SummaryCard>
+
+              <SummaryCard title="Daily PNL">
+                <h2 className={totalPnl >= 0 ? "positive" : "negative"}>
+                  {totalPnl >= 0 ? "+" : ""}
+                  {money.format(totalPnl)}
+                </h2>
+                <p className={totalPnl >= 0 ? "positive" : "negative"}>({totalPnlPct.toFixed(2)}%)</p>
+                <Sparkline data={[10, 18, 17, 11, 20, 22, 17, 19, 26, 24, 18, 20, 14, 17, 15]} />
+              </SummaryCard>
+
+              <SummaryCard title="Positions">
+                <div className="positions-summary">
+                  <div>
+                    <h2>{positions.length}</h2>
+                    <p>Diversified</p>
+                  </div>
+                  <Donut segments={riskDistribution} />
+                </div>
+              </SummaryCard>
+            </section>
+
+            <section className="insight-card">
+              <div className="insight-copy">
+                <Brain size={34} />
+                <div>
+                  <h2>Portfolio Insight</h2>
+                  <p>{portfolioInsight}</p>
+                </div>
+              </div>
+
+              <div className="insight-visual">
+                <Sparkline
+                  data={[20, 28, 24, 31, 33, 29, 36, 43, 38, 50, 62, 58, 54, 59, 66, 61, 57, 69, 72, 63, 60, 73]}
+                  tone="purple"
+                />
+              </div>
+
+              <button className="primary-button">
+                View Details <ChevronRight size={18} />
+              </button>
+            </section>
+          </>
+        ) : (
+          <section className="insight-card">
+            <div className="insight-copy">
+              <Brain size={34} />
+              <div>
+                <h2>Watchlist Intelligence</h2>
+                <p>
+                  Monitor stocks before buying. SellSmart highlights panic-risk signals, sentiment pressure,
+                  and short-term downside risk.
+                </p>
+              </div>
+            </div>
+
+            <button className="primary-button" onClick={() => setIsWatchModalOpen(true)}>
+              Add Ticker <Plus size={18} />
+            </button>
+          </section>
+        )}
+
+        <div className="content-grid">
+          <section className="positions-panel">
+            <div className="panel-header">
+              <h2>{activeView === "portfolio" ? "Your Positions" : "Your Watchlist"}</h2>
+              <div className="sort-area">
+                <span>Sort by</span>
+                <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
+                  <option value="risk">Risk (High to Low)</option>
+                  {activeView === "portfolio" && <option value="value">Value</option>}
+                  {activeView === "portfolio" && <option value="pnl">PNL</option>}
+                </select>
+                <button className="icon-button active">
+                  <Grid2X2 size={18} />
+                </button>
+                <button className="icon-button">
+                  <List size={18} />
+                </button>
+              </div>
+            </div>
+
+            <div className="table-head">
+              <span>{activeView === "portfolio" ? "Position" : "Ticker"}</span>
+              <span>{activeView === "portfolio" ? "Value / PNL" : "Price"}</span>
+              <span>Risk Score</span>
+              <span>Action</span>
+            </div>
+
+            <div className="position-list">
+              {activeView === "portfolio"
+                ? sortedPositions.map((position) => (
+                    <PositionRow
+                      key={position.ticker}
+                      position={position}
+                      isExpanded={expandedTicker === position.ticker}
+                      onToggle={() =>
+                        setExpandedTicker(expandedTicker === position.ticker ? null : position.ticker)
+                      }
+                    />
+                  ))
+                : sortedWatchlist.map((item) => (
+                    <WatchlistRow
+                      key={item.ticker}
+                      item={item}
+                      isExpanded={expandedTicker === item.ticker}
+                      onToggle={() =>
+                        setExpandedTicker(expandedTicker === item.ticker ? null : item.ticker)
+                      }
+                    />
+                  ))}
+            </div>
+          </section>
+
+          <aside className="right-rail">
+            <section className="side-card">
+              <h3>Risk Distribution</h3>
+              <div className="distribution-layout">
+                <Donut segments={riskDistribution} />
+              </div>
+            </section>
+
+            <section className="side-card">
+              <h3>Top Risk Drivers</h3>
+              <ul className="driver-list">
+                {topDrivers.length > 0 ? (
+                  topDrivers.map((driver) => (
+                    <li key={`${driver.ticker}-${driver.feature}`}>
+                      <SlidersHorizontal size={17} />
+                      {driver.ticker}: {driver.label}
+                      <strong className={driver.impact}>{driver.impact}</strong>
+                    </li>
+                  ))
+                ) : (
+                  <li>
+                    <LayoutDashboard size={17} />
+                    Loading AI drivers
+                    <strong className="moderate">AI</strong>
+                  </li>
+                )}
+              </ul>
+            </section>
+
+            <section className="side-card">
+              <h3>Actions Summary</h3>
+              <button className="primary-button full">
+                View Full Report <ChevronRight size={18} />
+              </button>
+            </section>
+          </aside>
+        </div>
+
+        <footer className="disclaimer">
+          <CircleHelp size={18} />
+          <p>
+            SellSmart provides AI-powered risk analysis and insights only. Not financial advice.
+            Always do your own research before making investment decisions.
+          </p>
+        </footer>
+      </main>
+
+      {isAddModalOpen && (
+        <div className="modal-backdrop">
+          <form className="add-modal" onSubmit={addPosition}>
+            <div className="modal-header">
+              <div>
+                <h2>Add Position</h2>
+                <p>Add a stock manually and load SellSmart AI analysis.</p>
+              </div>
+
+              <button type="button" className="modal-close" onClick={() => setIsAddModalOpen(false)}>
+                ×
+              </button>
+            </div>
+
+            <div className="modal-form">
+              <label>
+                Ticker
+                <input value={newTicker} onChange={(event) => setNewTicker(event.target.value)} placeholder="AMD" />
+              </label>
+
+              <label>
+                Shares
+                <input
+                  value={newShares}
+                  onChange={(event) => setNewShares(event.target.value)}
+                  placeholder="10"
+                  type="number"
+                  min="0"
+                />
+              </label>
+
+              <label>
+                Average Buy Price
+                <input
+                  value={newAvgBuyPrice}
+                  onChange={(event) => setNewAvgBuyPrice(event.target.value)}
+                  placeholder="120"
+                  type="number"
+                  min="0"
+                />
+              </label>
+            </div>
+
+            <div className="modal-actions">
+              <button type="button" className="secondary-button" onClick={() => setIsAddModalOpen(false)}>
+                Cancel
+              </button>
+
+              <button type="submit" className="primary-button">
+                Add Position
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {isWatchModalOpen && (
+        <div className="modal-backdrop">
+          <form className="add-modal" onSubmit={addWatchItem}>
+            <div className="modal-header">
+              <div>
+                <h2>Add to Watchlist</h2>
+                <p>Track a ticker before adding it to your portfolio.</p>
+              </div>
+
+              <button type="button" className="modal-close" onClick={() => setIsWatchModalOpen(false)}>
+                ×
+              </button>
+            </div>
+
+            <div className="modal-form">
+              <label>
+                Ticker
+                <input
+                  value={newWatchTicker}
+                  onChange={(event) => setNewWatchTicker(event.target.value)}
+                  placeholder="TSLA"
+                />
+              </label>
+            </div>
+
+            <div className="modal-actions">
+              <button type="button" className="secondary-button" onClick={() => setIsWatchModalOpen(false)}>
+                Cancel
+              </button>
+
+              <button type="submit" className="primary-button">
+                Add Ticker
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PositionRow({
+  position,
+  isExpanded,
+  onToggle,
+}: {
+  position: Position;
+  isExpanded: boolean;
+  onToggle: () => void;
+}) {
+  const isPositive = position.pnl >= 0;
+  const actionClass = position.action.toLowerCase();
+
+  return (
+    <article className="position-row">
+      <div className="position-main">
+        <div className={`position-logo ${position.logoClass}`}>{position.logo}</div>
+        <div>
+          <h3>{position.ticker}</h3>
+          <p>{position.company}</p>
+          <span>
+            {position.shares} shares
+            {position.currentPrice && <> · {money.format(position.currentPrice)}</>}
+          </span>
+        </div>
+      </div>
+
+      <div className="value-cell">
+        <strong>{money.format(position.value)}</strong>
+        <span className={isPositive ? "positive" : "negative"}>
+          {isPositive ? "+" : ""}
+          {money.format(position.pnl)}
+        </span>
+        <span className={isPositive ? "positive" : "negative"}>
+          ({isPositive ? "+" : ""}
+          {position.pnlPct.toFixed(2)}%)
+        </span>
+        <Sparkline data={position.chart} tone={isPositive ? "positive" : "negative"} />
+      </div>
+
+      <RiskAndAction asset={position} actionClass={actionClass} />
+
+      <button className={`icon-button row-button ${isExpanded ? "expanded" : ""}`} onClick={onToggle}>
+        <ChevronRight size={22} />
+      </button>
+
+      {isExpanded && <AssetDetails asset={position} />}
+    </article>
+  );
+}
+
+function WatchlistRow({
+  item,
+  isExpanded,
+  onToggle,
+}: {
+  item: WatchItem;
+  isExpanded: boolean;
+  onToggle: () => void;
+}) {
+  const actionClass = item.action.toLowerCase();
+
+  return (
+    <article className="position-row">
+      <div className="position-main">
+        <div className={`position-logo ${item.logoClass}`}>{item.logo}</div>
+        <div>
+          <h3>{item.ticker}</h3>
+          <p>{item.company}</p>
+          <span>Watchlist</span>
+        </div>
+      </div>
+
+      <div className="value-cell">
+        <strong>{item.currentPrice ? money.format(item.currentPrice) : "Loading..."}</strong>
+        <span className="muted-text">Current price</span>
+        <Sparkline data={item.chart} tone="purple" />
+      </div>
+
+      <RiskAndAction asset={item} actionClass={actionClass} />
+
+      <button className={`icon-button row-button ${isExpanded ? "expanded" : ""}`} onClick={onToggle}>
+        <ChevronRight size={22} />
+      </button>
+
+      {isExpanded && <AssetDetails asset={item} />}
+    </article>
+  );
+}
+
+function RiskAndAction({ asset, actionClass }: { asset: RiskAsset; actionClass: string }) {
+  return (
+    <>
+      <div className="risk-cell">
+        <RiskRing score={asset.riskScore} level={asset.riskLevel} />
+        <span className={`risk-label ${asset.riskLevel}`}>
+          {asset.riskLevel === "high" ? "High" : asset.riskLevel === "moderate" ? "Moderate" : "Low"} Risk
+        </span>
+      </div>
+
+      <div className="action-cell">
+        <strong className={`action ${actionClass}`}>
+          {asset.action}
+          {asset.action === "Reduce" && <TrendingDown size={16} />}
+          {asset.action === "Watch" && <span>—</span>}
+        </strong>
+
+        <p className="position-summary">{asset.explanation}</p>
+
+        {asset.marketRegime && (
+          <div className="position-meta">
+            <span>{asset.marketRegime}</span>
+            {asset.probabilityOfDrop !== undefined && (
+              <span>{(asset.probabilityOfDrop * 100).toFixed(1)}% drop probability</span>
+            )}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+function AssetDetails({ asset }: { asset: RiskAsset }) {
+  return (
+    <div className="position-details">
+      <div>
+        <h4>Risk drivers</h4>
+
+        {asset.drivers.length > 0 ? (
+          asset.drivers.slice(0, 5).map((driver) => (
+            <div key={driver.feature} className={`detail-driver ${driver.impact}`}>
+              <strong>{driver.label}</strong>
+              <p>{driver.message}</p>
+            </div>
+          ))
+        ) : (
+          <p className="empty-details">No risk drivers returned by API.</p>
+        )}
+      </div>
+
+      <div>
+        <h4>Supportive signals</h4>
+
+        {asset.supportiveSignals.length > 0 ? (
+          asset.supportiveSignals.slice(0, 3).map((signal) => (
+            <div key={signal.feature} className="detail-driver positive-signal">
+              <strong>{signal.label}</strong>
+              <p>{signal.message}</p>
+            </div>
+          ))
+        ) : (
+          <p className="empty-details">No supportive signals returned by API.</p>
+        )}
+
+        <div className="cache-note">
+          <strong>Analysis</strong>
+          <p>
+            {asset.confidence ? `Confidence: ${asset.confidence}` : "SellSmart AI signal"}
+            {asset.cacheGeneratedAt ? ` · ${new Date(asset.cacheGeneratedAt).toLocaleString()}` : ""}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SummaryCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="summary-card">
+      <p className="eyebrow">{title}</p>
+      {children}
+    </section>
+  );
+}
+
+function Sparkline({
+  data,
+  tone = "positive",
+}: {
+  data: number[];
+  tone?: "positive" | "negative" | "purple";
+}) {
+  const points = data
+    .map((value, index) => {
+      const x = (index / (data.length - 1)) * 120;
+      const y = 46 - (value / 60) * 38;
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  return (
+    <svg className={`sparkline sparkline-${tone}`} viewBox="0 0 120 50" preserveAspectRatio="none">
+      <polyline
+        points={points}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function Donut({ segments }: { segments: { value: number; level: RiskLevel }[] }) {
+  let offset = 25;
+  const radius = 17;
+  const circumference = 2 * Math.PI * radius;
+
+  return (
+    <svg className="donut" viewBox="0 0 44 44">
+      <circle cx="22" cy="22" r={radius} className="donut-bg" />
+      {segments.map((segment) => {
+        const dash = (segment.value / 100) * circumference;
+        const item = (
+          <circle
+            key={`${segment.level}-${offset}`}
+            cx="22"
+            cy="22"
+            r={radius}
+            className={`donut-segment ${segment.level}`}
+            strokeDasharray={`${dash} ${circumference - dash}`}
+            strokeDashoffset={offset}
+          />
+        );
+
+        offset -= dash;
+        return item;
+      })}
+    </svg>
+  );
+}
+
+function RiskRing({ score, level }: { score: number; level: RiskLevel }) {
+  const radius = 28;
+  const circumference = 2 * Math.PI * radius;
+  const dash = (score / 100) * circumference;
+
+  return (
+    <div className={`risk-ring risk-${level}`}>
+      <svg viewBox="0 0 72 72">
+        <circle cx="36" cy="36" r={radius} className="ring-bg" />
+        <circle
+          cx="36"
+          cy="36"
+          r={radius}
+          className="ring-progress"
+          strokeDasharray={`${dash} ${circumference - dash}`}
+        />
+      </svg>
+      <strong>{score}</strong>
+    </div>
+  );
+}

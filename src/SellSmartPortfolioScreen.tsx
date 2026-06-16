@@ -359,17 +359,17 @@ const enrichWatchItemWithApi = async (item: WatchItem): Promise<WatchItem> => {
 
 export default function SellSmartPortfolioScreen() {
   const [activeView, setActiveView] = useState<ViewType>(() => {
-  try {
-    const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    try {
+      const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
 
-    if (savedSettings) {
-      const settings = JSON.parse(savedSettings);
-      return settings.defaultView ?? "dashboard";
-    }
-  } catch {}
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        return settings.defaultView ?? "dashboard";
+      }
+    } catch { }
 
-  return "dashboard";
-});
+    return "dashboard";
+  });
 
   const [positions, setPositions] = useState<Position[]>([]);
   const [watchlist, setWatchlist] = useState<WatchItem[]>([]);
@@ -948,122 +948,9 @@ export default function SellSmartPortfolioScreen() {
                 Add Ticker
               </button>
             ) : activeView === "settings" ? (
-              <section className="settings-page">
-                <section className="settings-grid">
-                  <article className="settings-card">
-                    <h2>Risk Thresholds</h2>
-                    <p>Control when SellSmart creates portfolio and position alerts.</p>
-
-                    <label className="settings-field">
-                      <span>High-risk position threshold</span>
-                      <strong>{settings.highRiskThreshold}/100</strong>
-                      <input
-                        type="range"
-                        min="40"
-                        max="100"
-                        step="5"
-                        value={settings.highRiskThreshold}
-                        onChange={(event) =>
-                          updateSetting("highRiskThreshold", Number(event.target.value))
-                        }
-                      />
-                    </label>
-
-                    <label className="settings-field">
-                      <span>Portfolio risk threshold</span>
-                      <strong>{settings.portfolioRiskThreshold}/100</strong>
-                      <input
-                        type="range"
-                        min="20"
-                        max="100"
-                        step="5"
-                        value={settings.portfolioRiskThreshold}
-                        onChange={(event) =>
-                          updateSetting("portfolioRiskThreshold", Number(event.target.value))
-                        }
-                      />
-                    </label>
-                  </article>
-
-                  <article className="settings-card">
-                    <h2>Alert Preferences</h2>
-                    <p>Choose which risk signals should appear in Alerts.</p>
-
-                    <label className="settings-toggle">
-                      <div>
-                        <strong>High-risk alerts</strong>
-                        <span>Create alerts when a position crosses the risk threshold.</span>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={settings.enableRiskAlerts}
-                        onChange={(event) =>
-                          updateSetting("enableRiskAlerts", event.target.checked)
-                        }
-                      />
-                    </label>
-
-                    <label className="settings-toggle">
-                      <div>
-                        <strong>Reduce signal alerts</strong>
-                        <span>Notify when SellSmart suggests reducing exposure.</span>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={settings.enableReduceAlerts}
-                        onChange={(event) =>
-                          updateSetting("enableReduceAlerts", event.target.checked)
-                        }
-                      />
-                    </label>
-
-                    <label className="settings-toggle">
-                      <div>
-                        <strong>News-risk alerts</strong>
-                        <span>Show alerts when news-related risk drivers are detected.</span>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={settings.enableNewsAlerts}
-                        onChange={(event) =>
-                          updateSetting("enableNewsAlerts", event.target.checked)
-                        }
-                      />
-                    </label>
-                  </article>
-
-                  <article className="settings-card">
-                    <h2>Default View</h2>
-                    <p>Choose which page should open first in SellSmart.</p>
-
-                    <label className="settings-field">
-                      <span>Start page</span>
-                      <select
-                        value={settings.defaultView}
-                        onChange={(event) =>
-                          updateSetting("defaultView", event.target.value as ViewType)
-                        }
-                      >
-                        <option value="dashboard">Dashboard</option>
-                        <option value="portfolio">Portfolio</option>
-                        <option value="watchlist">Watchlist</option>
-                        <option value="alerts">Alerts</option>
-                        <option value="insights">Insights</option>
-                        <option value="reports">Reports</option>
-                      </select>
-                    </label>
-                  </article>
-
-                  <article className="settings-card danger-zone">
-                    <h2>Demo Data</h2>
-                    <p>Reset local portfolio, watchlist and alert read status.</p>
-
-                    <button className="secondary-button" onClick={resetAppData}>
-                      Reset Demo Data
-                    </button>
-                  </article>
-                </section>
-              </section>
+              <button className="secondary-button">
+                Settings
+              </button>
             ) : activeView === "alerts" ? (
               <button className="secondary-button" onClick={markAllAlertsAsRead}>
                 Mark All Read
@@ -1428,6 +1315,123 @@ export default function SellSmartPortfolioScreen() {
                 </section>
               </article>
             </div>
+          </section>
+        ) : activeView === "settings" ? (
+          <section className="settings-page">
+            <section className="settings-grid">
+              <article className="settings-card">
+                <h2>Risk Thresholds</h2>
+                <p>Control when SellSmart creates portfolio and position alerts.</p>
+
+                <label className="settings-field">
+                  <span>High-risk position threshold</span>
+                  <strong>{settings.highRiskThreshold}/100</strong>
+                  <input
+                    type="range"
+                    min="40"
+                    max="100"
+                    step="5"
+                    value={settings.highRiskThreshold}
+                    onChange={(event) =>
+                      updateSetting("highRiskThreshold", Number(event.target.value))
+                    }
+                  />
+                </label>
+
+                <label className="settings-field">
+                  <span>Portfolio risk threshold</span>
+                  <strong>{settings.portfolioRiskThreshold}/100</strong>
+                  <input
+                    type="range"
+                    min="20"
+                    max="100"
+                    step="5"
+                    value={settings.portfolioRiskThreshold}
+                    onChange={(event) =>
+                      updateSetting("portfolioRiskThreshold", Number(event.target.value))
+                    }
+                  />
+                </label>
+              </article>
+
+              <article className="settings-card">
+                <h2>Alert Preferences</h2>
+                <p>Choose which risk signals should appear in Alerts.</p>
+
+                <label className="settings-toggle">
+                  <div>
+                    <strong>High-risk alerts</strong>
+                    <span>Create alerts when a position crosses the risk threshold.</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={settings.enableRiskAlerts}
+                    onChange={(event) =>
+                      updateSetting("enableRiskAlerts", event.target.checked)
+                    }
+                  />
+                </label>
+
+                <label className="settings-toggle">
+                  <div>
+                    <strong>Reduce signal alerts</strong>
+                    <span>Notify when SellSmart suggests reducing exposure.</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={settings.enableReduceAlerts}
+                    onChange={(event) =>
+                      updateSetting("enableReduceAlerts", event.target.checked)
+                    }
+                  />
+                </label>
+
+                <label className="settings-toggle">
+                  <div>
+                    <strong>News-risk alerts</strong>
+                    <span>Show alerts when news-related risk drivers are detected.</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={settings.enableNewsAlerts}
+                    onChange={(event) =>
+                      updateSetting("enableNewsAlerts", event.target.checked)
+                    }
+                  />
+                </label>
+              </article>
+
+              <article className="settings-card">
+                <h2>Default View</h2>
+                <p>Choose which page should open first in SellSmart.</p>
+
+                <label className="settings-field">
+                  <span>Start page</span>
+                  <select
+                    value={settings.defaultView}
+                    onChange={(event) =>
+                      updateSetting("defaultView", event.target.value as ViewType)
+                    }
+                  >
+                    <option value="dashboard">Dashboard</option>
+                    <option value="portfolio">Portfolio</option>
+                    <option value="watchlist">Watchlist</option>
+                    <option value="alerts">Alerts</option>
+                    <option value="insights">Insights</option>
+                    <option value="reports">Reports</option>
+                  </select>
+                </label>
+              </article>
+
+              <article className="settings-card danger-zone">
+                <h2>Demo Data</h2>
+                <p>Reset local portfolio, watchlist and alert read status.</p>
+
+                <button className="secondary-button" onClick={resetAppData}>
+                  Reset Demo Data
+                </button>
+              </article>
+            </section>
           </section>
         ) : activeView === "alerts" ? (
           <section className="alerts-page">

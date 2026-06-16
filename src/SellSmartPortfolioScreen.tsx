@@ -533,6 +533,18 @@ export default function SellSmartPortfolioScreen() {
     return `Portfolio risk is currently controlled. ${positions.length} positions are monitored by SellSmart AI.`;
   }, [positions]);
 
+  const highRiskPositions = positions.filter(
+    (position) => position.riskLevel === "high"
+  );
+
+  const topRiskPosition = [...positions].sort(
+    (a, b) => b.riskScore - a.riskScore
+  )[0];
+
+  const reduceSignals = positions.filter(
+    (position) => position.action === "Reduce"
+  );
+
   const insights = useMemo(() => {
     const items: {
       id: string;
@@ -674,10 +686,6 @@ export default function SellSmartPortfolioScreen() {
   }, [positions, overallRisk, readAlertIds]);
 
   const unreadAlertsCount = alerts.filter((alert) => !alert.read).length;
-
-  const highRiskPositions = positions.filter((position) => position.riskLevel === "high");
-  const topRiskPosition = [...positions].sort((a, b) => b.riskScore - a.riskScore)[0];
-  const reduceSignals = positions.filter((position) => position.action === "Reduce");
   const latestAlerts = alerts.slice(0, 3);
   const watchlistOpportunity = [...watchlist].sort((a, b) => a.riskScore - b.riskScore)[0];
 

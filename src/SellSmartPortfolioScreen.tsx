@@ -26,7 +26,7 @@ import "./SellSmartPortfolioScreen.css";
 
 type RiskLevel = "high" | "moderate" | "low";
 type ActionType = "Reduce" | "Watch" | "Hold";
-type ViewType = "dashboard" | "portfolio" | "watchlist" | "alerts" | "insights" | "reports";
+type ViewType = "dashboard" | "portfolio" | "watchlist" | "alerts" | "insights" | "reports" | "settings";
 type AlertSeverity = "high" | "medium" | "low";
 
 type PortfolioAlert = {
@@ -98,10 +98,29 @@ type Position = RiskAsset & {
 
 type WatchItem = RiskAsset;
 
+type AppSettings = {
+  highRiskThreshold: number;
+  portfolioRiskThreshold: number;
+  enableRiskAlerts: boolean;
+  enableReduceAlerts: boolean;
+  enableNewsAlerts: boolean;
+  defaultView: ViewType;
+};
+
+const defaultSettings: AppSettings = {
+  highRiskThreshold: 70,
+  portfolioRiskThreshold: 40,
+  enableRiskAlerts: true,
+  enableReduceAlerts: true,
+  enableNewsAlerts: true,
+  defaultView: "dashboard",
+};
+
 const API_BASE_URL = "https://sellsmart-ml-api.onrender.com";
 const POSITIONS_STORAGE_KEY = "sellsmart_positions";
 const WATCHLIST_STORAGE_KEY = "sellsmart_watchlist";
 const ALERTS_READ_STORAGE_KEY = "sellsmart_alerts_read";
+const SETTINGS_STORAGE_KEY = "sellsmart_settings";
 
 const money = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -343,6 +362,7 @@ export default function SellSmartPortfolioScreen() {
 
   const [positions, setPositions] = useState<Position[]>([]);
   const [watchlist, setWatchlist] = useState<WatchItem[]>([]);
+  const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [readAlertIds, setReadAlertIds] = useState<string[]>([]);
 
   const [sortBy, setSortBy] = useState("risk");
@@ -420,6 +440,34 @@ export default function SellSmartPortfolioScreen() {
     }
   };
 
+  const saveSettings = (nextSettings: AppSettings) => {
+    setSettings(nextSettings);
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(nextSettings));
+  };
+
+  const updateSetting = <K extends keyof AppSettings>(
+    key: K,
+    value: AppSettings[K]
+  ) => {
+    saveSettings({
+      ...settings,
+      [key]: value,
+    });
+  };
+
+  const resetAppData = () => {
+    localStorage.removeItem(POSITIONS_STORAGE_KEY);
+    localStorage.removeItem(WATCHLIST_STORAGE_KEY);
+    localStorage.removeItem(ALERTS_READ_STORAGE_KEY);
+
+    savePositions(demoPositions);
+    saveWatchlist(demoWatchlist);
+    saveReadAlerts([]);
+
+    refreshPositions(demoPositions);
+    refreshWatchlist(demoWatchlist);
+  };
+
   useEffect(() => {
     const savedReadAlerts = localStorage.getItem(ALERTS_READ_STORAGE_KEY);
     setReadAlertIds(savedReadAlerts ? JSON.parse(savedReadAlerts) : []);
@@ -431,6 +479,15 @@ export default function SellSmartPortfolioScreen() {
     const savedWatchlist = localStorage.getItem(WATCHLIST_STORAGE_KEY);
     const rawWatchlist = savedWatchlist ? JSON.parse(savedWatchlist) : demoWatchlist;
     const baseWatchlist: WatchItem[] = rawWatchlist.map(normalizeWatchItem);
+
+    const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+
+    if (savedSettings) {
+      setSettings({
+        ...defaultSettings,
+        ...JSON.parse(savedSettings),
+      });
+    }
 
     setPositions(basePositions);
     setWatchlist(baseWatchlist);
@@ -666,7 +723,14 @@ export default function SellSmartPortfolioScreen() {
     const now = new Date().toISOString();
 
     const highRiskAlerts = positions
-      .filter((position) => position.riskLevel === "high" || position.riskScore >= 70)
+      .filter(
+        (position) =>
+          settings.enableRiskAlerts &&
+          (
+            position.riskLevel === "high" ||
+            position.riskScore >= settings.highRiskThreshold
+          )
+      )
       .map((position) => ({
         id: `risk-${position.ticker}`,
         ticker: position.ticker,
@@ -679,16 +743,21 @@ export default function SellSmartPortfolioScreen() {
       }));
 
     const newsAlerts = positions
-      .filter((position) =>
-        position.drivers.some((driver) =>
-          `${driver.label} ${driver.message}`.toLowerCase().includes("news")
-        )
+      .filter(
+        (position) =>
+          settings.enableNewsAlerts &&
+          position.drivers.some((driver) =>
+            `${driver.label} ${driver.message}`
+              .toLowerCase()
+              .includes("news")
+          )
       )
       .map((position) => ({
         id: `news-${position.ticker}`,
         ticker: position.ticker,
         title: `${position.ticker} news risk detected`,
-        message: "SellSmart detected news-related pressure among the top risk drivers.",
+        message:
+          "SellSmart detected news-related pressure among the top risk drivers.",
         severity: "medium" as AlertSeverity,
         type: "news" as const,
         createdAt: position.cacheGeneratedAt ?? now,
@@ -696,7 +765,11 @@ export default function SellSmartPortfolioScreen() {
       }));
 
     const actionAlerts = positions
-      .filter((position) => position.action === "Reduce")
+      .filter(
+        (position) =>
+          settings.enableReduceAlerts &&
+          position.action === "Reduce"
+      )
       .map((position) => ({
         id: `action-${position.ticker}`,
         ticker: position.ticker,
@@ -709,13 +782,16 @@ export default function SellSmartPortfolioScreen() {
       }));
 
     const portfolioAlert =
-      overallRisk >= 40
+      overallRisk >= settings.portfolioRiskThreshold
         ? [
           {
             id: "portfolio-risk",
             title: "Portfolio risk requires attention",
             message: `Overall portfolio risk is ${overallRisk}/100. Review high-risk positions before adding more exposure.`,
-            severity: overallRisk >= 70 ? ("high" as AlertSeverity) : ("medium" as AlertSeverity),
+            severity:
+              overallRisk >= settings.highRiskThreshold
+                ? ("high" as AlertSeverity)
+                : ("medium" as AlertSeverity),
             type: "portfolio" as const,
             createdAt: now,
             read: readAlertIds.includes("portfolio-risk"),
@@ -723,8 +799,18 @@ export default function SellSmartPortfolioScreen() {
         ]
         : [];
 
-    return [...portfolioAlert, ...highRiskAlerts, ...actionAlerts, ...newsAlerts];
-  }, [positions, overallRisk, readAlertIds]);
+    return [
+      ...portfolioAlert,
+      ...highRiskAlerts,
+      ...actionAlerts,
+      ...newsAlerts,
+    ];
+  }, [
+    positions,
+    overallRisk,
+    readAlertIds,
+    settings,
+  ]);
 
   const unreadAlertsCount = alerts.filter((alert) => !alert.read).length;
   const latestAlerts = alerts.slice(0, 3);
@@ -751,7 +837,9 @@ export default function SellSmartPortfolioScreen() {
             ? "Alerts"
             : activeView === "insights"
               ? "Insights"
-              : "Reports";
+              : activeView === "reports"
+                ? "Reports"
+                : "Settings";
 
   const pageSubtitle =
     activeView === "dashboard"
@@ -764,7 +852,9 @@ export default function SellSmartPortfolioScreen() {
             ? "Real-time risk alerts from SellSmart AI"
             : activeView === "insights"
               ? "AI-generated explanations behind portfolio risk"
-              : "Portfolio risk reports and AI-generated summaries";
+              : activeView === "reports"
+                ? "Portfolio risk reports and AI-generated summaries"
+                : "Customize SellSmart risk intelligence";
 
   return (
     <div className="app-shell">
@@ -789,7 +879,7 @@ export default function SellSmartPortfolioScreen() {
             { label: "Alerts", icon: Bell, view: "alerts" as ViewType },
             { label: "Insights", icon: LineChart, view: "insights" as ViewType },
             { label: "Reports", icon: FileText, view: "reports" as ViewType },
-            { label: "Settings", icon: Settings },
+            { label: "Settings", icon: Settings, view: "settings" as ViewType, },
           ].map((item) => {
             const Icon = item.icon;
             const isActive = item.view === activeView;
@@ -846,6 +936,123 @@ export default function SellSmartPortfolioScreen() {
                 <Plus size={18} />
                 Add Ticker
               </button>
+            ) : activeView === "settings" ? (
+              <section className="settings-page">
+                <section className="settings-grid">
+                  <article className="settings-card">
+                    <h2>Risk Thresholds</h2>
+                    <p>Control when SellSmart creates portfolio and position alerts.</p>
+
+                    <label className="settings-field">
+                      <span>High-risk position threshold</span>
+                      <strong>{settings.highRiskThreshold}/100</strong>
+                      <input
+                        type="range"
+                        min="40"
+                        max="100"
+                        step="5"
+                        value={settings.highRiskThreshold}
+                        onChange={(event) =>
+                          updateSetting("highRiskThreshold", Number(event.target.value))
+                        }
+                      />
+                    </label>
+
+                    <label className="settings-field">
+                      <span>Portfolio risk threshold</span>
+                      <strong>{settings.portfolioRiskThreshold}/100</strong>
+                      <input
+                        type="range"
+                        min="20"
+                        max="100"
+                        step="5"
+                        value={settings.portfolioRiskThreshold}
+                        onChange={(event) =>
+                          updateSetting("portfolioRiskThreshold", Number(event.target.value))
+                        }
+                      />
+                    </label>
+                  </article>
+
+                  <article className="settings-card">
+                    <h2>Alert Preferences</h2>
+                    <p>Choose which risk signals should appear in Alerts.</p>
+
+                    <label className="settings-toggle">
+                      <div>
+                        <strong>High-risk alerts</strong>
+                        <span>Create alerts when a position crosses the risk threshold.</span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={settings.enableRiskAlerts}
+                        onChange={(event) =>
+                          updateSetting("enableRiskAlerts", event.target.checked)
+                        }
+                      />
+                    </label>
+
+                    <label className="settings-toggle">
+                      <div>
+                        <strong>Reduce signal alerts</strong>
+                        <span>Notify when SellSmart suggests reducing exposure.</span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={settings.enableReduceAlerts}
+                        onChange={(event) =>
+                          updateSetting("enableReduceAlerts", event.target.checked)
+                        }
+                      />
+                    </label>
+
+                    <label className="settings-toggle">
+                      <div>
+                        <strong>News-risk alerts</strong>
+                        <span>Show alerts when news-related risk drivers are detected.</span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={settings.enableNewsAlerts}
+                        onChange={(event) =>
+                          updateSetting("enableNewsAlerts", event.target.checked)
+                        }
+                      />
+                    </label>
+                  </article>
+
+                  <article className="settings-card">
+                    <h2>Default View</h2>
+                    <p>Choose which page should open first in SellSmart.</p>
+
+                    <label className="settings-field">
+                      <span>Start page</span>
+                      <select
+                        value={settings.defaultView}
+                        onChange={(event) =>
+                          updateSetting("defaultView", event.target.value as ViewType)
+                        }
+                      >
+                        <option value="dashboard">Dashboard</option>
+                        <option value="portfolio">Portfolio</option>
+                        <option value="watchlist">Watchlist</option>
+                        <option value="alerts">Alerts</option>
+                        <option value="insights">Insights</option>
+                        <option value="reports">Reports</option>
+                      </select>
+                    </label>
+                  </article>
+
+                  <article className="settings-card danger-zone">
+                    <h2>Demo Data</h2>
+                    <p>Reset local portfolio, watchlist and alert read status.</p>
+
+                    <button className="secondary-button" onClick={resetAppData}>
+                      Reset Demo Data
+                    </button>
+                  </article>
+                </section>
+              </section>
             ) : activeView === "alerts" ? (
               <button className="secondary-button" onClick={markAllAlertsAsRead}>
                 Mark All Read

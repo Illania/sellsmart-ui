@@ -1697,7 +1697,7 @@ button {
 }
 
 .insights-hero-stats > div {
-  min-width: 140px;
+  min-width: unset;
   padding: 16px;
   border: 1px solid rgba(255,255,255,.08);
   border-radius: 16px;
@@ -1723,9 +1723,12 @@ button {
   margin-bottom: 36px;
 }
 
+
 .insights-hero-stats {
-  display: flex;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  max-width: 900px;
   margin-top: 20px;
   margin-bottom: 36px;
 }

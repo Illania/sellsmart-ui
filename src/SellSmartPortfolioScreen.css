@@ -1632,3 +1632,66 @@ button {
   pointer-events: none;
   display: block;
 }
+
+.insights-page {
+  margin-top: 20px;
+}
+
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 16px;
+}
+
+.insight-driver-card {
+  padding: 22px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(15, 23, 42, 0.9),
+      rgba(11, 18, 34, 0.94)
+    ),
+    var(--panel);
+}
+
+.insight-driver-card.high {
+  border-left: 4px solid var(--red);
+}
+
+.insight-driver-card.medium {
+  border-left: 4px solid var(--yellow);
+}
+
+.insight-driver-card.low {
+  border-left: 4px solid var(--green);
+}
+
+.insight-driver-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.insight-driver-header svg {
+  color: #c084fc;
+}
+
+.insight-driver-header span {
+  font-size: 11px;
+  font-weight: 900;
+  color: #94a3b8;
+}
+
+.insight-driver-card h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+.insight-driver-card p {
+  margin: 0;
+  color: #cbd5e1;
+  line-height: 1.6;
+}

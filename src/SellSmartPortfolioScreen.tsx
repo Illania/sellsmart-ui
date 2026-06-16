@@ -24,7 +24,7 @@ import "./SellSmartPortfolioScreen.css";
 
 type RiskLevel = "high" | "moderate" | "low";
 type ActionType = "Reduce" | "Watch" | "Hold";
-type ViewType = "dashboard" | "portfolio" | "watchlist" | "alerts";
+type ViewType = "dashboard" | "portfolio" | "watchlist" | "alerts" | "insights";
 type AlertSeverity = "high" | "medium" | "low";
 
 type PortfolioAlert = {
@@ -533,6 +533,82 @@ export default function SellSmartPortfolioScreen() {
     return `Portfolio risk is currently controlled. ${positions.length} positions are monitored by SellSmart AI.`;
   }, [positions]);
 
+  const insights = useMemo(() => {
+    const items: {
+      id: string;
+      title: string;
+      text: string;
+      severity: AlertSeverity;
+      ticker?: string;
+      reason?: string;
+    }[] = [];
+
+    const highestRisk = [...positions].sort((a, b) => b.riskScore - a.riskScore)[0];
+
+    if (highestRisk) {
+      items.push({
+        id: "top-risk",
+        ticker: highestRisk.ticker,
+        severity: highestRisk.riskScore >= 70 ? "high" : highestRisk.riskScore >= 40 ? "medium" : "low",
+        title: `${highestRisk.ticker} is your main risk contributor`,
+        text: `${highestRisk.ticker} currently has a risk score of ${highestRisk.riskScore}/100 and contributes the most downside risk to your portfolio. Suggested action: ${highestRisk.action}.`,
+        reason: "Portfolio concentration",
+      });
+    }
+
+    if (overallRisk >= 40) {
+      items.push({
+        id: "portfolio-risk-insight",
+        severity: overallRisk >= 70 ? "high" : "medium",
+        title: "Portfolio risk requires attention",
+        text: `${highRiskPositions.length} of ${positions.length} positions are currently high risk. Overall portfolio risk is ${overallRisk}/100.`,
+        reason: "Portfolio-level signal",
+      });
+    }
+
+    positions
+      .filter((position) => position.action === "Reduce")
+      .forEach((position) => {
+        items.push({
+          id: `reduce-${position.ticker}`,
+          ticker: position.ticker,
+          severity: "high",
+          title: `${position.ticker} has a Reduce signal`,
+          text: position.explanation || `${position.ticker} currently shows elevated downside risk.`,
+          reason: "Action signal",
+        });
+      });
+
+    positions.forEach((position) => {
+      position.drivers.slice(0, 2).forEach((driver) => {
+        items.push({
+          id: `${position.ticker}-${driver.feature}`,
+          ticker: position.ticker,
+          severity: driver.impact === "high" ? "high" : driver.impact === "medium" ? "medium" : "low",
+          title: `${position.ticker}: ${driver.label}`,
+          text: driver.message,
+          reason: driver.direction === "negative" ? "Risk driver" : "Supportive context",
+        });
+      });
+    });
+
+    watchlist
+      .filter((item) => item.riskLevel === "low")
+      .slice(0, 2)
+      .forEach((item) => {
+        items.push({
+          id: `watchlist-opportunity-${item.ticker}`,
+          ticker: item.ticker,
+          severity: "low",
+          title: `${item.ticker} looks lower risk on your watchlist`,
+          text: `${item.ticker} currently has a risk score of ${item.riskScore}/100. This may be worth monitoring as a potential lower-risk opportunity.`,
+          reason: "Watchlist opportunity",
+        });
+      });
+
+    return items.slice(0, 20);
+  }, [positions, watchlist, overallRisk]);
+
   const alerts = useMemo<PortfolioAlert[]>(() => {
     const now = new Date().toISOString();
 
@@ -620,7 +696,9 @@ export default function SellSmartPortfolioScreen() {
         ? "My Portfolio"
         : activeView === "watchlist"
           ? "Watchlist"
-          : "Alerts";
+          : activeView === "alerts"
+            ? "Alerts"
+            : "Insights";
 
   const pageSubtitle =
     activeView === "dashboard"
@@ -629,7 +707,9 @@ export default function SellSmartPortfolioScreen() {
         ? "AI-powered risk analysis of your investments"
         : activeView === "watchlist"
           ? "Track stocks before adding them to your portfolio"
-          : "Real-time risk alerts from SellSmart AI";
+          : activeView === "alerts"
+            ? "Real-time risk alerts from SellSmart AI"
+            : "AI-generated explanations behind portfolio risk";
 
   return (
     <div className="app-shell">
@@ -652,7 +732,7 @@ export default function SellSmartPortfolioScreen() {
             { label: "Portfolio", icon: WalletCards, view: "portfolio" as ViewType },
             { label: "Watchlist", icon: ShieldCheck, view: "watchlist" as ViewType },
             { label: "Alerts", icon: Bell, view: "alerts" as ViewType },
-            { label: "Insights", icon: LineChart },
+            { label: "Insights", icon: LineChart, view: "insights" as ViewType },
             { label: "Reports", icon: FileText },
             { label: "Settings", icon: Settings },
           ].map((item) => {
@@ -883,6 +963,80 @@ export default function SellSmartPortfolioScreen() {
                 </button>
               </article>
             </section>
+          </section>
+        ) : activeView === "insights" ? (
+          <section className="insights-page">
+            <div className="panel-header">
+              <div>
+                <h2>AI Insights</h2>
+                <p className="muted-text">
+                  Explainable risk intelligence generated from portfolio and watchlist data.
+                </p>
+              </div>
+
+              <button className="secondary-button" onClick={() => setActiveView("portfolio")}>
+                Review Portfolio
+              </button>
+            </div>
+
+            <section className="insights-hero">
+              <div className="insight-copy">
+                <Brain size={34} />
+                <div>
+                  <h2>Today’s AI Explanation</h2>
+                  <p>{portfolioInsight}</p>
+                </div>
+              </div>
+
+              <div className="insights-hero-stats">
+                <div>
+                  <span>Portfolio risk</span>
+                  <strong>{overallRisk}/100</strong>
+                </div>
+                <div>
+                  <span>High-risk positions</span>
+                  <strong>{highRiskPositions.length}</strong>
+                </div>
+                <div>
+                  <span>Reduce signals</span>
+                  <strong>{reduceSignals.length}</strong>
+                </div>
+              </div>
+            </section>
+
+            <div className="insights-grid">
+              {insights.length > 0 ? (
+                insights.map((insight) => (
+                  <article key={insight.id} className={`insight-driver-card ${insight.severity}`}>
+                    <div className="insight-driver-header">
+                      <Brain size={22} />
+                      <span>{insight.reason ?? insight.severity.toUpperCase()}</span>
+                    </div>
+
+                    <h3>{insight.title}</h3>
+                    <p>{insight.text}</p>
+
+                    {insight.ticker && (
+                      <button
+                        className="mini-link-button"
+                        onClick={() => {
+                          setExpandedTicker(insight.ticker ?? null);
+                          setActiveView("portfolio");
+                        }}
+                      >
+                        Open {insight.ticker} <ChevronRight size={16} />
+                      </button>
+                    )}
+                  </article>
+                ))
+              ) : (
+                <div className="empty-alerts">
+                  <Brain size={34} />
+                  <h3>No insights available</h3>
+                  <p>Add positions to generate AI explanations.</p>
+                </div>
+              )}
+            </div>
           </section>
         ) : activeView === "alerts" ? (
           <section className="alerts-page">

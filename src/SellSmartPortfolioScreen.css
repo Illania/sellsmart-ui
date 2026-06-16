@@ -1733,63 +1733,6 @@ button {
   margin-bottom: 36px;
 }
 
-@media print {
-  body {
-    background: #ffffff;
-  }
-
-  .sidebar,
-  .topbar,
-  .page-header,
-  .disclaimer,
-  .secondary-button,
-  .primary-button {
-    display: none !important;
-  }
-
-  .main-content {
-    margin: 0;
-    padding: 0;
-    background: #ffffff;
-    color: #111827;
-  }
-
-  .reports-page {
-    padding: 32px;
-    color: #111827;
-  }
-
-  .report-card,
-  .report-preview {
-    background: #ffffff !important;
-    border: 1px solid #e5e7eb !important;
-    box-shadow: none !important;
-    color: #111827 !important;
-  }
-
-  .report-card span,
-  .report-card p,
-  .muted-text,
-  .report-section p {
-    color: #4b5563 !important;
-  }
-
-  .report-card strong,
-  .report-preview h3,
-  .report-section h4,
-  .report-row span {
-    color: #111827 !important;
-  }
-
-  .reports-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .report-preview {
-    page-break-inside: avoid;
-  }
-}
-
 .reports-page {
   display: flex;
   flex-direction: column;
@@ -1923,3 +1866,63 @@ button {
   font-size: 13px;
 }
 
+@media print {
+  body {
+    background: #fff !important;
+  }
+
+  .sidebar,
+  .topbar,
+  .page-header,
+  .disclaimer,
+  .no-print {
+    display: none !important;
+  }
+
+  .app-shell,
+  .main-content,
+  .reports-page,
+  .printable-report {
+    display: block !important;
+    background: #fff !important;
+    color: #111827 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .printable-report {
+    padding: 32px !important;
+  }
+
+  .reports-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 14px !important;
+  }
+
+  .report-card,
+  .report-preview,
+  .report-driver {
+    background: #fff !important;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: none !important;
+    color: #111827 !important;
+  }
+
+  .report-card *,
+  .report-preview *,
+  .report-driver * {
+    color: #111827 !important;
+  }
+
+  .muted-text,
+  .report-card p,
+  .report-section p,
+  .report-disclaimer {
+    color: #4b5563 !important;
+  }
+
+  .report-preview {
+    page-break-inside: avoid;
+  }
+}

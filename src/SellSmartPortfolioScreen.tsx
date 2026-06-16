@@ -358,7 +358,18 @@ const enrichWatchItemWithApi = async (item: WatchItem): Promise<WatchItem> => {
 };
 
 export default function SellSmartPortfolioScreen() {
-  const [activeView, setActiveView] = useState<ViewType>("dashboard");
+  const [activeView, setActiveView] = useState<ViewType>(() => {
+  try {
+    const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+
+    if (savedSettings) {
+      const settings = JSON.parse(savedSettings);
+      return settings.defaultView ?? "dashboard";
+    }
+  } catch {}
+
+  return "dashboard";
+});
 
   const [positions, setPositions] = useState<Position[]>([]);
   const [watchlist, setWatchlist] = useState<WatchItem[]>([]);

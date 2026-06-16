@@ -708,9 +708,19 @@ export default function SellSmartPortfolioScreen() {
               Import Demo
             </button>
 
-            <button className="icon-button" onClick={() => setActiveView("alerts")}>
-              <Bell size={20} />
-            </button>
+            <button
+              type="button"
+              className="icon-button top-alert-button"
+              onClick={() => setActiveView("alerts")}
+              aria-label="Open alerts"
+            >
+            <Bell size={20} />
+            {unreadAlertsCount > 0 && (
+              <span className="top-alert-badge">
+                {unreadAlertsCount}
+              </span>
+            )}
+          </button>
             <button className="avatar">AS</button>
           </div>
         </header>

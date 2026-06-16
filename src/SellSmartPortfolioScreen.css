@@ -1733,3 +1733,60 @@ button {
   margin-bottom: 36px;
 }
 
+@media print {
+  body {
+    background: #ffffff;
+  }
+
+  .sidebar,
+  .topbar,
+  .page-header,
+  .disclaimer,
+  .secondary-button,
+  .primary-button {
+    display: none !important;
+  }
+
+  .main-content {
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+    color: #111827;
+  }
+
+  .reports-page {
+    padding: 32px;
+    color: #111827;
+  }
+
+  .report-card,
+  .report-preview {
+    background: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: none !important;
+    color: #111827 !important;
+  }
+
+  .report-card span,
+  .report-card p,
+  .muted-text,
+  .report-section p {
+    color: #4b5563 !important;
+  }
+
+  .report-card strong,
+  .report-preview h3,
+  .report-section h4,
+  .report-row span {
+    color: #111827 !important;
+  }
+
+  .reports-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .report-preview {
+    page-break-inside: avoid;
+  }
+}
+

@@ -24,7 +24,7 @@ import "./SellSmartPortfolioScreen.css";
 
 type RiskLevel = "high" | "moderate" | "low";
 type ActionType = "Reduce" | "Watch" | "Hold";
-type ViewType = "dashboard" | "portfolio" | "watchlist" | "alerts" | "insights";
+type ViewType = "dashboard" | "portfolio" | "watchlist" | "alerts" | "insights" | "reports";
 type AlertSeverity = "high" | "medium" | "low";
 
 type PortfolioAlert = {
@@ -533,19 +533,6 @@ export default function SellSmartPortfolioScreen() {
     return `Portfolio risk is currently controlled. ${positions.length} positions are monitored by SellSmart AI.`;
   }, [positions]);
 
-
-const highRiskPositions = positions.filter(
-  (position) => position.riskLevel === "high"
-);
-
-const topRiskPosition = [...positions].sort(
-  (a, b) => b.riskScore - a.riskScore
-)[0];
-
-const reduceSignals = positions.filter(
-  (position) => position.action === "Reduce"
-);
-
   const insights = useMemo(() => {
     const items: {
       id: string;
@@ -620,7 +607,7 @@ const reduceSignals = positions.filter(
       });
 
     return items.slice(0, 20);
-  }, [positions, watchlist, overallRisk, highRiskPositions.length]);
+  }, [positions, watchlist, overallRisk]);
 
   const alerts = useMemo<PortfolioAlert[]>(() => {
     const now = new Date().toISOString();
@@ -687,6 +674,10 @@ const reduceSignals = positions.filter(
   }, [positions, overallRisk, readAlertIds]);
 
   const unreadAlertsCount = alerts.filter((alert) => !alert.read).length;
+
+  const highRiskPositions = positions.filter((position) => position.riskLevel === "high");
+  const topRiskPosition = [...positions].sort((a, b) => b.riskScore - a.riskScore)[0];
+  const reduceSignals = positions.filter((position) => position.action === "Reduce");
   const latestAlerts = alerts.slice(0, 3);
   const watchlistOpportunity = [...watchlist].sort((a, b) => a.riskScore - b.riskScore)[0];
 
@@ -698,6 +689,8 @@ const reduceSignals = positions.filter(
     saveReadAlerts(alerts.map((alert) => alert.id));
   };
 
+  const reportGeneratedAt = new Date();
+
   const pageTitle =
     activeView === "dashboard"
       ? "Dashboard"
@@ -707,7 +700,9 @@ const reduceSignals = positions.filter(
           ? "Watchlist"
           : activeView === "alerts"
             ? "Alerts"
-            : "Insights";
+            : activeView === "insights"
+              ? "Insights"
+              : "Reports";
 
   const pageSubtitle =
     activeView === "dashboard"
@@ -718,7 +713,9 @@ const reduceSignals = positions.filter(
           ? "Track stocks before adding them to your portfolio"
           : activeView === "alerts"
             ? "Real-time risk alerts from SellSmart AI"
-            : "AI-generated explanations behind portfolio risk";
+            : activeView === "insights"
+              ? "AI-generated explanations behind portfolio risk"
+              : "Portfolio risk reports and AI-generated summaries";
 
   return (
     <div className="app-shell">
@@ -742,7 +739,7 @@ const reduceSignals = positions.filter(
             { label: "Watchlist", icon: ShieldCheck, view: "watchlist" as ViewType },
             { label: "Alerts", icon: Bell, view: "alerts" as ViewType },
             { label: "Insights", icon: LineChart, view: "insights" as ViewType },
-            { label: "Reports", icon: FileText },
+            { label: "Reports", icon: FileText, view: "reports" as ViewType },
             { label: "Settings", icon: Settings },
           ].map((item) => {
             const Icon = item.icon;
@@ -803,6 +800,11 @@ const reduceSignals = positions.filter(
             ) : activeView === "alerts" ? (
               <button className="secondary-button" onClick={markAllAlertsAsRead}>
                 Mark All Read
+              </button>
+            ) : activeView === "reports" ? (
+              <button className="secondary-button" onClick={() => window.print()}>
+                <FileText size={18} />
+                Export PDF
               </button>
             ) : (
               <button className="secondary-button" onClick={() => setIsAddModalOpen(true)}>
@@ -1046,6 +1048,137 @@ const reduceSignals = positions.filter(
                 </div>
               )}
             </div>
+          </section>
+         ) : activeView === "reports" ? (
+          <section className="reports-page">
+            <div className="panel-header">
+              <div>
+                <h2>Weekly AI Risk Report</h2>
+                <p className="muted-text">
+                  Generated {reportGeneratedAt.toLocaleDateString()} · Based on current SellSmart AI signals.
+                </p>
+              </div>
+
+              <button className="secondary-button" onClick={() => window.print()}>
+                <FileText size={18} />
+                Export PDF
+              </button>
+            </div>
+
+            <section className="reports-grid">
+              <article className="report-card">
+                <span>Portfolio Risk</span>
+                <strong>{overallRisk}/100</strong>
+                <p>
+                  {overallRiskLevel === "high"
+                    ? "High risk"
+                    : overallRiskLevel === "moderate"
+                      ? "Moderate risk"
+                      : "Low risk"}
+                </p>
+              </article>
+
+              <article className="report-card">
+                <span>High-Risk Positions</span>
+                <strong>{highRiskPositions.length}</strong>
+                <p>Positions with elevated downside risk</p>
+              </article>
+
+              <article className="report-card">
+                <span>Reduce Signals</span>
+                <strong>{reduceSignals.length}</strong>
+                <p>Positions requiring review</p>
+              </article>
+            </section>
+
+            <article className="report-preview">
+              <div className="report-preview-header">
+                <div>
+                  <h3>Portfolio Risk Summary</h3>
+                  <p className="muted-text">
+                    AI-generated report for your current portfolio snapshot.
+                  </p>
+                </div>
+
+                <FileText size={30} />
+              </div>
+
+              <section className="report-section first">
+                <h4>Executive summary</h4>
+                <p>{portfolioInsight}</p>
+              </section>
+
+              {topRiskPosition && (
+                <section className="report-section">
+                  <h4>Main risk contributor</h4>
+                  <p>
+                    <strong>{topRiskPosition.ticker}</strong> has a risk score of{" "}
+                    <strong>{topRiskPosition.riskScore}/100</strong>. Suggested action:{" "}
+                    <strong>{topRiskPosition.action}</strong>.
+                  </p>
+                </section>
+              )}
+
+              <section className="report-section">
+                <h4>Positions requiring attention</h4>
+
+                {reduceSignals.length > 0 ? (
+                  <div className="report-table">
+                    {reduceSignals.map((position) => (
+                      <div key={position.ticker} className="report-row">
+                        <span>{position.ticker}</span>
+                        <strong>{position.riskScore}/100</strong>
+                        <em>{position.action}</em>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="muted-text">No reduce signals at this time.</p>
+                )}
+              </section>
+
+              <section className="report-section">
+                <h4>Top risk drivers</h4>
+
+                {topDrivers.length > 0 ? (
+                  <div className="report-driver-list">
+                    {topDrivers.map((driver) => (
+                      <div key={`${driver.ticker}-${driver.feature}`} className="report-driver">
+                        <div>
+                          <strong>{driver.ticker}: {driver.label}</strong>
+                          <p>{driver.message}</p>
+                        </div>
+                        <span className={`alert-severity ${driver.impact}`}>{driver.impact}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="muted-text">Risk drivers are still loading.</p>
+                )}
+              </section>
+
+              <section className="report-section">
+                <h4>Suggested review actions</h4>
+
+                {reduceSignals.length > 0 ? (
+                  <ul className="report-actions-list">
+                    {reduceSignals.slice(0, 5).map((position) => (
+                      <li key={`action-${position.ticker}`}>
+                        Review <strong>{position.ticker}</strong> exposure and check the latest risk drivers before adding more capital.
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="muted-text">
+                    No urgent review actions. Continue monitoring your portfolio risk score and alerts.
+                  </p>
+                )}
+              </section>
+
+              <div className="report-disclaimer">
+                SellSmart provides AI-powered risk analysis and insights only. This report is not financial advice.
+              </div>
+            </article>
           </section>
         ) : activeView === "alerts" ? (
           <section className="alerts-page">

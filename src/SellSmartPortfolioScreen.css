@@ -1159,3 +1159,138 @@ button {
 .row-button.expanded svg {
   transform: rotate(90deg);
 }
+
+.nav-badge {
+  margin-left: auto;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--red);
+  color: white;
+  font-size: 12px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.alerts-page {
+  margin-top: 28px;
+}
+
+.alerts-page .panel-header {
+  padding: 0;
+}
+
+.alerts-list {
+  display: grid;
+  gap: 12px;
+}
+
+.alert-card {
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(11, 18, 34, 0.94)),
+    var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.alert-card.unread {
+  border-color: rgba(91, 108, 255, 0.44);
+}
+
+.alert-card.high {
+  border-left: 4px solid var(--red);
+}
+
+.alert-card.medium {
+  border-left: 4px solid var(--yellow);
+}
+
+.alert-card.low {
+  border-left: 4px solid var(--green);
+}
+
+.alert-card.read {
+  opacity: 0.66;
+}
+
+.alert-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  color: #c084fc;
+  background: var(--purple-soft);
+}
+
+.alert-title-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.alert-title-line h3 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.alert-content p {
+  margin: 7px 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.alert-time {
+  color: var(--muted-2);
+  font-size: 12px;
+}
+
+.alert-severity {
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.alert-severity.high {
+  color: var(--red);
+}
+
+.alert-severity.medium {
+  color: var(--yellow);
+}
+
+.alert-severity.low {
+  color: var(--green);
+}
+
+.empty-alerts {
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  min-height: 260px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: rgba(15, 23, 42, 0.72);
+  color: var(--muted);
+  text-align: center;
+}
+
+.empty-alerts h3,
+.empty-alerts p {
+  margin: 0;
+}
+
+@media (max-width: 980px) {
+  .alert-card {
+    grid-template-columns: 1fr;
+  }
+}

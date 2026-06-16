@@ -24,7 +24,19 @@ import "./SellSmartPortfolioScreen.css";
 
 type RiskLevel = "high" | "moderate" | "low";
 type ActionType = "Reduce" | "Watch" | "Hold";
-type ViewType = "portfolio" | "watchlist";
+type ViewType = "portfolio" | "watchlist" | "alerts";
+type AlertSeverity = "high" | "medium" | "low";
+
+type PortfolioAlert = {
+  id: string;
+  ticker?: string;
+  title: string;
+  message: string;
+  severity: AlertSeverity;
+  type: "risk" | "news" | "portfolio" | "action";
+  createdAt: string;
+  read: boolean;
+};
 
 type ApiDriver = {
   label: string;
@@ -87,6 +99,7 @@ type WatchItem = RiskAsset;
 const API_BASE_URL = "https://sellsmart-ml-api.onrender.com";
 const POSITIONS_STORAGE_KEY = "sellsmart_positions";
 const WATCHLIST_STORAGE_KEY = "sellsmart_watchlist";
+const ALERTS_READ_STORAGE_KEY = "sellsmart_alerts_read";
 
 const money = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -138,6 +151,8 @@ const getLogoClass = (ticker: string) => {
     NVDA: "logo-nvda",
     TSLA: "logo-tsla",
     AAPL: "logo-aapl",
+    MSFT: "logo-msft",
+    AMZN: "logo-amzn",
   };
 
   return known[ticker] ?? "logo-jpm";
@@ -287,6 +302,7 @@ export default function SellSmartPortfolioScreen() {
 
   const [positions, setPositions] = useState<Position[]>([]);
   const [watchlist, setWatchlist] = useState<WatchItem[]>([]);
+  const [readAlertIds, setReadAlertIds] = useState<string[]>([]);
 
   const [sortBy, setSortBy] = useState("risk");
   const [expandedTicker, setExpandedTicker] = useState<string | null>(null);
@@ -308,6 +324,11 @@ export default function SellSmartPortfolioScreen() {
   const saveWatchlist = (nextWatchlist: WatchItem[]) => {
     setWatchlist(nextWatchlist);
     localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(nextWatchlist));
+  };
+
+  const saveReadAlerts = (nextReadAlertIds: string[]) => {
+    setReadAlertIds(nextReadAlertIds);
+    localStorage.setItem(ALERTS_READ_STORAGE_KEY, JSON.stringify(nextReadAlertIds));
   };
 
   const refreshPositions = async (basePositions: Position[]) => {
@@ -359,6 +380,9 @@ export default function SellSmartPortfolioScreen() {
   };
 
   useEffect(() => {
+    const savedReadAlerts = localStorage.getItem(ALERTS_READ_STORAGE_KEY);
+    setReadAlertIds(savedReadAlerts ? JSON.parse(savedReadAlerts) : []);
+
     const savedPositions = localStorage.getItem(POSITIONS_STORAGE_KEY);
     const rawPositions = savedPositions ? JSON.parse(savedPositions) : demoPositions;
     const basePositions: Position[] = rawPositions.map(normalizePosition);
@@ -380,6 +404,7 @@ export default function SellSmartPortfolioScreen() {
   const importDemoPortfolio = () => {
     savePositions(demoPositions);
     saveWatchlist(demoWatchlist);
+    saveReadAlerts([]);
     refreshPositions(demoPositions);
     refreshWatchlist(demoWatchlist);
   };
@@ -410,11 +435,7 @@ export default function SellSmartPortfolioScreen() {
 
     try {
       const enrichedPosition = await enrichPositionWithApi(basePosition);
-      savePositions(
-        nextPositions.map((position) =>
-          position.ticker === ticker ? enrichedPosition : position
-        )
-      );
+      savePositions(nextPositions.map((position) => (position.ticker === ticker ? enrichedPosition : position)));
     } catch (error) {
       console.error(error);
     }
@@ -442,9 +463,7 @@ export default function SellSmartPortfolioScreen() {
 
     try {
       const enrichedItem = await enrichWatchItemWithApi(baseItem);
-      saveWatchlist(
-        nextWatchlist.map((item) => (item.ticker === ticker ? enrichedItem : item))
-      );
+      saveWatchlist(nextWatchlist.map((item) => (item.ticker === ticker ? enrichedItem : item)));
     } catch (error) {
       console.error(error);
     }
@@ -476,7 +495,7 @@ export default function SellSmartPortfolioScreen() {
     overallRisk >= 70 ? "high" : overallRisk >= 40 ? "moderate" : "low";
 
   const riskDistribution = useMemo(() => {
-    const source = activeView === "portfolio" ? positions : watchlist;
+    const source = activeView === "watchlist" ? watchlist : positions;
     const total = source.length || 1;
     const high = source.filter((p) => p.riskLevel === "high").length;
     const moderate = source.filter((p) => p.riskLevel === "moderate").length;
@@ -490,7 +509,7 @@ export default function SellSmartPortfolioScreen() {
   }, [activeView, positions, watchlist]);
 
   const topDrivers = useMemo(() => {
-    const source = activeView === "portfolio" ? positions : watchlist;
+    const source = activeView === "watchlist" ? watchlist : positions;
 
     return source
       .flatMap((asset) => asset.drivers.map((driver) => ({ ...driver, ticker: asset.ticker })))
@@ -514,6 +533,90 @@ export default function SellSmartPortfolioScreen() {
     return `Portfolio risk is currently controlled. ${positions.length} positions are monitored by SellSmart AI.`;
   }, [positions]);
 
+  const alerts = useMemo<PortfolioAlert[]>(() => {
+    const now = new Date().toISOString();
+
+    const highRiskAlerts = positions
+      .filter((position) => position.riskLevel === "high" || position.riskScore >= 70)
+      .map((position) => ({
+        id: `risk-${position.ticker}`,
+        ticker: position.ticker,
+        title: `${position.ticker} high-risk signal`,
+        message: `${position.ticker} has a risk score of ${position.riskScore}/100. Suggested action: ${position.action}.`,
+        severity: "high" as AlertSeverity,
+        type: "risk" as const,
+        createdAt: position.cacheGeneratedAt ?? now,
+        read: readAlertIds.includes(`risk-${position.ticker}`),
+      }));
+
+    const newsAlerts = positions
+      .filter((position) =>
+        position.drivers.some((driver) =>
+          `${driver.label} ${driver.message}`.toLowerCase().includes("news")
+        )
+      )
+      .map((position) => ({
+        id: `news-${position.ticker}`,
+        ticker: position.ticker,
+        title: `${position.ticker} news risk detected`,
+        message: "SellSmart detected news-related pressure among the top risk drivers.",
+        severity: "medium" as AlertSeverity,
+        type: "news" as const,
+        createdAt: position.cacheGeneratedAt ?? now,
+        read: readAlertIds.includes(`news-${position.ticker}`),
+      }));
+
+    const actionAlerts = positions
+      .filter((position) => position.action === "Reduce")
+      .map((position) => ({
+        id: `action-${position.ticker}`,
+        ticker: position.ticker,
+        title: `${position.ticker} reduce signal`,
+        message: `${position.ticker} currently has a Reduce signal. Review exposure and risk drivers.`,
+        severity: "high" as AlertSeverity,
+        type: "action" as const,
+        createdAt: position.cacheGeneratedAt ?? now,
+        read: readAlertIds.includes(`action-${position.ticker}`),
+      }));
+
+    const portfolioAlert =
+      overallRisk >= 40
+        ? [
+            {
+              id: "portfolio-risk",
+              title: "Portfolio risk requires attention",
+              message: `Overall portfolio risk is ${overallRisk}/100. Review high-risk positions before adding more exposure.`,
+              severity: overallRisk >= 70 ? ("high" as AlertSeverity) : ("medium" as AlertSeverity),
+              type: "portfolio" as const,
+              createdAt: now,
+              read: readAlertIds.includes("portfolio-risk"),
+            },
+          ]
+        : [];
+
+    return [...portfolioAlert, ...highRiskAlerts, ...actionAlerts, ...newsAlerts];
+  }, [positions, overallRisk, readAlertIds]);
+
+  const unreadAlertsCount = alerts.filter((alert) => !alert.read).length;
+
+  const markAlertAsRead = (alertId: string) => {
+    saveReadAlerts(Array.from(new Set([...readAlertIds, alertId])));
+  };
+
+  const markAllAlertsAsRead = () => {
+    saveReadAlerts(alerts.map((alert) => alert.id));
+  };
+
+  const pageTitle =
+    activeView === "portfolio" ? "My Portfolio" : activeView === "watchlist" ? "Watchlist" : "Alerts";
+
+  const pageSubtitle =
+    activeView === "portfolio"
+      ? "AI-powered risk analysis of your investments"
+      : activeView === "watchlist"
+        ? "Track stocks before adding them to your portfolio"
+        : "Real-time risk alerts from SellSmart AI";
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -534,7 +637,7 @@ export default function SellSmartPortfolioScreen() {
             { label: "Dashboard", icon: Home },
             { label: "Portfolio", icon: WalletCards, view: "portfolio" as ViewType },
             { label: "Watchlist", icon: ShieldCheck, view: "watchlist" as ViewType },
-            { label: "Alerts", icon: Bell },
+            { label: "Alerts", icon: Bell, view: "alerts" as ViewType },
             { label: "Insights", icon: LineChart },
             { label: "Reports", icon: FileText },
             { label: "Settings", icon: Settings },
@@ -550,6 +653,9 @@ export default function SellSmartPortfolioScreen() {
               >
                 <Icon size={19} />
                 {item.label}
+                {item.label === "Alerts" && unreadAlertsCount > 0 && (
+                  <span className="nav-badge">{unreadAlertsCount}</span>
+                )}
               </button>
             );
           })}
@@ -586,10 +692,14 @@ export default function SellSmartPortfolioScreen() {
                 <Plus size={18} />
                 Add Position
               </button>
-            ) : (
+            ) : activeView === "watchlist" ? (
               <button className="secondary-button" onClick={() => setIsWatchModalOpen(true)}>
                 <Plus size={18} />
                 Add Ticker
+              </button>
+            ) : (
+              <button className="secondary-button" onClick={markAllAlertsAsRead}>
+                Mark All Read
               </button>
             )}
 
@@ -598,7 +708,7 @@ export default function SellSmartPortfolioScreen() {
               Import Demo
             </button>
 
-            <button className="icon-button">
+            <button className="icon-button" onClick={() => setActiveView("alerts")}>
               <Bell size={20} />
             </button>
             <button className="avatar">AS</button>
@@ -607,12 +717,8 @@ export default function SellSmartPortfolioScreen() {
 
         <section className="page-header">
           <div>
-            <h1>{activeView === "portfolio" ? "My Portfolio" : "Watchlist"}</h1>
-            <p>
-              {activeView === "portfolio"
-                ? "AI-powered risk analysis of your investments"
-                : "Track stocks before adding them to your portfolio"}
-            </p>
+            <h1>{pageTitle}</h1>
+            <p>{pageSubtitle}</p>
           </div>
           <div className="market-status">
             <strong>
@@ -622,191 +728,250 @@ export default function SellSmartPortfolioScreen() {
           </div>
         </section>
 
-        {activeView === "portfolio" ? (
-          <>
-            <section className="summary-grid">
-              <SummaryCard title="Portfolio Value">
-                <h2>{money.format(totalValue)}</h2>
-                <p className={totalPnl >= 0 ? "positive" : "negative"}>
-                  {totalPnl >= 0 ? "+" : ""}
-                  {money.format(totalPnl)} ({totalPnlPct.toFixed(2)}%)
-                </p>
-                <Sparkline
-                  data={[12, 16, 24, 19, 28, 32, 27, 20, 17, 22, 36, 42, 39, 31, 36, 47, 50]}
-                  tone="purple"
-                />
-              </SummaryCard>
-
-              <SummaryCard title="Overall Risk ⓘ">
-                <div className="score-line">
-                  <strong>{overallRisk}</strong>
-                  <span>/100</span>
-                </div>
-                <p className={overallRiskLevel === "high" ? "negative" : "warning"}>
-                  {overallRiskLevel === "high"
-                    ? "High Risk"
-                    : overallRiskLevel === "moderate"
-                      ? "Moderate Risk"
-                      : "Low Risk"}
-                </p>
-                <div className="risk-meter">
-                  <span style={{ width: `${overallRisk}%` }} />
-                </div>
-                <div className="meter-labels">
-                  <span>0</span>
-                  <span>100</span>
-                </div>
-              </SummaryCard>
-
-              <SummaryCard title="Daily PNL">
-                <h2 className={totalPnl >= 0 ? "positive" : "negative"}>
-                  {totalPnl >= 0 ? "+" : ""}
-                  {money.format(totalPnl)}
-                </h2>
-                <p className={totalPnl >= 0 ? "positive" : "negative"}>({totalPnlPct.toFixed(2)}%)</p>
-                <Sparkline data={[10, 18, 17, 11, 20, 22, 17, 19, 26, 24, 18, 20, 14, 17, 15]} />
-              </SummaryCard>
-
-              <SummaryCard title="Positions">
-                <div className="positions-summary">
-                  <div>
-                    <h2>{positions.length}</h2>
-                    <p>Diversified</p>
-                  </div>
-                  <Donut segments={riskDistribution} />
-                </div>
-              </SummaryCard>
-            </section>
-
-            <section className="insight-card">
-              <div className="insight-copy">
-                <Brain size={34} />
-                <div>
-                  <h2>Portfolio Insight</h2>
-                  <p>{portfolioInsight}</p>
-                </div>
-              </div>
-
-              <div className="insight-visual">
-                <Sparkline
-                  data={[20, 28, 24, 31, 33, 29, 36, 43, 38, 50, 62, 58, 54, 59, 66, 61, 57, 69, 72, 63, 60, 73]}
-                  tone="purple"
-                />
-              </div>
-
-              <button className="primary-button">
-                View Details <ChevronRight size={18} />
-              </button>
-            </section>
-          </>
-        ) : (
-          <section className="insight-card">
-            <div className="insight-copy">
-              <Brain size={34} />
-              <div>
-                <h2>Watchlist Intelligence</h2>
-                <p>
-                  Monitor stocks before buying. SellSmart highlights panic-risk signals, sentiment pressure,
-                  and short-term downside risk.
-                </p>
-              </div>
-            </div>
-
-            <button className="primary-button" onClick={() => setIsWatchModalOpen(true)}>
-              Add Ticker <Plus size={18} />
-            </button>
-          </section>
-        )}
-
-        <div className="content-grid">
-          <section className="positions-panel">
+        {activeView === "alerts" ? (
+          <section className="alerts-page">
             <div className="panel-header">
-              <h2>{activeView === "portfolio" ? "Your Positions" : "Your Watchlist"}</h2>
-              <div className="sort-area">
-                <span>Sort by</span>
-                <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
-                  <option value="risk">Risk (High to Low)</option>
-                  {activeView === "portfolio" && <option value="value">Value</option>}
-                  {activeView === "portfolio" && <option value="pnl">PNL</option>}
-                </select>
-                <button className="icon-button active">
-                  <Grid2X2 size={18} />
-                </button>
-                <button className="icon-button">
-                  <List size={18} />
-                </button>
+              <div>
+                <h2>Risk Alerts</h2>
+                <p className="muted-text">
+                  {unreadAlertsCount} unread alert{unreadAlertsCount === 1 ? "" : "s"}
+                </p>
               </div>
+
+              {alerts.length > 0 && (
+                <button className="secondary-button" onClick={markAllAlertsAsRead}>
+                  Mark all as read
+                </button>
+              )}
             </div>
 
-            <div className="table-head">
-              <span>{activeView === "portfolio" ? "Position" : "Ticker"}</span>
-              <span>{activeView === "portfolio" ? "Value / PNL" : "Price"}</span>
-              <span>Risk Score</span>
-              <span>Action</span>
-            </div>
+            {alerts.length > 0 ? (
+              <div className="alerts-list">
+                {alerts.map((alert) => (
+                  <article
+                    key={alert.id}
+                    className={`alert-card ${alert.severity} ${alert.read ? "read" : "unread"}`}
+                  >
+                    <div className="alert-icon">
+                      <Bell size={20} />
+                    </div>
 
-            <div className="position-list">
-              {activeView === "portfolio"
-                ? sortedPositions.map((position) => (
-                    <PositionRow
-                      key={position.ticker}
-                      position={position}
-                      isExpanded={expandedTicker === position.ticker}
-                      onToggle={() =>
-                        setExpandedTicker(expandedTicker === position.ticker ? null : position.ticker)
-                      }
-                    />
-                  ))
-                : sortedWatchlist.map((item) => (
-                    <WatchlistRow
-                      key={item.ticker}
-                      item={item}
-                      isExpanded={expandedTicker === item.ticker}
-                      onToggle={() =>
-                        setExpandedTicker(expandedTicker === item.ticker ? null : item.ticker)
-                      }
-                    />
-                  ))}
-            </div>
+                    <div className="alert-content">
+                      <div className="alert-title-line">
+                        <h3>{alert.title}</h3>
+                        <span className={`alert-severity ${alert.severity}`}>{alert.severity}</span>
+                      </div>
+
+                      <p>{alert.message}</p>
+
+                      <span className="alert-time">{new Date(alert.createdAt).toLocaleString()}</span>
+                    </div>
+
+                    {!alert.read && (
+                      <button className="secondary-button" onClick={() => markAlertAsRead(alert.id)}>
+                        Mark read
+                      </button>
+                    )}
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-alerts">
+                <Bell size={34} />
+                <h3>No active alerts</h3>
+                <p>Your portfolio does not currently show urgent risk alerts.</p>
+              </div>
+            )}
           </section>
+        ) : (
+          <>
+            {activeView === "portfolio" ? (
+              <>
+                <section className="summary-grid">
+                  <SummaryCard title="Portfolio Value">
+                    <h2>{money.format(totalValue)}</h2>
+                    <p className={totalPnl >= 0 ? "positive" : "negative"}>
+                      {totalPnl >= 0 ? "+" : ""}
+                      {money.format(totalPnl)} ({totalPnlPct.toFixed(2)}%)
+                    </p>
+                    <Sparkline
+                      data={[12, 16, 24, 19, 28, 32, 27, 20, 17, 22, 36, 42, 39, 31, 36, 47, 50]}
+                      tone="purple"
+                    />
+                  </SummaryCard>
 
-          <aside className="right-rail">
-            <section className="side-card">
-              <h3>Risk Distribution</h3>
-              <div className="distribution-layout">
-                <Donut segments={riskDistribution} />
-              </div>
-            </section>
+                  <SummaryCard title="Overall Risk ⓘ">
+                    <div className="score-line">
+                      <strong>{overallRisk}</strong>
+                      <span>/100</span>
+                    </div>
+                    <p className={overallRiskLevel === "high" ? "negative" : "warning"}>
+                      {overallRiskLevel === "high"
+                        ? "High Risk"
+                        : overallRiskLevel === "moderate"
+                          ? "Moderate Risk"
+                          : "Low Risk"}
+                    </p>
+                    <div className="risk-meter">
+                      <span style={{ width: `${overallRisk}%` }} />
+                    </div>
+                    <div className="meter-labels">
+                      <span>0</span>
+                      <span>100</span>
+                    </div>
+                  </SummaryCard>
 
-            <section className="side-card">
-              <h3>Top Risk Drivers</h3>
-              <ul className="driver-list">
-                {topDrivers.length > 0 ? (
-                  topDrivers.map((driver) => (
-                    <li key={`${driver.ticker}-${driver.feature}`}>
-                      <SlidersHorizontal size={17} />
-                      {driver.ticker}: {driver.label}
-                      <strong className={driver.impact}>{driver.impact}</strong>
-                    </li>
-                  ))
-                ) : (
-                  <li>
-                    <LayoutDashboard size={17} />
-                    Loading AI drivers
-                    <strong className="moderate">AI</strong>
-                  </li>
-                )}
-              </ul>
-            </section>
+                  <SummaryCard title="Daily PNL">
+                    <h2 className={totalPnl >= 0 ? "positive" : "negative"}>
+                      {totalPnl >= 0 ? "+" : ""}
+                      {money.format(totalPnl)}
+                    </h2>
+                    <p className={totalPnl >= 0 ? "positive" : "negative"}>({totalPnlPct.toFixed(2)}%)</p>
+                    <Sparkline data={[10, 18, 17, 11, 20, 22, 17, 19, 26, 24, 18, 20, 14, 17, 15]} />
+                  </SummaryCard>
 
-            <section className="side-card">
-              <h3>Actions Summary</h3>
-              <button className="primary-button full">
-                View Full Report <ChevronRight size={18} />
-              </button>
-            </section>
-          </aside>
-        </div>
+                  <SummaryCard title="Positions">
+                    <div className="positions-summary">
+                      <div>
+                        <h2>{positions.length}</h2>
+                        <p>Diversified</p>
+                      </div>
+                      <Donut segments={riskDistribution} />
+                    </div>
+                  </SummaryCard>
+                </section>
+
+                <section className="insight-card">
+                  <div className="insight-copy">
+                    <Brain size={34} />
+                    <div>
+                      <h2>Portfolio Insight</h2>
+                      <p>{portfolioInsight}</p>
+                    </div>
+                  </div>
+
+                  <div className="insight-visual">
+                    <Sparkline
+                      data={[20, 28, 24, 31, 33, 29, 36, 43, 38, 50, 62, 58, 54, 59, 66, 61, 57, 69, 72, 63, 60, 73]}
+                      tone="purple"
+                    />
+                  </div>
+
+                  <button className="primary-button">
+                    View Details <ChevronRight size={18} />
+                  </button>
+                </section>
+              </>
+            ) : (
+              <section className="insight-card">
+                <div className="insight-copy">
+                  <Brain size={34} />
+                  <div>
+                    <h2>Watchlist Intelligence</h2>
+                    <p>
+                      Monitor stocks before buying. SellSmart highlights panic-risk signals, sentiment pressure,
+                      and short-term downside risk.
+                    </p>
+                  </div>
+                </div>
+
+                <button className="primary-button" onClick={() => setIsWatchModalOpen(true)}>
+                  Add Ticker <Plus size={18} />
+                </button>
+              </section>
+            )}
+
+            <div className="content-grid">
+              <section className="positions-panel">
+                <div className="panel-header">
+                  <h2>{activeView === "portfolio" ? "Your Positions" : "Your Watchlist"}</h2>
+                  <div className="sort-area">
+                    <span>Sort by</span>
+                    <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
+                      <option value="risk">Risk (High to Low)</option>
+                      {activeView === "portfolio" && <option value="value">Value</option>}
+                      {activeView === "portfolio" && <option value="pnl">PNL</option>}
+                    </select>
+                    <button className="icon-button active">
+                      <Grid2X2 size={18} />
+                    </button>
+                    <button className="icon-button">
+                      <List size={18} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="table-head">
+                  <span>{activeView === "portfolio" ? "Position" : "Ticker"}</span>
+                  <span>{activeView === "portfolio" ? "Value / PNL" : "Price"}</span>
+                  <span>Risk Score</span>
+                  <span>Action</span>
+                </div>
+
+                <div className="position-list">
+                  {activeView === "portfolio"
+                    ? sortedPositions.map((position) => (
+                        <PositionRow
+                          key={position.ticker}
+                          position={position}
+                          isExpanded={expandedTicker === position.ticker}
+                          onToggle={() =>
+                            setExpandedTicker(expandedTicker === position.ticker ? null : position.ticker)
+                          }
+                        />
+                      ))
+                    : sortedWatchlist.map((item) => (
+                        <WatchlistRow
+                          key={item.ticker}
+                          item={item}
+                          isExpanded={expandedTicker === item.ticker}
+                          onToggle={() =>
+                            setExpandedTicker(expandedTicker === item.ticker ? null : item.ticker)
+                          }
+                        />
+                      ))}
+                </div>
+              </section>
+
+              <aside className="right-rail">
+                <section className="side-card">
+                  <h3>Risk Distribution</h3>
+                  <div className="distribution-layout">
+                    <Donut segments={riskDistribution} />
+                  </div>
+                </section>
+
+                <section className="side-card">
+                  <h3>Top Risk Drivers</h3>
+                  <ul className="driver-list">
+                    {topDrivers.length > 0 ? (
+                      topDrivers.map((driver) => (
+                        <li key={`${driver.ticker}-${driver.feature}`}>
+                          <SlidersHorizontal size={17} />
+                          {driver.ticker}: {driver.label}
+                          <strong className={driver.impact}>{driver.impact}</strong>
+                        </li>
+                      ))
+                    ) : (
+                      <li>
+                        <LayoutDashboard size={17} />
+                        Loading AI drivers
+                        <strong className="moderate">AI</strong>
+                      </li>
+                    )}
+                  </ul>
+                </section>
+
+                <section className="side-card">
+                  <h3>Actions Summary</h3>
+                  <button className="primary-button full">
+                    View Full Report <ChevronRight size={18} />
+                  </button>
+                </section>
+              </aside>
+            </div>
+          </>
+        )}
 
         <footer className="disclaimer">
           <CircleHelp size={18} />

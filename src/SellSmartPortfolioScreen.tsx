@@ -19,6 +19,8 @@ import {
   TrendingDown,
   WalletCards,
 } from "lucide-react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 import "./SellSmartPortfolioScreen.css";
 
@@ -122,6 +124,45 @@ const mapAction = (action?: string): ActionType => {
   if (value.includes("hold")) return "Hold";
 
   return "Watch";
+};
+
+const exportReportPdf = async () => {
+  const reportElement = document.getElementById("sellsmart-report");
+
+  if (!reportElement) {
+    alert("Report section not found.");
+    return;
+  }
+
+  const canvas = await html2canvas(reportElement, {
+    scale: 2,
+    backgroundColor: "#050a14",
+    useCORS: true,
+  });
+
+  const imageData = canvas.toDataURL("image/png");
+
+  const pdf = new jsPDF("p", "mm", "a4");
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+
+  const imageWidth = pageWidth;
+  const imageHeight = (canvas.height * imageWidth) / canvas.width;
+
+  let heightLeft = imageHeight;
+  let position = 0;
+
+  pdf.addImage(imageData, "PNG", 0, position, imageWidth, imageHeight);
+  heightLeft -= pageHeight;
+
+  while (heightLeft > 0) {
+    position = heightLeft - imageHeight;
+    pdf.addPage();
+    pdf.addImage(imageData, "PNG", 0, position, imageWidth, imageHeight);
+    heightLeft -= pageHeight;
+  }
+
+  pdf.save("sellsmart-risk-report.pdf");
 };
 
 const getCompanyName = (ticker: string) => {
@@ -1058,7 +1099,7 @@ export default function SellSmartPortfolioScreen() {
             </div>
           </section>
         ) : activeView === "reports" ? (
-          <section className="reports-page">
+          <section id="sellsmart-report" className="reports-page">
             <div className="panel-header no-print">
               <div>
                 <h2>Weekly AI Risk Report</h2>
@@ -1067,8 +1108,8 @@ export default function SellSmartPortfolioScreen() {
                 </p>
               </div>
 
-              <button className="secondary-button" onClick={() => window.print()}>
-                <FileText size={17} />
+              <button className="secondary-button" onClick={exportReportPdf}>
+                <FileText size={16} />
                 Export PDF
               </button>
             </div>

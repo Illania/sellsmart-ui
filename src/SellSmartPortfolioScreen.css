@@ -1723,16 +1723,6 @@ button {
   margin-bottom: 36px;
 }
 
-
-.insights-hero-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  max-width: 900px;
-  margin-top: 20px;
-  margin-bottom: 36px;
-}
-
 .reports-page {
   display: flex;
   flex-direction: column;
@@ -1925,4 +1915,13 @@ button {
   .report-preview {
     page-break-inside: avoid;
   }
+}
+
+.insights-kpi-grid {
+  width: 100%;
+  margin: 28px 0 32px;
+}
+
+.insights-kpi-grid .report-card {
+  min-height: 130px;
 }

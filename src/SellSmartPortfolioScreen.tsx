@@ -1048,20 +1048,25 @@ export default function SellSmartPortfolioScreen() {
                 </div>
               </div>
 
-              <div className="insights-hero-stats">
-                <div>
-                  <span>Portfolio risk</span>
+              <section className="reports-grid insights-kpi-grid">
+                <div className="report-card">
+                  <span>Portfolio Risk</span>
                   <strong>{overallRisk}/100</strong>
+                  <p>{overallRiskLevel === "high" ? "High risk" : overallRiskLevel === "moderate" ? "Moderate risk" : "Low risk"}</p>
                 </div>
-                <div>
-                  <span>High-risk positions</span>
+
+                <div className="report-card">
+                  <span>High-Risk Positions</span>
                   <strong>{highRiskPositions.length}</strong>
+                  <p>Positions with elevated downside risk</p>
                 </div>
-                <div>
-                  <span>Reduce signals</span>
+
+                <div className="report-card">
+                  <span>Reduce Signals</span>
                   <strong>{reduceSignals.length}</strong>
+                  <p>Positions requiring review</p>
                 </div>
-              </div>
+              </section>
             </section>
 
             <div className="insights-grid">

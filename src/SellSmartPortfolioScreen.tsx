@@ -947,10 +947,6 @@ export default function SellSmartPortfolioScreen() {
                 <Plus size={18} />
                 Add Ticker
               </button>
-            ) : activeView === "settings" ? (
-              <button className="secondary-button">
-                Settings
-              </button>
             ) : activeView === "alerts" ? (
               <button className="secondary-button" onClick={markAllAlertsAsRead}>
                 Mark All Read

@@ -697,7 +697,7 @@ export default function SellSmartPortfolioScreen() {
     saveReadAlerts(alerts.map((alert) => alert.id));
   };
 
-  const reportGeneratedAt = new Date();
+  const reportGeneratedAt = new Date().toLocaleDateString();
 
   const pageTitle =
     activeView === "dashboard"
@@ -1063,7 +1063,7 @@ export default function SellSmartPortfolioScreen() {
               <div>
                 <h2>Weekly AI Risk Report</h2>
                 <p className="muted-text">
-                  Generated {new Date().toLocaleDateString()} · Based on current SellSmart AI signals.
+                  Generated {reportGeneratedAt} · Based on current SellSmart AI signals.
                 </p>
               </div>
 

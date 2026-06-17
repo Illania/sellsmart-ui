@@ -1594,7 +1594,13 @@ export default function SellSmartPortfolioScreen() {
                     />
                   </div>
 
-                  <button className="primary-button">
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={() => {
+                      setActiveView("insights");
+                    }}
+                  >
                     View Details <ChevronRight size={18} />
                   </button>
                 </section>

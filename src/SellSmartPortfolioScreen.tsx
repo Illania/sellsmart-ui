@@ -26,7 +26,7 @@ import "./SellSmartPortfolioScreen.css";
 
 type RiskLevel = "high" | "moderate" | "low";
 type ActionType = "Reduce" | "Watch" | "Hold";
-type ViewType = "dashboard" | "portfolio" | "watchlist" | "alerts" | "insights" | "reports" | "settings";
+type ViewType = "dashboard" | "portfolio" | "watchlist" | "alerts" | "insights" | "reports" | "settings" | "help";
 type AlertSeverity = "high" | "medium" | "low";
 
 type PortfolioAlert = {
@@ -868,7 +868,9 @@ export default function SellSmartPortfolioScreen() {
               ? "Insights"
               : activeView === "reports"
                 ? "Reports"
-                : "Settings";
+                : activeView === "help"
+                  ? "Help Center"
+                  : "Settings";
 
   const pageSubtitle =
     activeView === "dashboard"
@@ -883,7 +885,9 @@ export default function SellSmartPortfolioScreen() {
               ? "AI-generated explanations behind portfolio risk"
               : activeView === "reports"
                 ? "Portfolio risk reports and AI-generated summaries"
-                : "Customize SellSmart risk intelligence";
+                : activeView === "help"
+                  ? "Documentation, FAQs and platform support"
+                  : "Customize SellSmart risk intelligence";
 
   return (
     <div className="app-shell">
@@ -940,7 +944,10 @@ export default function SellSmartPortfolioScreen() {
         </div>
 
         <div className="sidebar-footer">
-          <button className="nav-item">
+          <button
+            className={`nav-item ${activeView === "help" ? "active" : ""}`}
+            onClick={() => setActiveView("help")}
+          >
             <CircleHelp size={18} />
             Help Center
           </button>
@@ -1327,6 +1334,55 @@ export default function SellSmartPortfolioScreen() {
                 <section className="report-disclaimer">
                   SellSmart provides AI-powered risk analysis and insights only. Not financial advice.
                 </section>
+              </article>
+            </div>
+          </section>
+        ) : activeView === "help" ? (
+          <section className="help-page">
+            <div className="panel-header">
+              <div>
+                <h2>Help Center</h2>
+                <p className="muted-text">
+                  Learn how SellSmart works and understand AI risk signals.
+                </p>
+              </div>
+            </div>
+
+            <div className="settings-grid">
+              <article className="settings-card">
+                <h2>What is SellSmart?</h2>
+                <p>
+                  SellSmart is an AI-powered risk intelligence platform designed to help
+                  investors identify downside risk and understand when positions may
+                  require attention.
+                </p>
+              </article>
+
+              <article className="settings-card">
+                <h2>Risk Score</h2>
+                <p>
+                  Risk scores range from 0–100. Higher scores indicate elevated
+                  short-term downside risk.
+                </p>
+              </article>
+
+              <article className="settings-card">
+                <h2>Action Labels</h2>
+                <ul>
+                  <li><strong>Hold</strong> — risk currently controlled</li>
+                  <li><strong>Watch</strong> — monitor closely</li>
+                  <li><strong>Reduce</strong> — elevated downside risk detected</li>
+                </ul>
+              </article>
+
+              <article className="settings-card">
+                <h2>Support</h2>
+                <p>
+                  Questions, feedback or pilot access requests:
+                </p>
+                <p>
+                  <strong>support@sellsmart.asia</strong>
+                </p>
               </article>
             </div>
           </section>

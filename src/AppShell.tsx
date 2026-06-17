@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import "./common.css";
+import "./AppShell.css";
 
 import { AddPositionModal, AddWatchItemModal } from "./components/AddModals";
 import { useAddPositionModal, useAddWatchItemModal } from "./hooks/useAddAssetModals";

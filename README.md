@@ -155,8 +155,7 @@ src/
 │   └── usePageHeader.ts
 │
 ├── layout/
-│   ├── AppShell.tsx
-│   └── AppShell.css
+│   └── SellSmartLayout.tsx
 │
 ├── pages/
 │   ├── DashboardPage.tsx
@@ -178,7 +177,9 @@ src/
 │
 ├── config.ts
 ├── types.ts
-└── main.tsx
+├── main.tsx
+├── AppShell.tsx
+└── AppShell.css
 ```
 
 ---

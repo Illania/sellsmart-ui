@@ -76,31 +76,53 @@ Unlike traditional investment tools focused on finding buying opportunities, Sel
 
 ---
 
-## 🖼 Screenshots
+# 🖼 Screenshots
 
-### Dashboard
+## Dashboard
 
-AI-generated portfolio overview and risk monitoring.
+Your AI-powered risk command center with portfolio risk overview, alerts, and watchlist opportunities.
 
-![Dashboard Screenshot](docs/dashboard.png)
+![Dashboard](docs/screenshots/dashboard.png)
 
-### Portfolio
+---
 
-Position-level risk intelligence and analysis.
+## Portfolio
 
-![Portfolio Screenshot](docs/portfolio.png)
+Portfolio valuation, risk scoring, AI-generated insights, and position-level analysis.
 
-### Insights
+![Portfolio](docs/screenshots/portfolio.png)
 
-Explainable AI risk drivers and recommendations.
+---
 
-![Insights Screenshot](docs/insights.png)
+## Alerts
 
-### Reports
+Real-time risk alerts generated from portfolio signals, news sentiment, and AI risk analysis.
 
-Exportable AI-generated portfolio reports.
+![Alerts](docs/screenshots/alerts.png)
 
-![Reports Screenshot](docs/reports.png)
+---
+
+## Insights
+
+Explainable AI intelligence showing portfolio concentration risks, news-driven signals, and risk drivers.
+
+![Insights](docs/screenshots/insights.png)
+
+---
+
+## Reports
+
+AI-generated portfolio risk reports with executive summaries and exportable PDF support.
+
+![Reports](docs/screenshots/reports.png)
+
+---
+
+## Settings
+
+Customize risk thresholds, alert preferences, and application behavior.
+
+![Settings](docs/screenshots/settings.png)
 
 ---
 

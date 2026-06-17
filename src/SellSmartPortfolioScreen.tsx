@@ -1642,16 +1642,24 @@ export default function SellSmartPortfolioScreen() {
                         />
                       )
                     )
-                    : sortedWatchlist.map((item) => (
-                      <WatchlistRow
-                        key={item.ticker}
-                        item={item}
-                        isExpanded={expandedTicker === item.ticker}
-                        onToggle={() =>
-                          setExpandedTicker(expandedTicker === item.ticker ? null : item.ticker)
-                        }
-                      />
-                    ))}
+                    : sortedWatchlist.map((item) =>
+                      portfolioViewMode === "grid" ? (
+                        <WatchlistCard
+                          key={item.ticker}
+                          item={item}
+                          onOpen={() => setExpandedTicker(item.ticker)}
+                        />
+                      ) : (
+                        <WatchlistRow
+                          key={item.ticker}
+                          item={item}
+                          isExpanded={expandedTicker === item.ticker}
+                          onToggle={() =>
+                            setExpandedTicker(expandedTicker === item.ticker ? null : item.ticker)
+                          }
+                        />
+                      )
+                    )}
                 </div>
               </section>
 
@@ -1903,6 +1911,55 @@ function PositionRow({
       </button>
 
       {isExpanded && <AssetDetails asset={position} />}
+    </article>
+  );
+}
+
+function WatchlistCard({
+  item,
+  onOpen,
+}: {
+  item: WatchItem;
+  onOpen: () => void;
+}) {
+  const actionClass = item.action.toLowerCase();
+
+  return (
+    <article className="position-card">
+      <div className="position-card-top">
+        <div className={`position-logo ${item.logoClass}`}>{item.logo}</div>
+
+        <button className="icon-button row-button" onClick={onOpen}>
+          <ChevronRight size={20} />
+        </button>
+      </div>
+
+      <div className="position-card-title">
+        <h3>{item.ticker}</h3>
+        <p>{item.company}</p>
+        <span>Watchlist</span>
+      </div>
+
+      <div className="position-card-value">
+        <strong>{item.currentPrice ? money.format(item.currentPrice) : "Loading..."}</strong>
+        <span className="muted-text">Current price</span>
+      </div>
+
+      <Sparkline data={item.chart} tone="purple" />
+
+      <div className="position-card-risk">
+        <RiskRing score={item.riskScore} level={item.riskLevel} />
+
+        <div>
+          <strong className={`action ${actionClass}`}>
+            {item.action}
+            {item.action === "Reduce" && <TrendingDown size={16} />}
+            {item.action === "Watch" && <span>—</span>}
+          </strong>
+
+          <p className="position-summary">{item.explanation}</p>
+        </div>
+      </div>
     </article>
   );
 }

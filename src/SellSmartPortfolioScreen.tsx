@@ -388,6 +388,8 @@ export default function SellSmartPortfolioScreen() {
   const [isWatchModalOpen, setIsWatchModalOpen] = useState(false);
   const [newWatchTicker, setNewWatchTicker] = useState("");
 
+  const [portfolioViewMode, setPortfolioViewMode] = useState<"grid" | "list">("list");
+
   const savePositions = (nextPositions: Position[]) => {
     setPositions(nextPositions);
     localStorage.setItem(POSITIONS_STORAGE_KEY, JSON.stringify(nextPositions));
@@ -1593,10 +1595,21 @@ export default function SellSmartPortfolioScreen() {
                       {activeView === "portfolio" && <option value="value">Value</option>}
                       {activeView === "portfolio" && <option value="pnl">PNL</option>}
                     </select>
-                    <button className="icon-button active">
+                    <button
+                      type="button"
+                      className={`icon-button ${portfolioViewMode === "grid" ? "active" : ""}`}
+                      onClick={() => setPortfolioViewMode("grid")}
+                      aria-label="Grid view"
+                    >
                       <Grid2X2 size={18} />
                     </button>
-                    <button className="icon-button">
+
+                    <button
+                      type="button"
+                      className={`icon-button ${portfolioViewMode === "list" ? "active" : ""}`}
+                      onClick={() => setPortfolioViewMode("list")}
+                      aria-label="List view"
+                    >
                       <List size={18} />
                     </button>
                   </div>
@@ -1609,18 +1622,26 @@ export default function SellSmartPortfolioScreen() {
                   <span>Action</span>
                 </div>
 
-                <div className="position-list">
+                <div className={portfolioViewMode === "grid" ? "position-grid" : "position-list"}>
                   {activeView === "portfolio"
-                    ? sortedPositions.map((position) => (
-                      <PositionRow
-                        key={position.ticker}
-                        position={position}
-                        isExpanded={expandedTicker === position.ticker}
-                        onToggle={() =>
-                          setExpandedTicker(expandedTicker === position.ticker ? null : position.ticker)
-                        }
-                      />
-                    ))
+                    ? sortedPositions.map((position) =>
+                      portfolioViewMode === "grid" ? (
+                        <PositionCard
+                          key={position.ticker}
+                          position={position}
+                          onOpen={() => setExpandedTicker(position.ticker)}
+                        />
+                      ) : (
+                        <PositionRow
+                          key={position.ticker}
+                          position={position}
+                          isExpanded={expandedTicker === position.ticker}
+                          onToggle={() =>
+                            setExpandedTicker(expandedTicker === position.ticker ? null : position.ticker)
+                          }
+                        />
+                      )
+                    )
                     : sortedWatchlist.map((item) => (
                       <WatchlistRow
                         key={item.ticker}
@@ -1777,6 +1798,62 @@ export default function SellSmartPortfolioScreen() {
         </div>
       )}
     </div>
+  );
+}
+
+function PositionCard({
+  position,
+  onOpen,
+}: {
+  position: Position;
+  onOpen: () => void;
+}) {
+  const isPositive = position.pnl >= 0;
+  const actionClass = position.action.toLowerCase();
+
+  return (
+    <article className="position-card">
+      <div className="position-card-top">
+        <div className={`position-logo ${position.logoClass}`}>{position.logo}</div>
+
+        <button className="icon-button row-button" onClick={onOpen}>
+          <ChevronRight size={20} />
+        </button>
+      </div>
+
+      <div className="position-card-title">
+        <h3>{position.ticker}</h3>
+        <p>{position.company}</p>
+        <span>
+          {position.shares} shares
+          {position.currentPrice && <> · {money.format(position.currentPrice)}</>}
+        </span>
+      </div>
+
+      <div className="position-card-value">
+        <strong>{money.format(position.value)}</strong>
+        <span className={isPositive ? "positive" : "negative"}>
+          {isPositive ? "+" : ""}
+          {money.format(position.pnl)} ({isPositive ? "+" : ""}
+          {position.pnlPct.toFixed(2)}%)
+        </span>
+      </div>
+
+      <Sparkline data={position.chart} tone={isPositive ? "positive" : "negative"} />
+
+      <div className="position-card-risk">
+        <RiskRing score={position.riskScore} level={position.riskLevel} />
+
+        <div>
+          <strong className={`action ${actionClass}`}>
+            {position.action}
+            {position.action === "Reduce" && <TrendingDown size={16} />}
+          </strong>
+
+          <p className="position-summary">{position.explanation}</p>
+        </div>
+      </div>
+    </article>
   );
 }
 

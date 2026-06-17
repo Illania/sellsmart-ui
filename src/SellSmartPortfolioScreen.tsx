@@ -1925,41 +1925,48 @@ function WatchlistCard({
   const actionClass = item.action.toLowerCase();
 
   return (
-    <article className="position-card">
-      <div className="position-card-top">
+    <article className="watchlist-card">
+      <div className="watchlist-card-header">
         <div className={`position-logo ${item.logoClass}`}>{item.logo}</div>
 
-        <button className="icon-button row-button" onClick={onOpen}>
-          <ChevronRight size={20} />
-        </button>
+        <div className="watchlist-card-title">
+          <h3>{item.ticker}</h3>
+          <p>{item.company}</p>
+          <span>Watchlist</span>
+        </div>
+
+        <RiskRing score={item.riskScore} level={item.riskLevel} />
       </div>
 
-      <div className="position-card-title">
-        <h3>{item.ticker}</h3>
-        <p>{item.company}</p>
-        <span>Watchlist</span>
-      </div>
-
-      <div className="position-card-value">
+      <div className="watchlist-card-price">
         <strong>{item.currentPrice ? money.format(item.currentPrice) : "Loading..."}</strong>
-        <span className="muted-text">Current price</span>
+        <span>Current price</span>
       </div>
 
       <Sparkline data={item.chart} tone="purple" />
 
-      <div className="position-card-risk">
-        <RiskRing score={item.riskScore} level={item.riskLevel} />
+      <div className="watchlist-card-action">
+        <strong className={`action ${actionClass}`}>
+          {item.action}
+          {item.action === "Reduce" && <TrendingDown size={16} />}
+          {item.action === "Watch" && <span>—</span>}
+        </strong>
 
-        <div>
-          <strong className={`action ${actionClass}`}>
-            {item.action}
-            {item.action === "Reduce" && <TrendingDown size={16} />}
-            {item.action === "Watch" && <span>—</span>}
-          </strong>
+        <p>{item.explanation}</p>
 
-          <p className="position-summary">{item.explanation}</p>
-        </div>
+        {item.marketRegime && (
+          <div className="position-meta">
+            <span>{item.marketRegime}</span>
+            {item.probabilityOfDrop !== undefined && (
+              <span>{(item.probabilityOfDrop * 100).toFixed(1)}% drop probability</span>
+            )}
+          </div>
+        )}
       </div>
+
+      <button className="mini-link-button" onClick={onOpen}>
+        View details <ChevronRight size={16} />
+      </button>
     </article>
   );
 }

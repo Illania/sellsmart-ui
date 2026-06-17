@@ -1615,12 +1615,14 @@ export default function SellSmartPortfolioScreen() {
                   </div>
                 </div>
 
-                <div className="table-head">
-                  <span>{activeView === "portfolio" ? "Position" : "Ticker"}</span>
-                  <span>{activeView === "portfolio" ? "Value / PNL" : "Price"}</span>
-                  <span>Risk Score</span>
-                  <span>Action</span>
-                </div>
+                {portfolioViewMode === "list" && (
+                  <div className="table-head">
+                    <span>{activeView === "portfolio" ? "Position" : "Ticker"}</span>
+                    <span>{activeView === "portfolio" ? "Value / PNL" : "Price"}</span>
+                    <span>Risk Score</span>
+                    <span>Action</span>
+                  </div>
+                )}
 
                 <div className={portfolioViewMode === "grid" ? "position-grid" : "position-list"}>
                   {activeView === "portfolio"

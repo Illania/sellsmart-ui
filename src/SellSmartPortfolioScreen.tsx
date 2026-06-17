@@ -1948,7 +1948,7 @@ function HelpCenterPage({
             For feedback, bugs, or pilot access questions, contact the SellSmart
             team directly.
           </p>
-          <a href="mailto:support@sellsmart.asia">support@sellsmart.asia</a>
+          <a href="mailto:sellsmart.asia@gmail.com">sellsmart.asia@gmail.com</a>
         </article>
       </div>
 

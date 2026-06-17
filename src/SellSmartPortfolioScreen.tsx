@@ -1750,7 +1750,11 @@ export default function SellSmartPortfolioScreen() {
 
                 <section className="side-card">
                   <h3>Actions Summary</h3>
-                  <button className="primary-button full">
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={() => setActiveView("reports")}
+                  >
                     View Full Report <ChevronRight size={18} />
                   </button>
                 </section>

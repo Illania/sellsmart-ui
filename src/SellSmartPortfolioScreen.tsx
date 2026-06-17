@@ -502,12 +502,6 @@ export default function SellSmartPortfolioScreen() {
       });
     }
 
-    useEffect(() => {
-      if (activeView === "watchlist" && (sortBy === "value" || sortBy === "pnl")) {
-        setSortBy("risk");
-      }
-    }, [activeView, sortBy]);
-
     setPositions(basePositions);
     setWatchlist(baseWatchlist);
 
@@ -517,6 +511,12 @@ export default function SellSmartPortfolioScreen() {
     refreshPositions(basePositions);
     refreshWatchlist(baseWatchlist);
   }, []);
+
+  useEffect(() => {
+    if (activeView === "watchlist" && (sortBy === "value" || sortBy === "pnl")) {
+      setSortBy("risk");
+    }
+  }, [activeView, sortBy]);
 
   const importDemoPortfolio = () => {
     savePositions(demoPositions);

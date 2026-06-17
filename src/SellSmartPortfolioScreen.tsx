@@ -394,6 +394,8 @@ export default function SellSmartPortfolioScreen() {
 
   const [portfolioViewMode, setPortfolioViewMode] = useState<"grid" | "list">("list");
 
+  const [helpSearch, setHelpSearch] = useState("");
+
   const savePositions = (nextPositions: Position[]) => {
     setPositions(nextPositions);
     localStorage.setItem(POSITIONS_STORAGE_KEY, JSON.stringify(nextPositions));
@@ -1342,7 +1344,10 @@ export default function SellSmartPortfolioScreen() {
             </div>
           </section>
         ) : activeView === "help" ? (
-          <HelpCenterPage />
+          <HelpCenterPage
+            helpSearch={helpSearch}
+            setHelpSearch={setHelpSearch}
+          />
         ) : activeView === "settings" ? (
           <section className="settings-page">
             <section className="settings-grid">
@@ -1854,8 +1859,14 @@ export default function SellSmartPortfolioScreen() {
   );
 }
 
-function HelpCenterPage() {
-  const faqs = [
+function HelpCenterPage({
+  helpSearch,
+  setHelpSearch,
+}: {
+  helpSearch: string;
+  setHelpSearch: React.Dispatch<React.SetStateAction<string>>;
+}) {
+  const helpFaqs = [
     {
       question: "What is SellSmart?",
       answer:
@@ -1883,6 +1894,12 @@ function HelpCenterPage() {
     },
   ];
 
+  const filteredHelpFaqs = helpFaqs.filter((faq) =>
+    `${faq.question} ${faq.answer}`
+      .toLowerCase()
+      .includes(helpSearch.toLowerCase())
+  );
+
   return (
     <section className="help-page">
       <div className="help-hero">
@@ -1897,7 +1914,11 @@ function HelpCenterPage() {
 
         <div className="help-search">
           <Search size={18} />
-          <input placeholder="Search help topics..." />
+          <input
+            value={helpSearch}
+            onChange={(event) => setHelpSearch(event.target.value)}
+            placeholder="Search help topics..."
+          />
         </div>
       </div>
 
@@ -1938,7 +1959,7 @@ function HelpCenterPage() {
         </div>
 
         <div className="faq-list">
-          {faqs.map((faq) => (
+          {filteredHelpFaqs.map((faq) => (
             <details key={faq.question} className="faq-item">
               <summary>{faq.question}</summary>
               <p>{faq.answer}</p>

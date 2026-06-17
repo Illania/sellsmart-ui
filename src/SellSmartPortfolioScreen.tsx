@@ -502,6 +502,12 @@ export default function SellSmartPortfolioScreen() {
       });
     }
 
+    useEffect(() => {
+      if (activeView === "watchlist" && (sortBy === "value" || sortBy === "pnl")) {
+        setSortBy("risk");
+      }
+    }, [activeView, sortBy]);
+
     setPositions(basePositions);
     setWatchlist(baseWatchlist);
 
@@ -584,13 +590,23 @@ export default function SellSmartPortfolioScreen() {
     return [...positions].sort((a, b) => {
       if (sortBy === "risk") return b.riskScore - a.riskScore;
       if (sortBy === "value") return b.value - a.value;
-      return b.pnlPct - a.pnlPct;
+      if (sortBy === "pnl") return b.pnlPct - a.pnlPct;
+      if (sortBy === "price") return (b.currentPrice ?? 0) - (a.currentPrice ?? 0);
+      if (sortBy === "ticker") return a.ticker.localeCompare(b.ticker);
+
+      return b.riskScore - a.riskScore;
     });
   }, [positions, sortBy]);
 
   const sortedWatchlist = useMemo(() => {
-    return [...watchlist].sort((a, b) => b.riskScore - a.riskScore);
-  }, [watchlist]);
+    return [...watchlist].sort((a, b) => {
+      if (sortBy === "risk") return b.riskScore - a.riskScore;
+      if (sortBy === "price") return (b.currentPrice ?? 0) - (a.currentPrice ?? 0);
+      if (sortBy === "ticker") return a.ticker.localeCompare(b.ticker);
+
+      return b.riskScore - a.riskScore;
+    });
+  }, [watchlist, sortBy]);
 
   const totalValue = positions.reduce((sum, item) => sum + item.value, 0);
   const totalPnl = positions.reduce((sum, item) => sum + item.pnl, 0);
@@ -1592,8 +1608,22 @@ export default function SellSmartPortfolioScreen() {
                     <span>Sort by</span>
                     <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
                       <option value="risk">Risk (High to Low)</option>
-                      {activeView === "portfolio" && <option value="value">Value</option>}
-                      {activeView === "portfolio" && <option value="pnl">PNL</option>}
+
+                      {activeView === "portfolio" && (
+                        <>
+                          <option value="value">Value</option>
+                          <option value="pnl">PNL</option>
+                          <option value="price">Price</option>
+                          <option value="ticker">Ticker A-Z</option>
+                        </>
+                      )}
+
+                      {activeView === "watchlist" && (
+                        <>
+                          <option value="price">Price</option>
+                          <option value="ticker">Ticker A-Z</option>
+                        </>
+                      )}
                     </select>
                     <button
                       type="button"

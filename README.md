@@ -94,6 +94,14 @@ Portfolio valuation, risk scoring, AI-generated insights, and position-level ana
 
 ---
 
+## Watchlist
+
+Track stocks before adding them to your portfolio. SellSmart monitors downside risk, sentiment pressure, and early warning signals even before a position is opened.
+
+![Watchlist](docs/screenshots/watchlist.png)
+
+---
+
 ## Alerts
 
 Real-time risk alerts generated from portfolio signals, news sentiment, and AI risk analysis.

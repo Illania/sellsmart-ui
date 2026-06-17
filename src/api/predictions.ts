@@ -2,9 +2,19 @@ import { API_BASE_URL } from "../config";
 import type { ApiPrediction, Position, WatchItem } from "../types";
 import { applyPredictionToAsset } from "../utils/risk";
 
-export const fetchPrediction = async (ticker: string): Promise<ApiPrediction> => {
+export const fetchPrediction = async (
+  ticker: string,
+  accessToken?: string
+): Promise<ApiPrediction> => {
   const response = await fetch(
-    `${API_BASE_URL}/predict?ticker=${encodeURIComponent(ticker)}&live=false`
+    `${API_BASE_URL}/predict?ticker=${encodeURIComponent(ticker)}&live=false`,
+    {
+      headers: accessToken
+        ? {
+            Authorization: `Bearer ${accessToken}`,
+          }
+        : undefined,
+    }
   );
 
   if (!response.ok) {
@@ -14,8 +24,11 @@ export const fetchPrediction = async (ticker: string): Promise<ApiPrediction> =>
   return response.json();
 };
 
-export const enrichPositionWithApi = async (position: Position): Promise<Position> => {
-  const data = await fetchPrediction(position.ticker);
+export const enrichPositionWithApi = async (
+  position: Position,
+  accessToken?: string
+): Promise<Position> => {
+  const data = await fetchPrediction(position.ticker, accessToken);
   const currentPrice = data.current_price ?? position.currentPrice ?? position.avgBuyPrice;
   const value = position.shares * currentPrice;
   const costBasis = position.shares * position.avgBuyPrice;
@@ -31,7 +44,10 @@ export const enrichPositionWithApi = async (position: Position): Promise<Positio
   };
 };
 
-export const enrichWatchItemWithApi = async (item: WatchItem): Promise<WatchItem> => {
-  const data = await fetchPrediction(item.ticker);
+export const enrichWatchItemWithApi = async (
+  item: WatchItem,
+  accessToken?: string
+): Promise<WatchItem> => {
+  const data = await fetchPrediction(item.ticker, accessToken);
   return applyPredictionToAsset(item, data);
 };

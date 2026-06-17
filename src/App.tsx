@@ -1,5 +1,5 @@
-import SellSmartPortfolioScreen from "./SellSmartPortfolioScreen";
+import MainScreen from "./AppShell";
 
 export default function App() {
-  return <SellSmartPortfolioScreen />;
+  return <MainScreen />;
 }

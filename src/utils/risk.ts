@@ -1,0 +1,123 @@
+import type { ActionType, ApiPrediction, Position, RiskAsset, RiskLevel, WatchItem } from "../types";
+
+export const mapRiskLevel = (category?: string, score?: number): RiskLevel => {
+  if (category === "high" || category === "moderate" || category === "low") return category;
+
+  const value = score ?? 50;
+  if (value >= 70) return "high";
+  if (value >= 40) return "moderate";
+  return "low";
+};
+
+export const mapAction = (action?: string): ActionType => {
+  const value = action?.toLowerCase() ?? "";
+
+  if (value.includes("reduce") || value.includes("exit") || value.includes("sell")) return "Reduce";
+  if (value.includes("hold")) return "Hold";
+
+  return "Watch";
+};
+
+export const getCompanyName = (ticker: string) => {
+  const known: Record<string, string> = {
+    AAPL: "Apple Inc.", AMD: "Advanced Micro Devices, Inc.", NVDA: "NVIDIA Corporation",
+    TSLA: "Tesla, Inc.", MSFT: "Microsoft Corporation", META: "Meta Platforms, Inc.",
+    AMZN: "Amazon.com, Inc.", GOOGL: "Alphabet Inc.", JPM: "JPMorgan Chase & Co.",
+    NFLX: "Netflix, Inc.", CRM: "Salesforce, Inc.", ADBE: "Adobe Inc.",
+    INTC: "Intel Corporation", QCOM: "Qualcomm Incorporated", PYPL: "PayPal Holdings, Inc.",
+  };
+
+  return known[ticker] ?? `${ticker} Corporation`;
+};
+
+export const getLogoClass = (ticker: string) => {
+  const known: Record<string, string> = {
+    NVDA: "logo-nvda", TSLA: "logo-tsla", AAPL: "logo-aapl", MSFT: "logo-msft", AMZN: "logo-amzn",
+  };
+
+  return known[ticker] ?? "logo-jpm";
+};
+
+export const createBaseRiskAsset = (ticker: string): RiskAsset => ({
+  ticker,
+  company: getCompanyName(ticker),
+  riskScore: 50,
+  riskLevel: "moderate",
+  action: "Watch",
+  explanation: "Loading SellSmart AI prediction...",
+  logo: ticker.slice(0, 3),
+  logoClass: getLogoClass(ticker),
+  chart: [18, 24, 20, 28, 26, 31, 29, 34, 32, 38, 35, 40],
+  drivers: [],
+  supportiveSignals: [],
+});
+
+export const createBasePosition = (ticker: string, shares: number, avgBuyPrice: number): Position => ({
+  ...createBaseRiskAsset(ticker),
+  shares,
+  avgBuyPrice,
+  value: shares * avgBuyPrice,
+  pnl: 0,
+  pnlPct: 0,
+});
+
+export const createBaseWatchItem = (ticker: string): WatchItem => ({
+  ...createBaseRiskAsset(ticker),
+});
+
+export const normalizePosition = (position: Partial<Position>): Position => {
+  const ticker = (position.ticker ?? "AMD").toUpperCase();
+  const shares = Number(position.shares ?? 1);
+  const avgBuyPrice = Number(position.avgBuyPrice) ||
+    (Number(position.value) && shares > 0 ? Number(position.value) / shares : 100);
+
+  return {
+    ...createBasePosition(ticker, shares, avgBuyPrice),
+    ...position,
+    ticker,
+    company: position.company ?? getCompanyName(ticker),
+    shares,
+    avgBuyPrice,
+    value: Number(position.value ?? shares * avgBuyPrice),
+    pnl: Number(position.pnl ?? 0),
+    pnlPct: Number(position.pnlPct ?? 0),
+    riskScore: Number(position.riskScore ?? 50),
+    riskLevel: mapRiskLevel(position.riskLevel, position.riskScore),
+    action: position.action ?? "Watch",
+    drivers: position.drivers ?? [],
+    supportiveSignals: position.supportiveSignals ?? [],
+  };
+};
+
+export const normalizeWatchItem = (item: Partial<WatchItem>): WatchItem => {
+  const ticker = (item.ticker ?? "TSLA").toUpperCase();
+
+  return {
+    ...createBaseWatchItem(ticker),
+    ...item,
+    ticker,
+    company: item.company ?? getCompanyName(ticker),
+    riskScore: Number(item.riskScore ?? 50),
+    riskLevel: mapRiskLevel(item.riskLevel, item.riskScore),
+    action: item.action ?? "Watch",
+    drivers: item.drivers ?? [],
+    supportiveSignals: item.supportiveSignals ?? [],
+  };
+};
+
+export const applyPredictionToAsset = <T extends RiskAsset>(asset: T, data: ApiPrediction): T => ({
+  ...asset,
+  company: getCompanyName(asset.ticker),
+  currentPrice: data.current_price ?? asset.currentPrice,
+  riskScore: data.risk_score,
+  riskLevel: mapRiskLevel(data.category, data.risk_score),
+  action: mapAction(data.action_label ?? data.action),
+  explanation: data.summary ?? data.action_explanation ?? "SellSmart AI prediction loaded.",
+  marketRegime: data.market_regime,
+  confidence: data.confidence,
+  probabilityOfDrop: data.probability_of_drop,
+  cacheStatus: data.cache_status,
+  cacheGeneratedAt: data.cache_generated_at,
+  drivers: [...(data.drivers ?? []), ...(data.stress_signals ?? [])],
+  supportiveSignals: data.supportive_signals ?? [],
+});

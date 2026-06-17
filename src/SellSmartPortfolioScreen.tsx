@@ -1752,7 +1752,7 @@ export default function SellSmartPortfolioScreen() {
                   <h3>Actions Summary</h3>
                   <button
                     type="button"
-                    className="primary-button"
+                    className="primary-button full"
                     onClick={() => setActiveView("reports")}
                   >
                     View Full Report <ChevronRight size={18} />

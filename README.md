@@ -10,9 +10,7 @@ Unlike traditional investment tools focused on finding buying opportunities, Sel
 
 ## 🌐 Live Demo
 
-**Website:** https://sellsmart.asia
-
-**Frontend:** https://sellsmart-ui.vercel.app
+**Frontend:** https://sellsmart.asia
 
 **API:** https://sellsmart-ml-api.onrender.com
 

@@ -186,12 +186,10 @@ export function PositionRow({
 export function WatchlistCard({
   item,
   onOpen,
-  onEdit,
   onDelete,
 }: {
   item: WatchItem;
   onOpen: () => void;
-  onEdit: () => void;
   onDelete: () => void;
 }) {
   const actionClass = item.action.toLowerCase();
@@ -208,15 +206,6 @@ export function WatchlistCard({
         </div>
 
         <div className="asset-card-actions">
-          <button
-            type="button"
-            className="asset-action-button"
-            onClick={onEdit}
-            aria-label={`Edit ${item.ticker}`}
-          >
-            <Edit3 size={16} />
-          </button>
-
           <button
             type="button"
             className="asset-action-button danger"
@@ -270,13 +259,11 @@ export function WatchlistRow({
   item,
   isExpanded,
   onToggle,
-  onEdit,
   onDelete,
 }: {
   item: WatchItem;
   isExpanded: boolean;
   onToggle: () => void;
-  onEdit: () => void;
   onDelete: () => void;
 }) {
   const actionClass = item.action.toLowerCase();
@@ -303,14 +290,6 @@ export function WatchlistRow({
       <RiskAndAction asset={item} actionClass={actionClass} />
 
       <div className="asset-row-actions">
-        <button
-          type="button"
-          className="asset-action-button"
-          onClick={onEdit}
-          aria-label={`Edit ${item.ticker}`}
-        >
-          <Edit3 size={16} />
-        </button>
         <button
           type="button"
           className="asset-action-button danger"

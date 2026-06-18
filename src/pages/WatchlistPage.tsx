@@ -141,7 +141,6 @@ export function WatchlistPage({
                       expandedTicker === item.ticker ? null : item.ticker,
                     )
                   }
-                  onEdit={() => onEditWatchItem(item)}
                   onDelete={() => onDeleteWatchItem(item.ticker)}
                 />
               ) : (
@@ -154,7 +153,6 @@ export function WatchlistPage({
                       expandedTicker === item.ticker ? null : item.ticker,
                     )
                   }
-                  onEdit={() => onEditWatchItem(item)}
                   onDelete={() => onDeleteWatchItem(item.ticker)}
                 />
               ),

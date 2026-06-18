@@ -1867,32 +1867,35 @@ button {
 .position-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: 18px;
+  gap: 22px;
 }
 
 .position-card {
-  padding: 24px;
+  min-height: 500px;
+  padding: 30px;
   border-radius: 24px;
   background: linear-gradient(180deg, rgba(18, 28, 52, 0.96), rgba(7, 13, 27, 0.96));
   border: 1px solid rgba(94, 116, 191, 0.24);
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.22);
+  display: flex;
+  flex-direction: column;
 }
 
-.position-card-top,
-.position-card-risk {
+.position-card-top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 18px;
+  gap: 14px;
 }
 
 .position-card-title {
-  margin-top: 18px;
+  margin-top: 26px;
 }
 
 .position-card-title h3 {
   margin: 0;
   font-size: 28px;
+  line-height: 1.1;
 }
 
 .position-card-title p,
@@ -1901,39 +1904,59 @@ button {
 }
 
 .position-card-value {
-  margin-top: 22px;
+  margin-top: 24px;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
 .position-card-value strong {
-  font-size: 26px;
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.position-card > .sparkline {
+  width: 100%;
+  height: 58px;
+  margin-top: 24px;
 }
 
 .position-card-risk {
-  margin-top: 18px;
-  align-items: flex-start;
+  margin-top: auto;
+  padding-top: 28px;
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
 }
 
-.position-card-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
+.position-card-risk .risk-ring {
+  width: 72px;
+  height: 72px;
 }
 
-.position-card-risk {
-  margin-top: 18px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  gap: 24px;
+.position-card-risk > div:last-child {
+  min-width: 0;
+}
+
+.position-card-risk .action {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.1;
 }
 
 .position-card-risk .position-summary {
-  max-width: none;
-  margin-right: 0;
+  max-width: 100%;
+  margin: 0;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .position-card:hover .asset-card-actions,
@@ -3873,4 +3896,135 @@ button {
   object-position: center 20%;
 
   border-radius: 50%;
+}
+
+/* Final desktop watchlist risk layout */
+@media (min-width: 981px) {
+  .watchlist-card-risk {
+    margin-top: auto !important;
+
+    display: grid !important;
+    grid-template-columns: 72px minmax(0, 1fr) !important;
+    gap: 18px !important;
+
+    align-items: center !important;
+  }
+
+  .watchlist-card-risk .risk-ring {
+    width: 72px !important;
+    height: 72px !important;
+  }
+
+  .watchlist-card-risk .risk-ring svg {
+    width: 72px !important;
+    height: 72px !important;
+  }
+
+  .watchlist-card-risk > div {
+    min-width: 0 !important;
+  }
+
+  .watchlist-card-risk .action {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+
+    margin: 0 0 8px !important;
+
+    font-size: 18px !important;
+    font-weight: 900 !important;
+    line-height: 1.1 !important;
+  }
+
+  .watchlist-card-risk .position-summary {
+    margin: 0 !important;
+    max-width: 100% !important;
+
+    color: var(--text) !important;
+    font-size: 15px !important;
+    line-height: 1.35 !important;
+
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+}
+
+/* Final mobile portfolio card risk fix */
+@media (max-width: 980px) {
+  .position-card-risk {
+    grid-area: risk !important;
+    margin: 0 !important;
+
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    justify-items: center !important;
+    align-content: center !important;
+    gap: 6px !important;
+  }
+
+  .position-card-risk .risk-ring {
+    position: relative !important;
+    width: 54px !important;
+    height: 54px !important;
+    display: grid !important;
+    place-items: center !important;
+    overflow: visible !important;
+  }
+
+  .position-card-risk .risk-ring svg {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 54px !important;
+    height: 54px !important;
+    transform: rotate(-90deg) !important;
+  }
+
+  .position-card-risk .risk-ring strong {
+    position: relative !important;
+    z-index: 2 !important;
+    font-size: 18px !important;
+    line-height: 1 !important;
+  }
+
+  .position-card-risk > div {
+    display: grid !important;
+    justify-items: center !important;
+  }
+
+  .position-card-risk .action {
+    margin: 0 !important;
+    font-size: 13px !important;
+    line-height: 1.1 !important;
+    text-align: center !important;
+  }
+
+  .position-card-risk .position-summary {
+    display: none !important;
+  }
+}
+
+/* Final mobile sticky topbar fix */
+@media (max-width: 980px) {
+  .topbar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 5000 !important;
+
+    margin: 0 !important;
+    padding: 14px 16px 12px !important;
+
+    background: rgba(5, 10, 20, 0.94) !important;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  }
+
+  .main-content {
+    padding-top: 92px !important;
+  }
 }

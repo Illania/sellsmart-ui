@@ -1,48 +1,57 @@
 import { useEffect, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
+
 import { enrichPositionWithApi, enrichWatchItemWithApi } from "../api/predictions";
 import {
-  ALERTS_READ_STORAGE_KEY,
-  defaultSettings,
-  POSITIONS_STORAGE_KEY,
-  SETTINGS_STORAGE_KEY,
-  WATCHLIST_STORAGE_KEY,
-} from "../config";
+  ensureUserSettings,
+  loadPositions,
+  loadReadAlertIds,
+  loadSettings,
+  loadWatchlist,
+  replacePositions,
+  replaceReadAlertIds,
+  replaceWatchlist,
+  saveSettings,
+} from "../api/sellsmartData";
+import { defaultSettings } from "../config";
 import { demoPositions, demoWatchlist } from "../data/demoData";
-import type { AppSettings, Position, WatchItem } from "../types";
-import { createBasePosition, createBaseWatchItem, normalizePosition, normalizeWatchItem } from "../utils/risk";
+import type { AppSettings, Position, ViewType, WatchItem } from "../types";
+import { createBasePosition, createBaseWatchItem } from "../utils/risk";
 
-export function useSellSmartData() {
+export function useSellSmartData(
+  session: Session | null,
+  setActiveView: (view: ViewType) => void
+) {
   const [positions, setPositions] = useState<Position[]>([]);
   const [watchlist, setWatchlist] = useState<WatchItem[]>([]);
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [readAlertIds, setReadAlertIds] = useState<string[]>([]);
   const [isLoadingPredictions, setIsLoadingPredictions] = useState(false);
 
-  const savePositions = (nextPositions: Position[]) => {
-    setPositions(nextPositions);
-    localStorage.setItem(POSITIONS_STORAGE_KEY, JSON.stringify(nextPositions));
-  };
 
-  const saveWatchlist = (nextWatchlist: WatchItem[]) => {
-    setWatchlist(nextWatchlist);
-    localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(nextWatchlist));
-  };
-
-  const saveReadAlerts = (nextReadAlertIds: string[]) => {
+  const saveReadAlerts = async (nextReadAlertIds: string[]) => {
     setReadAlertIds(nextReadAlertIds);
-    localStorage.setItem(ALERTS_READ_STORAGE_KEY, JSON.stringify(nextReadAlertIds));
+    await replaceReadAlertIds(nextReadAlertIds);
   };
 
   const refreshPositions = async (basePositions: Position[]) => {
     setIsLoadingPredictions(true);
 
     try {
+      if (!session?.access_token) {
+        throw new Error("You must be signed in to load predictions");
+      }
+
       const enriched = await Promise.all(
         basePositions.map(async (position) => {
           try {
-            return await enrichPositionWithApi(position);
+            return await enrichPositionWithApi(
+              position,
+              session.access_token
+            );
           } catch (error) {
             console.error(error);
+
             return {
               ...position,
               explanation: `Could not load API prediction for ${position.ticker}.`,
@@ -51,131 +60,201 @@ export function useSellSmartData() {
         })
       );
 
-      savePositions(enriched);
+      setPositions(enriched);
     } finally {
       setIsLoadingPredictions(false);
     }
   };
 
-  const refreshWatchlist = async (baseWatchlist: WatchItem[]) => {
-    setIsLoadingPredictions(true);
+ const refreshWatchlist = async (baseWatchlist: WatchItem[]) => {
+  setIsLoadingPredictions(true);
 
-    try {
-      const enriched = await Promise.all(
-        baseWatchlist.map(async (item) => {
-          try {
-            return await enrichWatchItemWithApi(item);
-          } catch (error) {
-            console.error(error);
-            return {
-              ...item,
-              explanation: `Could not load API prediction for ${item.ticker}.`,
-            };
-          }
-        })
-      );
-
-      saveWatchlist(enriched);
-    } finally {
-      setIsLoadingPredictions(false);
+  try {
+    if (!session?.access_token) {
+      throw new Error("You must be signed in to load predictions");
     }
-  };
 
-  const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
+    const enriched = await Promise.all(
+      baseWatchlist.map(async (item) => {
+        try {
+          return await enrichWatchItemWithApi(
+            item,
+            session.access_token
+          );
+        } catch (error) {
+          console.error(error);
+
+          return {
+            ...item,
+            explanation: `Could not load API prediction for ${item.ticker}.`,
+          };
+        }
+      })
+    );
+
+    setWatchlist(enriched);
+  } finally {
+    setIsLoadingPredictions(false);
+  }
+};
+
+  const updateSetting = <K extends keyof AppSettings>(
+    key: K,
+    value: AppSettings[K]
+  ) => {
     const nextSettings = {
       ...settings,
       [key]: value,
     };
 
     setSettings(nextSettings);
-    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(nextSettings));
+    void saveSettings(nextSettings);
   };
 
-  const resetAppData = () => {
-    localStorage.removeItem(POSITIONS_STORAGE_KEY);
-    localStorage.removeItem(WATCHLIST_STORAGE_KEY);
-    localStorage.removeItem(ALERTS_READ_STORAGE_KEY);
+  const resetAppData = async () => {
+    setPositions(demoPositions);
+    setWatchlist(demoWatchlist);
+    setReadAlertIds([]);
 
-    savePositions(demoPositions);
-    saveWatchlist(demoWatchlist);
-    saveReadAlerts([]);
+    await Promise.all([
+      replacePositions(demoPositions),
+      replaceWatchlist(demoWatchlist),
+      replaceReadAlertIds([]),
+    ]);
 
-    refreshPositions(demoPositions);
-    refreshWatchlist(demoWatchlist);
+    void refreshPositions(demoPositions);
+    void refreshWatchlist(demoWatchlist);
   };
 
-  const importDemoPortfolio = () => {
-    savePositions(demoPositions);
-    saveWatchlist(demoWatchlist);
-    saveReadAlerts([]);
-    refreshPositions(demoPositions);
-    refreshWatchlist(demoWatchlist);
+  const importDemoPortfolio = async () => {
+    setPositions(demoPositions);
+    setWatchlist(demoWatchlist);
+    setReadAlertIds([]);
+
+    await Promise.all([
+      replacePositions(demoPositions),
+      replaceWatchlist(demoWatchlist),
+      replaceReadAlertIds([]),
+    ]);
+
+    void refreshPositions(demoPositions);
+    void refreshWatchlist(demoWatchlist);
   };
 
-  const addPosition = async (ticker: string, shares: number, avgBuyPrice: number) => {
-    const basePosition = createBasePosition(ticker, shares, avgBuyPrice);
-    const nextPositions = [...positions.filter((position) => position.ticker !== ticker), basePosition];
+const addPosition = async (
+  ticker: string,
+  shares: number,
+  avgBuyPrice: number
+) => {
+  if (!session?.access_token) {
+    console.error("You must be signed in to add positions.");
+    return;
+  }
 
-    savePositions(nextPositions);
+  const basePosition = createBasePosition(ticker, shares, avgBuyPrice);
+  const nextPositions = [
+    ...positions.filter((position) => position.ticker !== ticker),
+    basePosition,
+  ];
 
-    try {
-      const enrichedPosition = await enrichPositionWithApi(basePosition);
-      savePositions(
-        nextPositions.map((position) =>
-          position.ticker === ticker ? enrichedPosition : position
-        )
-      );
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  setPositions(nextPositions);
+  await replacePositions(nextPositions);
 
-  const addWatchItem = async (ticker: string) => {
-    const baseItem = createBaseWatchItem(ticker);
-    const nextWatchlist = [...watchlist.filter((item) => item.ticker !== ticker), baseItem];
+  try {
+    const enrichedPosition = await enrichPositionWithApi(
+      basePosition,
+      session.access_token
+    );
 
-    saveWatchlist(nextWatchlist);
+    setPositions((currentPositions) =>
+      currentPositions.map((position) =>
+        position.ticker === ticker ? enrichedPosition : position
+      )
+    );
+  } catch (error) {
+    console.error(error);
+  }
+};
 
-    try {
-      const enrichedItem = await enrichWatchItemWithApi(baseItem);
-      saveWatchlist(
-        nextWatchlist.map((item) => (item.ticker === ticker ? enrichedItem : item))
-      );
-    } catch (error) {
-      console.error(error);
-    }
-  };
+ const addWatchItem = async (ticker: string) => {
+  if (!session?.access_token) {
+    console.error("You must be signed in to add watchlist items.");
+    return;
+  }
+
+  const baseItem = createBaseWatchItem(ticker);
+  const nextWatchlist = [
+    ...watchlist.filter((item) => item.ticker !== ticker),
+    baseItem,
+  ];
+
+  setWatchlist(nextWatchlist);
+  await replaceWatchlist(nextWatchlist);
+
+  try {
+    const enrichedItem = await enrichWatchItemWithApi(
+      baseItem,
+      session.access_token
+    );
+
+    setWatchlist((currentWatchlist) =>
+      currentWatchlist.map((item) =>
+        item.ticker === ticker ? enrichedItem : item
+      )
+    );
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   useEffect(() => {
-    const savedReadAlerts = localStorage.getItem(ALERTS_READ_STORAGE_KEY);
-    setReadAlertIds(savedReadAlerts ? JSON.parse(savedReadAlerts) : []);
+    if (!session) return;
 
-    const savedPositions = localStorage.getItem(POSITIONS_STORAGE_KEY);
-    const rawPositions = savedPositions ? JSON.parse(savedPositions) : demoPositions;
-    const basePositions: Position[] = rawPositions.map(normalizePosition);
+    const loadUserData = async () => {
+      try {
+        await ensureUserSettings();
 
-    const savedWatchlist = localStorage.getItem(WATCHLIST_STORAGE_KEY);
-    const rawWatchlist = savedWatchlist ? JSON.parse(savedWatchlist) : demoWatchlist;
-    const baseWatchlist: WatchItem[] = rawWatchlist.map(normalizeWatchItem);
+        const [
+          loadedSettings,
+          loadedPositions,
+          loadedWatchlist,
+          loadedReadAlertIds,
+        ] = await Promise.all([
+          loadSettings(),
+          loadPositions(),
+          loadWatchlist(),
+          loadReadAlertIds(),
+        ]);
 
-    const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+        const basePositions =
+          loadedPositions.length > 0 ? loadedPositions : demoPositions;
 
-    if (savedSettings) {
-      setSettings({
-        ...defaultSettings,
-        ...JSON.parse(savedSettings),
-      });
-    }
+        const baseWatchlist =
+          loadedWatchlist.length > 0 ? loadedWatchlist : demoWatchlist;
 
-    setPositions(basePositions);
-    setWatchlist(baseWatchlist);
+        setSettings(loadedSettings);
+        setActiveView(loadedSettings.defaultView);
+        setReadAlertIds(loadedReadAlertIds);
+        setPositions(basePositions);
+        setWatchlist(baseWatchlist);
 
-    localStorage.setItem(POSITIONS_STORAGE_KEY, JSON.stringify(basePositions));
-    localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(baseWatchlist));
+        if (loadedPositions.length === 0) {
+          await replacePositions(basePositions);
+        }
 
-    refreshPositions(basePositions);
-    refreshWatchlist(baseWatchlist);
-  }, []);
+        if (loadedWatchlist.length === 0) {
+          await replaceWatchlist(baseWatchlist);
+        }
+
+        void refreshPositions(basePositions);
+        void refreshWatchlist(baseWatchlist);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    void loadUserData();
+  }, [session]);
 
   return {
     positions,

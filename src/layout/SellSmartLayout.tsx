@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   WalletCards,
 } from "lucide-react";
+
 import type { ViewType } from "../types";
 
 type Props = {
@@ -26,6 +27,8 @@ type Props = {
   onAddTicker: () => void;
   onImportDemo: () => void;
   onMarkAllAlertsAsRead: () => void;
+  onLogout: () => void;
+  userEmail?: string;
 };
 
 const navItems = [
@@ -50,13 +53,24 @@ export function SellSmartLayout({
   onAddTicker,
   onImportDemo,
   onMarkAllAlertsAsRead,
+  onLogout,
+  userEmail,
 }: Props) {
+  const avatarText = getAvatarText(userEmail);
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
-          <div className="brand-mark"><span /><span /><span /><span /></div>
-          <strong>Sell<span>Smart</span></strong>
+          <div className="brand-mark">
+            <span />
+            <span />
+            <span />
+            <span />
+          </div>
+          <strong>
+            Sell<span>Smart</span>
+          </strong>
         </div>
 
         <nav className="nav-list">
@@ -65,10 +79,17 @@ export function SellSmartLayout({
             const isActive = item.view === activeView;
 
             return (
-              <button key={item.label} className={`nav-item ${isActive ? "active" : ""}`} onClick={() => setActiveView(item.view)}>
+              <button
+                key={item.label}
+                className={`nav-item ${isActive ? "active" : ""}`}
+                onClick={() => setActiveView(item.view)}
+              >
                 <Icon size={19} />
                 {item.label}
-                {item.label === "Alerts" && unreadAlertsCount > 0 && <span className="nav-badge">{unreadAlertsCount}</span>}
+
+                {item.label === "Alerts" && unreadAlertsCount > 0 && (
+                  <span className="nav-badge">{unreadAlertsCount}</span>
+                )}
               </button>
             );
           })}
@@ -78,22 +99,32 @@ export function SellSmartLayout({
           <div className="demo-icon">♙</div>
           <div>
             <strong>{isLoadingPredictions ? "Loading AI" : "SellSmart AI"}</strong>
-            <p><span /> Risk Intelligence</p>
+            <p>
+              <span /> Risk Intelligence
+            </p>
           </div>
         </div>
 
         <div className="sidebar-footer">
-          <button className={`nav-item ${activeView === "help" ? "active" : ""}`} onClick={() => setActiveView("help")}>
+          <button
+            className={`nav-item ${activeView === "help" ? "active" : ""}`}
+            onClick={() => setActiveView("help")}
+          >
             <CircleHelp size={18} />
             Help Center
           </button>
-          <button className="nav-item"><LogOut size={18} />Log out</button>
+
+          <button className="nav-item" onClick={onLogout}>
+            <LogOut size={18} />
+            Log out
+          </button>
         </div>
       </aside>
 
       <main className="main-content">
         <header className="topbar">
           <div />
+
           <div className="topbar-actions">
             <TopbarPrimaryAction
               activeView={activeView}
@@ -102,27 +133,57 @@ export function SellSmartLayout({
               onMarkAllAlertsAsRead={onMarkAllAlertsAsRead}
             />
 
-            <button className="secondary-button" onClick={onImportDemo}><Import size={16} />Import Demo</button>
-
-            <button type="button" className="icon-button top-alert-button" onClick={() => setActiveView("alerts")} aria-label="Open alerts">
-              <Bell size={20} />
-              {unreadAlertsCount > 0 && <span className="top-alert-badge" aria-hidden="true" />}
+            <button className="secondary-button" onClick={onImportDemo}>
+              <Import size={16} />
+              Import Demo
             </button>
 
-            <button className="avatar">AS</button>
+            <button
+              type="button"
+              className="icon-button top-alert-button"
+              onClick={() => setActiveView("alerts")}
+              aria-label="Open alerts"
+            >
+              <Bell size={20} />
+              {unreadAlertsCount > 0 && (
+                <span className="top-alert-badge" aria-hidden="true" />
+              )}
+            </button>
+
+            <button
+              type="button"
+              className="avatar"
+              title={userEmail ?? "Signed in user"}
+              aria-label={userEmail ? `Signed in as ${userEmail}` : "Signed in user"}
+            >
+              {avatarText}
+            </button>
           </div>
         </header>
 
         <section className="page-header">
-          <div><h1>{pageTitle}</h1><p>{pageSubtitle}</p></div>
-          <div className="market-status"><strong><span /> Market Analysis Ready</strong><p>Real-time portfolio risk insights</p></div>
+          <div>
+            <h1>{pageTitle}</h1>
+            <p>{pageSubtitle}</p>
+          </div>
+
+          <div className="market-status">
+            <strong>
+              <span /> Market Analysis Ready
+            </strong>
+            <p>Real-time portfolio risk insights</p>
+          </div>
         </section>
 
         {children}
 
         <footer className="disclaimer">
           <CircleHelp size={18} />
-          <p>SellSmart provides AI-powered risk analysis and insights only. Not financial advice. Always do your own research before making investment decisions.</p>
+          <p>
+            SellSmart provides AI-powered risk analysis and insights only. Not
+            financial advice. Always do your own research before making investment
+            decisions.
+          </p>
         </footer>
       </main>
     </div>
@@ -141,20 +202,55 @@ function TopbarPrimaryAction({
   onMarkAllAlertsAsRead: () => void;
 }) {
   if (activeView === "portfolio") {
-    return <button className="secondary-button" onClick={onAddPosition}><Plus size={18} />Add Position</button>;
+    return (
+      <button className="secondary-button" onClick={onAddPosition}>
+        <Plus size={18} />
+        Add Position
+      </button>
+    );
   }
 
   if (activeView === "watchlist") {
-    return <button className="secondary-button" onClick={onAddTicker}><Plus size={18} />Add Ticker</button>;
+    return (
+      <button className="secondary-button" onClick={onAddTicker}>
+        <Plus size={18} />
+        Add Ticker
+      </button>
+    );
   }
 
   if (activeView === "alerts") {
-    return <button className="secondary-button" onClick={onMarkAllAlertsAsRead}>Mark All Read</button>;
+    return (
+      <button className="secondary-button" onClick={onMarkAllAlertsAsRead}>
+        Mark All Read
+      </button>
+    );
   }
 
   if (activeView === "reports") {
-    return <button className="secondary-button" onClick={() => window.print()}><FileText size={18} />Export PDF</button>;
+    return (
+      <button className="secondary-button" onClick={() => window.print()}>
+        <FileText size={18} />
+        Export PDF
+      </button>
+    );
   }
 
-  return <button className="secondary-button" onClick={onAddPosition}><Plus size={18} />Add Position</button>;
+  return (
+    <button className="secondary-button" onClick={onAddPosition}>
+      <Plus size={18} />
+      Add Position
+    </button>
+  );
+}
+
+function getAvatarText(email?: string) {
+  if (!email) return "SS";
+
+  const namePart = email.split("@")[0] ?? "";
+  const cleaned = namePart.replace(/[^a-zA-Z0-9]/g, "");
+
+  if (!cleaned) return "SS";
+
+  return cleaned.slice(0, 2).toUpperCase();
 }

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
 
 import "./AppShell.css";
 
@@ -14,16 +15,36 @@ import { useSellSmartData } from "./hooks/useSellSmartData";
 import { SellSmartLayout } from "./layout/SellSmartLayout";
 import { AlertsPage } from "./pages/AlertsPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { HelpCenterPage } from "./pages/HelpCenterPage";
 import { InsightsPage } from "./pages/InsightsPage";
+import { LoginPage } from "./pages/LoginPage";
 import { PortfolioPage } from "./pages/PortfolioPage";
 import { ReportsPage } from "./pages/ReportsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { WatchlistPage } from "./pages/WatchlistPage";
-import { HelpCenterPage } from "./pages/HelpCenterPage";
+import { supabase } from "./supabaseClient";
 
 export default function MainScreen() {
   const [activeView, setActiveView] = useInitialView();
   const [helpSearch, setHelpSearch] = useState("");
+
+  const [session, setSession] = useState<Session | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setAuthLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const {
     positions,
@@ -37,7 +58,7 @@ export default function MainScreen() {
     importDemoPortfolio,
     addPosition,
     addWatchItem,
-  } = useSellSmartData();
+  } = useSellSmartData(session, setActiveView);
 
   const {
     sortBy,
@@ -74,9 +95,30 @@ export default function MainScreen() {
   );
 
   const { pageTitle, pageSubtitle } = usePageHeader(activeView);
-  const addPositionModal = useAddPositionModal(addPosition, setActiveView, setExpandedTicker);
-  const addWatchItemModal = useAddWatchItemModal(addWatchItem, setActiveView, setExpandedTicker);
+  const addPositionModal = useAddPositionModal(
+    addPosition,
+    setActiveView,
+    setExpandedTicker
+  );
+  const addWatchItemModal = useAddWatchItemModal(
+    addWatchItem,
+    setActiveView,
+    setExpandedTicker
+  );
+
   const reportGeneratedAt = new Date().toLocaleDateString();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
+
+  if (authLoading) {
+    return <div className="app-loading">Loading SellSmart...</div>;
+  }
+
+  if (!session) {
+    return <LoginPage />;
+  }
 
   return (
     <SellSmartLayout
@@ -90,6 +132,8 @@ export default function MainScreen() {
       onAddTicker={addWatchItemModal.open}
       onImportDemo={importDemoPortfolio}
       onMarkAllAlertsAsRead={markAllAlertsAsRead}
+      onLogout={handleLogout}
+      userEmail={session.user.email ?? undefined}
     >
       {activeView === "dashboard" && (
         <DashboardPage

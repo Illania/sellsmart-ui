@@ -43,7 +43,6 @@ export function WatchlistPage({
   topDrivers,
   setActiveView,
   onAddTicker,
-  onEditWatchItem,
   onDeleteWatchItem,
   isMobile = false,
 }: Props) {

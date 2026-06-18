@@ -1,6 +1,6 @@
 export type RiskLevel = "high" | "moderate" | "low";
 export type ActionType = "Reduce" | "Watch" | "Hold";
-export type ViewType = "dashboard" | "portfolio" | "watchlist" | "alerts" | "insights" | "reports" | "settings" | "help";
+export type ViewType = "dashboard" | "portfolio" | "watchlist" | "alerts" | "insights" | "reports" | "settings" | "help" | "profile" ;
 export type AlertSeverity = "high" | "medium" | "low";
 
 export type PortfolioAlert = {

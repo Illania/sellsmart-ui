@@ -30,6 +30,7 @@ import { PortfolioPage } from "./pages/PortfolioPage";
 import { ReportsPage } from "./pages/ReportsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { WatchlistPage } from "./pages/WatchlistPage";
+import { ProfilePage } from "./pages/ProfilePage";
 import { supabase } from "./supabaseClient";
 import type { Position, WatchItem } from "./types";
 
@@ -166,20 +167,25 @@ export default function MainScreen() {
   }
 
   return (
-    <SellSmartLayout
-      activeView={activeView}
-      pageTitle={pageTitle}
-      pageSubtitle={pageSubtitle}
-      unreadAlertsCount={unreadAlertsCount}
-      isLoadingPredictions={isLoadingPredictions}
-      setActiveView={setActiveView}
-      onAddPosition={addPositionModal.open}
-      onAddTicker={addWatchItemModal.open}
-      onImportDemo={importDemoPortfolio}
-      onMarkAllAlertsAsRead={markAllAlertsAsRead}
-      onLogout={handleLogout}
-      userEmail={session.user.email ?? undefined}
-    >
+   <SellSmartLayout
+  activeView={activeView}
+  pageTitle={pageTitle}
+  pageSubtitle={pageSubtitle}
+  unreadAlertsCount={unreadAlertsCount}
+  isLoadingPredictions={isLoadingPredictions}
+  setActiveView={setActiveView}
+  onAddPosition={addPositionModal.open}
+  onAddTicker={addWatchItemModal.open}
+  onImportDemo={importDemoPortfolio}
+  onMarkAllAlertsAsRead={markAllAlertsAsRead}
+  onLogout={handleLogout}
+  userEmail={session.user.email ?? undefined}
+  userAvatarUrl={
+    session.user.user_metadata.avatar_url ??
+    session.user.user_metadata.picture ??
+    undefined
+  }
+>
       {activeView === "dashboard" && (
         <DashboardPage
           overallRisk={analytics.overallRisk}
@@ -283,6 +289,14 @@ export default function MainScreen() {
           settings={settings}
           updateSetting={updateSetting}
           resetAppData={resetAppData}
+        />
+      )}
+
+      {activeView === "profile" && (
+        <ProfilePage
+          userEmail={session.user.email ?? undefined}
+          onLogout={handleLogout}
+          onResetAppData={resetAppData}
         />
       )}
 

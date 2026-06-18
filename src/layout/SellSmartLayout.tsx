@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   Bell,
   CircleHelp,
@@ -10,6 +10,7 @@ import {
   Plus,
   Settings,
   ShieldCheck,
+  User,
   WalletCards,
 } from "lucide-react";
 
@@ -29,6 +30,7 @@ type Props = {
   onMarkAllAlertsAsRead: () => void;
   onLogout: () => void;
   userEmail?: string;
+  userAvatarUrl?: string;
 };
 
 const navItems = [
@@ -40,6 +42,8 @@ const navItems = [
   { label: "Reports", icon: FileText, view: "reports" as ViewType },
   { label: "Settings", icon: Settings, view: "settings" as ViewType },
 ];
+
+const mobileNavItems = navItems.filter((item) => item.view !== "settings");
 
 export function SellSmartLayout({
   activeView,
@@ -55,8 +59,28 @@ export function SellSmartLayout({
   onMarkAllAlertsAsRead,
   onLogout,
   userEmail,
+  userAvatarUrl,
 }: Props) {
   const avatarText = getAvatarText(userEmail);
+  const [avatarUrl, setAvatarUrl] = useState(() =>
+    getResolvedAvatarUrl(userEmail, userAvatarUrl),
+  );
+
+  useEffect(() => {
+    const updateAvatar = () => {
+      setAvatarUrl(getResolvedAvatarUrl(userEmail, userAvatarUrl));
+    };
+
+    updateAvatar();
+
+    window.addEventListener("storage", updateAvatar);
+    window.addEventListener("sellsmart-profile-updated", updateAvatar);
+
+    return () => {
+      window.removeEventListener("storage", updateAvatar);
+      window.removeEventListener("sellsmart-profile-updated", updateAvatar);
+    };
+  }, [userEmail, userAvatarUrl, activeView]);
 
   return (
     <div className="app-shell">
@@ -106,7 +130,27 @@ export function SellSmartLayout({
           </div>
         </div>
 
+        <div className="sidebar-profile">
+          <div className="sidebar-profile-avatar">
+            <AvatarContent avatarUrl={avatarUrl} avatarText={avatarText} />
+          </div>
+
+          <div className="sidebar-profile-info">
+            <strong>{userEmail?.split("@")[0] ?? "SellSmart User"}</strong>
+            <span>{userEmail ?? "Signed in user"}</span>
+          </div>
+        </div>
+
         <div className="sidebar-footer">
+          <button
+            type="button"
+            className={`nav-item ${activeView === "profile" ? "active" : ""}`}
+            onClick={() => setActiveView("profile")}
+          >
+            <User size={18} />
+            Profile
+          </button>
+
           <button
             type="button"
             className={`nav-item ${activeView === "help" ? "active" : ""}`}
@@ -140,26 +184,38 @@ export function SellSmartLayout({
               Import Demo
             </button>
 
-            <button
-              type="button"
-              className="icon-button top-alert-button"
-              onClick={() => setActiveView("alerts")}
-              aria-label="Open alerts"
-            >
-              <Bell size={20} />
-              {unreadAlertsCount > 0 && (
-                <span className="top-alert-badge" aria-hidden="true" />
-              )}
-            </button>
+            <div className="desktop-topbar-user">
+              <button
+                type="button"
+                className="icon-button top-alert-button"
+                onClick={() => setActiveView("alerts")}
+                aria-label="Open alerts"
+              >
+                <Bell size={20} />
+                {unreadAlertsCount > 0 && (
+                  <span className="top-alert-badge" aria-hidden="true" />
+                )}
+              </button>
 
-            <button
-              type="button"
-              className="avatar"
-              title={userEmail ?? "Signed in user"}
-              aria-label={userEmail ? `Signed in as ${userEmail}` : "Signed in user"}
-            >
-              {avatarText}
-            </button>
+              <button
+                type="button"
+                className="avatar"
+                title={userEmail ?? "Signed in user"}
+                aria-label={
+                  userEmail ? `Signed in as ${userEmail}` : "Signed in user"
+                }
+              >
+                <AvatarContent avatarUrl={avatarUrl} avatarText={avatarText} />
+              </button>
+            </div>
+
+            <MobileAccountMenu
+              avatarText={avatarText}
+              avatarUrl={avatarUrl}
+              userEmail={userEmail}
+              setActiveView={setActiveView}
+              onLogout={onLogout}
+            />
           </div>
         </header>
 
@@ -180,7 +236,7 @@ export function SellSmartLayout({
         {children}
 
         <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
-          {navItems.map((item) => {
+          {mobileNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = item.view === activeView;
 
@@ -201,16 +257,6 @@ export function SellSmartLayout({
               </button>
             );
           })}
-
-          <button
-            type="button"
-            className={`mobile-nav-button ${activeView === "help" ? "active" : ""}`}
-            onClick={() => setActiveView("help")}
-            aria-label="Help"
-            title="Help"
-          >
-            <CircleHelp size={20} />
-          </button>
         </nav>
 
         <footer className="disclaimer">
@@ -224,6 +270,79 @@ export function SellSmartLayout({
       </main>
     </div>
   );
+}
+
+function MobileAccountMenu({
+  avatarText,
+  avatarUrl,
+  userEmail,
+  setActiveView,
+  onLogout,
+}: {
+  avatarText: string;
+  avatarUrl: string;
+  userEmail?: string;
+  setActiveView: (view: ViewType) => void;
+  onLogout: () => void;
+}) {
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+
+  const openView = (view: ViewType) => {
+    setActiveView(view);
+    setAccountMenuOpen(false);
+  };
+
+  return (
+    <div className="mobile-account-menu-wrapper">
+      <button
+        type="button"
+        className="avatar mobile-account-avatar"
+        title={userEmail ?? "Signed in user"}
+        aria-label="Open account menu"
+        onClick={() => setAccountMenuOpen((open) => !open)}
+      >
+        <AvatarContent avatarUrl={avatarUrl} avatarText={avatarText} />
+      </button>
+
+      {accountMenuOpen && (
+        <div className="mobile-account-menu">
+          <button type="button" onClick={() => openView("profile")}>
+            Profile
+          </button>
+
+          <button type="button" onClick={() => openView("settings")}>
+            Settings
+          </button>
+
+          <button type="button" onClick={() => openView("help")}>
+            Help Center
+          </button>
+
+          <button
+            type="button"
+            className="mobile-account-menu-danger"
+            onClick={onLogout}
+          >
+            Logout
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AvatarContent({
+  avatarUrl,
+  avatarText,
+}: {
+  avatarUrl: string;
+  avatarText: string;
+}) {
+  if (avatarUrl) {
+    return <img src={avatarUrl} alt="Profile avatar" />;
+  }
+
+  return <>{avatarText}</>;
 }
 
 function TopbarPrimaryAction({
@@ -282,6 +401,28 @@ function TopbarPrimaryAction({
       Add Position
     </button>
   );
+}
+
+function getResolvedAvatarUrl(email?: string, googleAvatarUrl?: string) {
+  const uploadedAvatarUrl = getProfileAvatar(email);
+
+  return uploadedAvatarUrl || googleAvatarUrl || "";
+}
+
+function getProfileAvatar(email?: string) {
+  if (!email) return "";
+
+  const storageKey = `sellsmart-profile-${email}`;
+  const raw = localStorage.getItem(storageKey);
+
+  if (!raw) return "";
+
+  try {
+    const profile = JSON.parse(raw) as { avatarUrl?: string };
+    return profile.avatarUrl ?? "";
+  } catch {
+    return "";
+  }
 }
 
 function getAvatarText(email?: string) {

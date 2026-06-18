@@ -33,6 +33,11 @@ const pageHeaderContent: Record<ViewType, { pageTitle: string; pageSubtitle: str
     pageTitle: "Settings",
     pageSubtitle: "Customize SellSmart risk intelligence",
   },
+
+  profile: {
+    pageTitle: "Profile",
+    pageSubtitle: "Manage your account, photo, subscription and preferences",
+  },
 };
 
 export function usePageHeader(activeView: ViewType) {

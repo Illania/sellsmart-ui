@@ -130,17 +130,6 @@ export function SellSmartLayout({
           </div>
         </div>
 
-        <div className="sidebar-profile">
-          <div className="sidebar-profile-avatar">
-            <AvatarContent avatarUrl={avatarUrl} avatarText={avatarText} />
-          </div>
-
-          <div className="sidebar-profile-info">
-            <strong>{userEmail?.split("@")[0] ?? "SellSmart User"}</strong>
-            <span>{userEmail ?? "Signed in user"}</span>
-          </div>
-        </div>
-
         <div className="sidebar-footer">
           <button
             type="button"

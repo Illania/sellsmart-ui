@@ -79,16 +79,16 @@ export default function MainScreen() {
   } = useSellSmartData(session, setActiveView);
 
   const {
-  sortBy,
-  setSortBy,
-  portfolioViewMode,
-  setPortfolioViewMode,
-  expandedTicker,
-  setExpandedTicker,
-  isMobile,
-  sortedPositions,
-  sortedWatchlist,
-} = useAssetSorting(activeView, positions, watchlist);
+    sortBy,
+    setSortBy,
+    portfolioViewMode,
+    setPortfolioViewMode,
+    expandedTicker,
+    setExpandedTicker,
+    isMobile,
+    sortedPositions,
+    sortedWatchlist,
+  } = useAssetSorting(activeView, positions, watchlist);
 
   const analytics = usePortfolioAnalytics(activeView, positions, watchlist);
 
@@ -167,25 +167,25 @@ export default function MainScreen() {
   }
 
   return (
-   <SellSmartLayout
-  activeView={activeView}
-  pageTitle={pageTitle}
-  pageSubtitle={pageSubtitle}
-  unreadAlertsCount={unreadAlertsCount}
-  isLoadingPredictions={isLoadingPredictions}
-  setActiveView={setActiveView}
-  onAddPosition={addPositionModal.open}
-  onAddTicker={addWatchItemModal.open}
-  onImportDemo={importDemoPortfolio}
-  onMarkAllAlertsAsRead={markAllAlertsAsRead}
-  onLogout={handleLogout}
-  userEmail={session.user.email ?? undefined}
-  userAvatarUrl={
-    session.user.user_metadata.avatar_url ??
-    session.user.user_metadata.picture ??
-    undefined
-  }
->
+    <SellSmartLayout
+      activeView={activeView}
+      pageTitle={pageTitle}
+      pageSubtitle={pageSubtitle}
+      unreadAlertsCount={unreadAlertsCount}
+      isLoadingPredictions={isLoadingPredictions}
+      setActiveView={setActiveView}
+      onAddPosition={addPositionModal.open}
+      onAddTicker={addWatchItemModal.open}
+      onImportDemo={importDemoPortfolio}
+      onMarkAllAlertsAsRead={markAllAlertsAsRead}
+      onLogout={handleLogout}
+      userEmail={session.user.email ?? undefined}
+      userAvatarUrl={
+        session.user.user_metadata.avatar_url ??
+        session.user.user_metadata.picture ??
+        undefined
+      }
+    >
       {activeView === "dashboard" && (
         <DashboardPage
           overallRisk={analytics.overallRisk}
@@ -295,6 +295,11 @@ export default function MainScreen() {
       {activeView === "profile" && (
         <ProfilePage
           userEmail={session.user.email ?? undefined}
+          userAvatarUrl={
+            session.user.user_metadata.avatar_url ??
+            session.user.user_metadata.picture ??
+            undefined
+          }
           onLogout={handleLogout}
           onResetAppData={resetAppData}
         />

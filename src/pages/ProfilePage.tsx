@@ -3,11 +3,12 @@ import { useMemo, useState } from "react";
 
 type Props = {
   userEmail?: string;
+  userAvatarUrl?: string;
   onLogout: () => void;
   onResetAppData: () => void;
 };
 
-export function ProfilePage({ userEmail, onLogout, onResetAppData }: Props) {
+export function ProfilePage({ userEmail, userAvatarUrl, onLogout, onResetAppData }: Props) {
   const storageKey = userEmail ? `sellsmart-profile-${userEmail}` : "sellsmart-profile";
 
   const savedProfile = useMemo(() => {
@@ -34,7 +35,7 @@ export function ProfilePage({ userEmail, onLogout, onResetAppData }: Props) {
   }, [storageKey]);
 
   const [displayName, setDisplayName] = useState(savedProfile.displayName);
-  const [avatarUrl, setAvatarUrl] = useState(savedProfile.avatarUrl);
+  const [avatarUrl, setAvatarUrl] = useState(savedProfile.avatarUrl || userAvatarUrl || "",);
   const [saved, setSaved] = useState(false);
 
   const avatarText = getAvatarText(displayName || userEmail);

@@ -1,4 +1,4 @@
-import { ChevronRight, TrendingDown } from "lucide-react";
+import { ChevronRight, Edit3, Trash2, TrendingDown } from "lucide-react";
 import type { Position, RiskAsset, WatchItem } from "../types";
 import { money } from "../utils/format";
 import { RiskRing, Sparkline } from "./Charts";
@@ -6,9 +6,13 @@ import { RiskRing, Sparkline } from "./Charts";
 export function PositionCard({
   position,
   onOpen,
+  onEdit,
+  onDelete,
 }: {
   position: Position;
   onOpen: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }) {
   const isPositive = position.pnl >= 0;
   const actionClass = position.action.toLowerCase();
@@ -16,11 +20,39 @@ export function PositionCard({
   return (
     <article className="position-card">
       <div className="position-card-top">
-        <div className={`position-logo ${position.logoClass}`}>{position.logo}</div>
+        <div className={`position-logo ${position.logoClass}`}>
+          {position.logo}
+        </div>
 
-        <button className="icon-button row-button" onClick={onOpen}>
-          <ChevronRight size={20} />
-        </button>
+        <div className="asset-card-actions">
+          <button
+            type="button"
+            className="asset-action-button"
+            onClick={onEdit}
+            aria-label={`Edit ${position.ticker}`}
+          >
+            <Edit3 size={16} />
+          </button>
+          <button
+            type="button"
+            className="asset-action-button danger"
+            onClick={() => {
+              if (window.confirm(`Delete ${position.ticker} from portfolio?`))
+                onDelete();
+            }}
+            aria-label={`Delete ${position.ticker}`}
+          >
+            <Trash2 size={16} />
+          </button>
+          <button
+            type="button"
+            className="icon-button row-button"
+            onClick={onOpen}
+            aria-label={`Open ${position.ticker} details`}
+          >
+            <ChevronRight size={20} />
+          </button>
+        </div>
       </div>
 
       <div className="position-card-title">
@@ -28,7 +60,9 @@ export function PositionCard({
         <p>{position.company}</p>
         <span>
           {position.shares} shares
-          {position.currentPrice && <> · {money.format(position.currentPrice)}</>}
+          {position.currentPrice && (
+            <> · {money.format(position.currentPrice)}</>
+          )}
         </span>
       </div>
 
@@ -41,7 +75,10 @@ export function PositionCard({
         </span>
       </div>
 
-      <Sparkline data={position.chart} tone={isPositive ? "positive" : "negative"} />
+      <Sparkline
+        data={position.chart}
+        tone={isPositive ? "positive" : "negative"}
+      />
 
       <div className="position-card-risk">
         <RiskRing score={position.riskScore} level={position.riskLevel} />
@@ -63,10 +100,14 @@ export function PositionRow({
   position,
   isExpanded,
   onToggle,
+  onEdit,
+  onDelete,
 }: {
   position: Position;
   isExpanded: boolean;
   onToggle: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }) {
   const isPositive = position.pnl >= 0;
   const actionClass = position.action.toLowerCase();
@@ -74,13 +115,17 @@ export function PositionRow({
   return (
     <article className="position-row">
       <div className="position-main">
-        <div className={`position-logo ${position.logoClass}`}>{position.logo}</div>
+        <div className={`position-logo ${position.logoClass}`}>
+          {position.logo}
+        </div>
         <div>
           <h3>{position.ticker}</h3>
           <p>{position.company}</p>
           <span>
             {position.shares} shares
-            {position.currentPrice && <> · {money.format(position.currentPrice)}</>}
+            {position.currentPrice && (
+              <> · {money.format(position.currentPrice)}</>
+            )}
           </span>
         </div>
       </div>
@@ -95,14 +140,43 @@ export function PositionRow({
           ({isPositive ? "+" : ""}
           {position.pnlPct.toFixed(2)}%)
         </span>
-        <Sparkline data={position.chart} tone={isPositive ? "positive" : "negative"} />
+        <Sparkline
+          data={position.chart}
+          tone={isPositive ? "positive" : "negative"}
+        />
       </div>
 
       <RiskAndAction asset={position} actionClass={actionClass} />
 
-      <button className={`icon-button row-button ${isExpanded ? "expanded" : ""}`} onClick={onToggle}>
-        <ChevronRight size={22} />
-      </button>
+      <div className="asset-row-actions">
+        <button
+          type="button"
+          className="asset-action-button"
+          onClick={onEdit}
+          aria-label={`Edit ${position.ticker}`}
+        >
+          <Edit3 size={16} />
+        </button>
+        <button
+          type="button"
+          className="asset-action-button danger"
+          onClick={() => {
+            if (window.confirm(`Delete ${position.ticker} from portfolio?`))
+              onDelete();
+          }}
+          aria-label={`Delete ${position.ticker}`}
+        >
+          <Trash2 size={16} />
+        </button>
+        <button
+          type="button"
+          className={`icon-button row-button ${isExpanded ? "expanded" : ""}`}
+          onClick={onToggle}
+          aria-label={`Open ${position.ticker} details`}
+        >
+          <ChevronRight size={22} />
+        </button>
+      </div>
 
       {isExpanded && <AssetDetails asset={position} />}
     </article>
@@ -112,9 +186,13 @@ export function PositionRow({
 export function WatchlistCard({
   item,
   onOpen,
+  onEdit,
+  onDelete,
 }: {
   item: WatchItem;
   onOpen: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }) {
   const actionClass = item.action.toLowerCase();
 
@@ -129,11 +207,34 @@ export function WatchlistCard({
           <span>Watchlist</span>
         </div>
 
-        <RiskRing score={item.riskScore} level={item.riskLevel} />
+        <div className="asset-card-actions">
+          <button
+            type="button"
+            className="asset-action-button"
+            onClick={onEdit}
+            aria-label={`Edit ${item.ticker}`}
+          >
+            <Edit3 size={16} />
+          </button>
+          <button
+            type="button"
+            className="asset-action-button danger"
+            onClick={() => {
+              if (window.confirm(`Delete ${item.ticker} from watchlist?`))
+                onDelete();
+            }}
+            aria-label={`Delete ${item.ticker}`}
+          >
+            <Trash2 size={16} />
+          </button>
+          <RiskRing score={item.riskScore} level={item.riskLevel} />
+        </div>
       </div>
 
       <div className="watchlist-card-price">
-        <strong>{item.currentPrice ? money.format(item.currentPrice) : "Loading..."}</strong>
+        <strong>
+          {item.currentPrice ? money.format(item.currentPrice) : "Loading..."}
+        </strong>
         <span>Current price</span>
       </div>
 
@@ -152,7 +253,9 @@ export function WatchlistCard({
           <div className="position-meta">
             <span>{item.marketRegime}</span>
             {item.probabilityOfDrop !== undefined && (
-              <span>{(item.probabilityOfDrop * 100).toFixed(1)}% drop probability</span>
+              <span>
+                {(item.probabilityOfDrop * 100).toFixed(1)}% drop probability
+              </span>
             )}
           </div>
         )}
@@ -169,10 +272,14 @@ export function WatchlistRow({
   item,
   isExpanded,
   onToggle,
+  onEdit,
+  onDelete,
 }: {
   item: WatchItem;
   isExpanded: boolean;
   onToggle: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }) {
   const actionClass = item.action.toLowerCase();
 
@@ -188,29 +295,68 @@ export function WatchlistRow({
       </div>
 
       <div className="value-cell">
-        <strong>{item.currentPrice ? money.format(item.currentPrice) : "Loading..."}</strong>
+        <strong>
+          {item.currentPrice ? money.format(item.currentPrice) : "Loading..."}
+        </strong>
         <span className="muted-text">Current price</span>
         <Sparkline data={item.chart} tone="purple" />
       </div>
 
       <RiskAndAction asset={item} actionClass={actionClass} />
 
-      <button className={`icon-button row-button ${isExpanded ? "expanded" : ""}`} onClick={onToggle}>
-        <ChevronRight size={22} />
-      </button>
+      <div className="asset-row-actions">
+        <button
+          type="button"
+          className="asset-action-button"
+          onClick={onEdit}
+          aria-label={`Edit ${item.ticker}`}
+        >
+          <Edit3 size={16} />
+        </button>
+        <button
+          type="button"
+          className="asset-action-button danger"
+          onClick={() => {
+            if (window.confirm(`Delete ${item.ticker} from watchlist?`))
+              onDelete();
+          }}
+          aria-label={`Delete ${item.ticker}`}
+        >
+          <Trash2 size={16} />
+        </button>
+        <button
+          type="button"
+          className={`icon-button row-button ${isExpanded ? "expanded" : ""}`}
+          onClick={onToggle}
+          aria-label={`Open ${item.ticker} details`}
+        >
+          <ChevronRight size={22} />
+        </button>
+      </div>
 
       {isExpanded && <AssetDetails asset={item} />}
     </article>
   );
 }
 
-export function RiskAndAction({ asset, actionClass }: { asset: RiskAsset; actionClass: string }) {
+export function RiskAndAction({
+  asset,
+  actionClass,
+}: {
+  asset: RiskAsset;
+  actionClass: string;
+}) {
   return (
     <>
       <div className="risk-cell">
         <RiskRing score={asset.riskScore} level={asset.riskLevel} />
         <span className={`risk-label ${asset.riskLevel}`}>
-          {asset.riskLevel === "high" ? "High" : asset.riskLevel === "moderate" ? "Moderate" : "Low"} Risk
+          {asset.riskLevel === "high"
+            ? "High"
+            : asset.riskLevel === "moderate"
+              ? "Moderate"
+              : "Low"}{" "}
+          Risk
         </span>
       </div>
 
@@ -227,7 +373,9 @@ export function RiskAndAction({ asset, actionClass }: { asset: RiskAsset; action
           <div className="position-meta">
             <span>{asset.marketRegime}</span>
             {asset.probabilityOfDrop !== undefined && (
-              <span>{(asset.probabilityOfDrop * 100).toFixed(1)}% drop probability</span>
+              <span>
+                {(asset.probabilityOfDrop * 100).toFixed(1)}% drop probability
+              </span>
             )}
           </div>
         )}
@@ -244,7 +392,10 @@ export function AssetDetails({ asset }: { asset: RiskAsset }) {
 
         {asset.drivers.length > 0 ? (
           asset.drivers.slice(0, 5).map((driver) => (
-            <div key={driver.feature} className={`detail-driver ${driver.impact}`}>
+            <div
+              key={driver.feature}
+              className={`detail-driver ${driver.impact}`}
+            >
               <strong>{driver.label}</strong>
               <p>{driver.message}</p>
             </div>
@@ -265,14 +416,20 @@ export function AssetDetails({ asset }: { asset: RiskAsset }) {
             </div>
           ))
         ) : (
-          <p className="empty-details">No supportive signals returned by API.</p>
+          <p className="empty-details">
+            No supportive signals returned by API.
+          </p>
         )}
 
         <div className="cache-note">
           <strong>Analysis</strong>
           <p>
-            {asset.confidence ? `Confidence: ${asset.confidence}` : "SellSmart AI signal"}
-            {asset.cacheGeneratedAt ? ` · ${new Date(asset.cacheGeneratedAt).toLocaleString()}` : ""}
+            {asset.confidence
+              ? `Confidence: ${asset.confidence}`
+              : "SellSmart AI signal"}
+            {asset.cacheGeneratedAt
+              ? ` · ${new Date(asset.cacheGeneratedAt).toLocaleString()}`
+              : ""}
           </p>
         </div>
       </div>

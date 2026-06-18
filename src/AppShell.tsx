@@ -3,8 +3,16 @@ import type { Session } from "@supabase/supabase-js";
 
 import "./AppShell.css";
 
-import { AddPositionModal, AddWatchItemModal } from "./components/AddModals";
-import { useAddPositionModal, useAddWatchItemModal } from "./hooks/useAddAssetModals";
+import {
+  AddPositionModal,
+  AddWatchItemModal,
+  EditPositionModal,
+  EditWatchItemModal,
+} from "./components/AddModals";
+import {
+  useAddPositionModal,
+  useAddWatchItemModal,
+} from "./hooks/useAddAssetModals";
 import { useAlerts } from "./hooks/useAlerts";
 import { useAssetSorting } from "./hooks/useAssetSorting";
 import { useInitialView } from "./hooks/useInitialView";
@@ -23,10 +31,15 @@ import { ReportsPage } from "./pages/ReportsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { WatchlistPage } from "./pages/WatchlistPage";
 import { supabase } from "./supabaseClient";
+import type { Position, WatchItem } from "./types";
 
 export default function MainScreen() {
   const [activeView, setActiveView] = useInitialView();
   const [helpSearch, setHelpSearch] = useState("");
+  const [editingPosition, setEditingPosition] = useState<Position | null>(null);
+  const [editingWatchItem, setEditingWatchItem] = useState<WatchItem | null>(
+    null,
+  );
 
   const [session, setSession] = useState<Session | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -57,7 +70,11 @@ export default function MainScreen() {
     resetAppData,
     importDemoPortfolio,
     addPosition,
+    updatePosition,
+    deletePosition,
     addWatchItem,
+    updateWatchItem,
+    deleteWatchItem,
   } = useSellSmartData(session, setActiveView);
 
   const {
@@ -84,32 +101,59 @@ export default function MainScreen() {
     analytics.overallRisk,
     settings,
     readAlertIds,
-    saveReadAlerts
+    saveReadAlerts,
   );
 
   const insights = useInsights(
     positions,
     watchlist,
     analytics.overallRisk,
-    analytics.highRiskPositions.length
+    analytics.highRiskPositions.length,
   );
 
   const { pageTitle, pageSubtitle } = usePageHeader(activeView);
   const addPositionModal = useAddPositionModal(
     addPosition,
     setActiveView,
-    setExpandedTicker
+    setExpandedTicker,
   );
   const addWatchItemModal = useAddWatchItemModal(
     addWatchItem,
     setActiveView,
-    setExpandedTicker
+    setExpandedTicker,
   );
 
   const reportGeneratedAt = new Date().toLocaleDateString();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+  };
+
+  const handleDeletePosition = async (ticker: string) => {
+    await deletePosition(ticker);
+    setExpandedTicker(null);
+  };
+
+  const handleUpdatePosition = async (
+    oldTicker: string,
+    ticker: string,
+    shares: number,
+    avgBuyPrice: number,
+  ) => {
+    await updatePosition(oldTicker, ticker, shares, avgBuyPrice);
+    setExpandedTicker(ticker);
+    setActiveView("portfolio");
+  };
+
+  const handleDeleteWatchItem = async (ticker: string) => {
+    await deleteWatchItem(ticker);
+    setExpandedTicker(null);
+  };
+
+  const handleUpdateWatchItem = async (oldTicker: string, ticker: string) => {
+    await updateWatchItem(oldTicker, ticker);
+    setExpandedTicker(ticker);
+    setActiveView("watchlist");
   };
 
   if (authLoading) {
@@ -169,6 +213,8 @@ export default function MainScreen() {
           portfolioInsight={analytics.portfolioInsight}
           topDrivers={analytics.topDrivers}
           setActiveView={setActiveView}
+          onEditPosition={setEditingPosition}
+          onDeletePosition={handleDeletePosition}
         />
       )}
 
@@ -185,6 +231,8 @@ export default function MainScreen() {
           topDrivers={analytics.topDrivers}
           setActiveView={setActiveView}
           onAddTicker={addWatchItemModal.open}
+          onEditWatchItem={setEditingWatchItem}
+          onDeleteWatchItem={handleDeleteWatchItem}
         />
       )}
 
@@ -248,12 +296,28 @@ export default function MainScreen() {
         />
       )}
 
+      {editingPosition && (
+        <EditPositionModal
+          position={editingPosition}
+          onSubmit={handleUpdatePosition}
+          onClose={() => setEditingPosition(null)}
+        />
+      )}
+
       {addWatchItemModal.isOpen && (
         <AddWatchItemModal
           newWatchTicker={addWatchItemModal.newWatchTicker}
           setNewWatchTicker={addWatchItemModal.setNewWatchTicker}
           onSubmit={addWatchItemModal.submit}
           onClose={addWatchItemModal.close}
+        />
+      )}
+
+      {editingWatchItem && (
+        <EditWatchItemModal
+          item={editingWatchItem}
+          onSubmit={handleUpdateWatchItem}
+          onClose={() => setEditingWatchItem(null)}
         />
       )}
     </SellSmartLayout>

@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 
-import { enrichPositionWithApi, enrichWatchItemWithApi } from "../api/predictions";
+import {
+  enrichPositionWithApi,
+  enrichWatchItemWithApi,
+} from "../api/predictions";
 import {
   ensureUserSettings,
   loadPositions,
@@ -20,14 +23,13 @@ import { createBasePosition, createBaseWatchItem } from "../utils/risk";
 
 export function useSellSmartData(
   session: Session | null,
-  setActiveView: (view: ViewType) => void
+  setActiveView: (view: ViewType) => void,
 ) {
   const [positions, setPositions] = useState<Position[]>([]);
   const [watchlist, setWatchlist] = useState<WatchItem[]>([]);
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [readAlertIds, setReadAlertIds] = useState<string[]>([]);
   const [isLoadingPredictions, setIsLoadingPredictions] = useState(false);
-
 
   const saveReadAlerts = async (nextReadAlertIds: string[]) => {
     setReadAlertIds(nextReadAlertIds);
@@ -45,10 +47,7 @@ export function useSellSmartData(
       const enriched = await Promise.all(
         basePositions.map(async (position) => {
           try {
-            return await enrichPositionWithApi(
-              position,
-              session.access_token
-            );
+            return await enrichPositionWithApi(position, session.access_token);
           } catch (error) {
             console.error(error);
 
@@ -57,7 +56,7 @@ export function useSellSmartData(
               explanation: `Could not load API prediction for ${position.ticker}.`,
             };
           }
-        })
+        }),
       );
 
       setPositions(enriched);
@@ -66,41 +65,38 @@ export function useSellSmartData(
     }
   };
 
- const refreshWatchlist = async (baseWatchlist: WatchItem[]) => {
-  setIsLoadingPredictions(true);
+  const refreshWatchlist = async (baseWatchlist: WatchItem[]) => {
+    setIsLoadingPredictions(true);
 
-  try {
-    if (!session?.access_token) {
-      throw new Error("You must be signed in to load predictions");
+    try {
+      if (!session?.access_token) {
+        throw new Error("You must be signed in to load predictions");
+      }
+
+      const enriched = await Promise.all(
+        baseWatchlist.map(async (item) => {
+          try {
+            return await enrichWatchItemWithApi(item, session.access_token);
+          } catch (error) {
+            console.error(error);
+
+            return {
+              ...item,
+              explanation: `Could not load API prediction for ${item.ticker}.`,
+            };
+          }
+        }),
+      );
+
+      setWatchlist(enriched);
+    } finally {
+      setIsLoadingPredictions(false);
     }
-
-    const enriched = await Promise.all(
-      baseWatchlist.map(async (item) => {
-        try {
-          return await enrichWatchItemWithApi(
-            item,
-            session.access_token
-          );
-        } catch (error) {
-          console.error(error);
-
-          return {
-            ...item,
-            explanation: `Could not load API prediction for ${item.ticker}.`,
-          };
-        }
-      })
-    );
-
-    setWatchlist(enriched);
-  } finally {
-    setIsLoadingPredictions(false);
-  }
-};
+  };
 
   const updateSetting = <K extends keyof AppSettings>(
     key: K,
-    value: AppSettings[K]
+    value: AppSettings[K],
   ) => {
     const nextSettings = {
       ...settings,
@@ -141,71 +137,122 @@ export function useSellSmartData(
     void refreshWatchlist(demoWatchlist);
   };
 
-const addPosition = async (
-  ticker: string,
-  shares: number,
-  avgBuyPrice: number
-) => {
-  if (!session?.access_token) {
-    console.error("You must be signed in to add positions.");
-    return;
-  }
+  const addPosition = async (
+    ticker: string,
+    shares: number,
+    avgBuyPrice: number,
+  ) => {
+    await updatePosition(ticker, ticker, shares, avgBuyPrice);
+  };
 
-  const basePosition = createBasePosition(ticker, shares, avgBuyPrice);
-  const nextPositions = [
-    ...positions.filter((position) => position.ticker !== ticker),
-    basePosition,
-  ];
+  const updatePosition = async (
+    oldTicker: string,
+    ticker: string,
+    shares: number,
+    avgBuyPrice: number,
+  ) => {
+    if (!session?.access_token) {
+      console.error("You must be signed in to update positions.");
+      return;
+    }
 
-  setPositions(nextPositions);
-  await replacePositions(nextPositions);
+    const normalizedOldTicker = oldTicker.trim().toUpperCase();
+    const normalizedTicker = ticker.trim().toUpperCase();
+    const basePosition = createBasePosition(
+      normalizedTicker,
+      shares,
+      avgBuyPrice,
+    );
 
-  try {
-    const enrichedPosition = await enrichPositionWithApi(
+    const nextPositions = [
+      ...positions.filter(
+        (position) =>
+          position.ticker !== normalizedOldTicker &&
+          position.ticker !== normalizedTicker,
+      ),
       basePosition,
-      session.access_token
+    ];
+
+    setPositions(nextPositions);
+    await replacePositions(nextPositions);
+
+    try {
+      const enrichedPosition = await enrichPositionWithApi(
+        basePosition,
+        session.access_token,
+      );
+
+      setPositions((currentPositions) =>
+        currentPositions.map((position) =>
+          position.ticker === normalizedTicker ? enrichedPosition : position,
+        ),
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const deletePosition = async (ticker: string) => {
+    const normalizedTicker = ticker.trim().toUpperCase();
+    const nextPositions = positions.filter(
+      (position) => position.ticker !== normalizedTicker,
     );
 
-    setPositions((currentPositions) =>
-      currentPositions.map((position) =>
-        position.ticker === ticker ? enrichedPosition : position
-      )
-    );
-  } catch (error) {
-    console.error(error);
-  }
-};
+    setPositions(nextPositions);
+    await replacePositions(nextPositions);
+  };
 
- const addWatchItem = async (ticker: string) => {
-  if (!session?.access_token) {
-    console.error("You must be signed in to add watchlist items.");
-    return;
-  }
+  const addWatchItem = async (ticker: string) => {
+    await updateWatchItem(ticker, ticker);
+  };
 
-  const baseItem = createBaseWatchItem(ticker);
-  const nextWatchlist = [
-    ...watchlist.filter((item) => item.ticker !== ticker),
-    baseItem,
-  ];
+  const updateWatchItem = async (oldTicker: string, ticker: string) => {
+    if (!session?.access_token) {
+      console.error("You must be signed in to update watchlist items.");
+      return;
+    }
 
-  setWatchlist(nextWatchlist);
-  await replaceWatchlist(nextWatchlist);
+    const normalizedOldTicker = oldTicker.trim().toUpperCase();
+    const normalizedTicker = ticker.trim().toUpperCase();
+    const baseItem = createBaseWatchItem(normalizedTicker);
 
-  try {
-    const enrichedItem = await enrichWatchItemWithApi(
+    const nextWatchlist = [
+      ...watchlist.filter(
+        (item) =>
+          item.ticker !== normalizedOldTicker &&
+          item.ticker !== normalizedTicker,
+      ),
       baseItem,
-      session.access_token
+    ];
+
+    setWatchlist(nextWatchlist);
+    await replaceWatchlist(nextWatchlist);
+
+    try {
+      const enrichedItem = await enrichWatchItemWithApi(
+        baseItem,
+        session.access_token,
+      );
+
+      setWatchlist((currentWatchlist) =>
+        currentWatchlist.map((item) =>
+          item.ticker === normalizedTicker ? enrichedItem : item,
+        ),
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const deleteWatchItem = async (ticker: string) => {
+    const normalizedTicker = ticker.trim().toUpperCase();
+    const nextWatchlist = watchlist.filter(
+      (item) => item.ticker !== normalizedTicker,
     );
 
-    setWatchlist((currentWatchlist) =>
-      currentWatchlist.map((item) =>
-        item.ticker === ticker ? enrichedItem : item
-      )
-    );
-  } catch (error) {
-    console.error(error);
-  }
-};
+    setWatchlist(nextWatchlist);
+    await replaceWatchlist(nextWatchlist);
+  };
 
   useEffect(() => {
     if (!session) return;
@@ -267,6 +314,10 @@ const addPosition = async (
     resetAppData,
     importDemoPortfolio,
     addPosition,
+    updatePosition,
+    deletePosition,
     addWatchItem,
+    updateWatchItem,
+    deleteWatchItem,
   };
 }

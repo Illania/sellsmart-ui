@@ -626,7 +626,7 @@ button {
 
 .table-head {
   display: grid;
-  grid-template-columns: 1.25fr 0.75fr 0.55fr 0.95fr 32px;
+  grid-template-columns: 1.25fr 0.75fr 0.55fr minmax(320px, 1fr) 96px;
   gap: 18px;
   margin-bottom: 12px;
   padding: 0 10px;
@@ -643,7 +643,7 @@ button {
 .position-row {
   min-height: 126px;
   display: grid;
-  grid-template-columns: 1.25fr 0.75fr 0.55fr 0.95fr 32px;
+  grid-template-columns: 1.25fr 0.75fr 0.55fr minmax(320px, 1fr) 96px;
   align-items: center;
   gap: 18px;
   padding: 18px;
@@ -693,6 +693,7 @@ button {
   margin: 0;
   color: var(--muted);
   line-height: 1.45;
+  max-width: none;
 }
 
 .position-main span {
@@ -775,6 +776,10 @@ button {
 .risk-label.moderate { color: var(--yellow); }
 .risk-label.low { color: var(--green); }
 
+.action-cell {
+  min-width: 0;
+}
+
 .action-cell strong {
   display: flex;
   align-items: center;
@@ -784,7 +789,6 @@ button {
 }
 
 .action-cell p {
-  max-width: 265px;
   font-size: 14px;
   opacity: 0.9;
 }
@@ -1912,8 +1916,30 @@ button {
   align-items: flex-start;
 }
 
+.position-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.position-card-risk {
+  margin-top: 18px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 24px;
+}
+
 .position-card-risk .position-summary {
-  max-width: 230px;
+  max-width: none;
+  margin-right: 0;
+}
+
+.position-card:hover .asset-card-actions,
+.watchlist-card:hover .asset-card-actions {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .table-head.hidden {
@@ -2169,4 +2195,63 @@ button {
   margin: 18px 0 0;
   font-size: 13px;
   text-align: center;
+}
+
+/* =========================
+   Asset Actions
+   ========================= */
+
+.asset-card-actions,
+.asset-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+.position-card:hover .asset-card-actions,
+.watchlist-card:hover .asset-card-actions,
+.position-row:hover .asset-row-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.asset-card-actions {
+  margin-left: auto;
+}
+
+.asset-row-actions {
+  justify-content: flex-end;
+}
+
+.asset-action-button {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  background: rgba(15, 23, 42, 0.72);
+  color: #cbd5e1;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.asset-action-button:hover {
+  transform: translateY(-1px);
+  color: var(--text);
+  border-color: rgba(91, 108, 255, 0.46);
+  background: rgba(30, 41, 59, 0.84);
+}
+
+.asset-action-button.danger:hover {
+  color: var(--red);
+  border-color: rgba(239, 68, 68, 0.45);
+  background: rgba(239, 68, 68, 0.1);
 }

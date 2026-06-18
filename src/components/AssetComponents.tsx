@@ -216,6 +216,7 @@ export function WatchlistCard({
           >
             <Edit3 size={16} />
           </button>
+
           <button
             type="button"
             className="asset-action-button danger"
@@ -227,7 +228,15 @@ export function WatchlistCard({
           >
             <Trash2 size={16} />
           </button>
-          <RiskRing score={item.riskScore} level={item.riskLevel} />
+
+          <button
+            type="button"
+            className="icon-button row-button"
+            onClick={onOpen}
+            aria-label={`Open ${item.ticker} details`}
+          >
+            <ChevronRight size={20} />
+          </button>
         </div>
       </div>
 
@@ -240,30 +249,19 @@ export function WatchlistCard({
 
       <Sparkline data={item.chart} tone="purple" />
 
-      <div className="watchlist-card-action">
-        <strong className={`action ${actionClass}`}>
-          {item.action}
-          {item.action === "Reduce" && <TrendingDown size={16} />}
-          {item.action === "Watch" && <span>—</span>}
-        </strong>
+      <div className="watchlist-card-risk">
+        <RiskRing score={item.riskScore} level={item.riskLevel} />
 
-        <p>{item.explanation}</p>
+        <div>
+          <strong className={`action ${actionClass}`}>
+            {item.action}
+            {item.action === "Reduce" && <TrendingDown size={16} />}
+            {item.action === "Watch" && <span>—</span>}
+          </strong>
 
-        {item.marketRegime && (
-          <div className="position-meta">
-            <span>{item.marketRegime}</span>
-            {item.probabilityOfDrop !== undefined && (
-              <span>
-                {(item.probabilityOfDrop * 100).toFixed(1)}% drop probability
-              </span>
-            )}
-          </div>
-        )}
+          <p className="position-summary">{item.explanation}</p>
+        </div>
       </div>
-
-      <button className="mini-link-button" onClick={onOpen}>
-        View details <ChevronRight size={16} />
-      </button>
     </article>
   );
 }

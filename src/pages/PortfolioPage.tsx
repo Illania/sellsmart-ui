@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { PositionCard, PositionRow } from "../components/AssetComponents";
 import { Donut, Sparkline, SummaryCard } from "../components/Charts";
+import { TickerInsightsPanel } from "../components/TickerInsightsPanel";
 import type { ApiDriver, Position, RiskLevel, ViewType } from "../types";
 import { money } from "../utils/format";
 
@@ -33,6 +34,7 @@ type Props = {
   setActiveView: (view: ViewType) => void;
   onEditPosition: (position: Position) => void;
   onDeletePosition: (ticker: string) => void;
+  isMobile?: boolean;
 };
 
 export function PortfolioPage({
@@ -55,7 +57,13 @@ export function PortfolioPage({
   setActiveView,
   onEditPosition,
   onDeletePosition,
+  isMobile = false,
 }: Props) {
+  const effectivePortfolioViewMode = isMobile ? "grid" : portfolioViewMode;
+  const selectedAsset = sortedPositions.find(
+    (item) => item.ticker === expandedTicker,
+  );
+
   return (
     <>
       <section className="summary-grid">
@@ -149,6 +157,7 @@ export function PortfolioPage({
         <section className="positions-panel">
           <div className="panel-header">
             <h2>Your Positions</h2>
+
             <div className="sort-area">
               <span>Sort by</span>
               <select
@@ -161,26 +170,35 @@ export function PortfolioPage({
                 <option value="price">Price</option>
                 <option value="ticker">Ticker A-Z</option>
               </select>
-              <button
-                type="button"
-                className={`icon-button ${portfolioViewMode === "grid" ? "active" : ""}`}
-                onClick={() => setPortfolioViewMode("grid")}
-                aria-label="Grid view"
-              >
-                <Grid2X2 size={18} />
-              </button>
-              <button
-                type="button"
-                className={`icon-button ${portfolioViewMode === "list" ? "active" : ""}`}
-                onClick={() => setPortfolioViewMode("list")}
-                aria-label="List view"
-              >
-                <List size={18} />
-              </button>
+
+              {!isMobile && (
+                <>
+                  <button
+                    type="button"
+                    className={`icon-button ${
+                      portfolioViewMode === "grid" ? "active" : ""
+                    }`}
+                    onClick={() => setPortfolioViewMode("grid")}
+                    aria-label="Grid view"
+                  >
+                    <Grid2X2 size={18} />
+                  </button>
+                  <button
+                    type="button"
+                    className={`icon-button ${
+                      portfolioViewMode === "list" ? "active" : ""
+                    }`}
+                    onClick={() => setPortfolioViewMode("list")}
+                    aria-label="List view"
+                  >
+                    <List size={18} />
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
-          {portfolioViewMode === "list" && (
+          {effectivePortfolioViewMode === "list" && (
             <div className="table-head">
               <span>Position</span>
               <span>Value / PNL</span>
@@ -191,15 +209,21 @@ export function PortfolioPage({
 
           <div
             className={
-              portfolioViewMode === "grid" ? "position-grid" : "position-list"
+              effectivePortfolioViewMode === "grid"
+                ? "position-grid"
+                : "position-list"
             }
           >
             {sortedPositions.map((position) =>
-              portfolioViewMode === "grid" ? (
+              effectivePortfolioViewMode === "grid" ? (
                 <PositionCard
                   key={position.ticker}
                   position={position}
-                  onOpen={() => setExpandedTicker(position.ticker)}
+                  onOpen={() =>
+                    setExpandedTicker(
+                      expandedTicker === position.ticker ? null : position.ticker,
+                    )
+                  }
                   onEdit={() => onEditPosition(position)}
                   onDelete={() => onDeletePosition(position.ticker)}
                 />
@@ -221,6 +245,13 @@ export function PortfolioPage({
               ),
             )}
           </div>
+
+          {isMobile && (
+            <TickerInsightsPanel
+              asset={selectedAsset}
+              onClose={() => setExpandedTicker(null)}
+            />
+          )}
         </section>
 
         <PortfolioRightRail
@@ -250,6 +281,7 @@ function PortfolioRightRail({
           <Donut segments={riskDistribution} />
         </div>
       </section>
+
       <section className="side-card">
         <h3>Top Risk Drivers</h3>
         <ul className="driver-list">
@@ -269,6 +301,7 @@ function PortfolioRightRail({
           )}
         </ul>
       </section>
+
       <section className="side-card">
         <h3>Actions Summary</h3>
         <button

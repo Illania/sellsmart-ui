@@ -75,7 +75,7 @@ export function RiskRing({ score, level }: { score: number; level: RiskLevel }) 
 
   return (
     <div className={`risk-ring risk-${level}`}>
-      <svg viewBox="0 0 72 72">
+      <svg width="72" height="72" viewBox="0 0 72 72">
         <circle cx="36" cy="36" r={radius} className="ring-bg" />
         <circle
           cx="36"

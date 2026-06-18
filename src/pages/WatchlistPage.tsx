@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { WatchlistCard, WatchlistRow } from "../components/AssetComponents";
 import { Donut } from "../components/Charts";
+import { TickerInsightsPanel } from "../components/TickerInsightsPanel";
 import type { ApiDriver, RiskLevel, ViewType, WatchItem } from "../types";
 
 type DriverWithTicker = ApiDriver & { ticker: string };
@@ -27,6 +28,7 @@ type Props = {
   onAddTicker: () => void;
   onEditWatchItem: (item: WatchItem) => void;
   onDeleteWatchItem: (ticker: string) => void;
+  isMobile?: boolean;
 };
 
 export function WatchlistPage({
@@ -43,7 +45,13 @@ export function WatchlistPage({
   onAddTicker,
   onEditWatchItem,
   onDeleteWatchItem,
+  isMobile = false,
 }: Props) {
+  const effectivePortfolioViewMode = isMobile ? "grid" : portfolioViewMode;
+  const selectedAsset = sortedWatchlist.find(
+    (item) => item.ticker === expandedTicker,
+  );
+
   return (
     <>
       <section className="insight-card">
@@ -58,7 +66,7 @@ export function WatchlistPage({
           </div>
         </div>
 
-        <button className="primary-button" onClick={onAddTicker}>
+        <button type="button" className="primary-button" onClick={onAddTicker}>
           Add Ticker <Plus size={18} />
         </button>
       </section>
@@ -67,6 +75,7 @@ export function WatchlistPage({
         <section className="positions-panel">
           <div className="panel-header">
             <h2>Your Watchlist</h2>
+
             <div className="sort-area">
               <span>Sort by</span>
               <select
@@ -77,26 +86,36 @@ export function WatchlistPage({
                 <option value="price">Price</option>
                 <option value="ticker">Ticker A-Z</option>
               </select>
-              <button
-                type="button"
-                className={`icon-button ${portfolioViewMode === "grid" ? "active" : ""}`}
-                onClick={() => setPortfolioViewMode("grid")}
-                aria-label="Grid view"
-              >
-                <Grid2X2 size={18} />
-              </button>
-              <button
-                type="button"
-                className={`icon-button ${portfolioViewMode === "list" ? "active" : ""}`}
-                onClick={() => setPortfolioViewMode("list")}
-                aria-label="List view"
-              >
-                <List size={18} />
-              </button>
+
+              {!isMobile && (
+                <>
+                  <button
+                    type="button"
+                    className={`icon-button ${
+                      portfolioViewMode === "grid" ? "active" : ""
+                    }`}
+                    onClick={() => setPortfolioViewMode("grid")}
+                    aria-label="Grid view"
+                  >
+                    <Grid2X2 size={18} />
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`icon-button ${
+                      portfolioViewMode === "list" ? "active" : ""
+                    }`}
+                    onClick={() => setPortfolioViewMode("list")}
+                    aria-label="List view"
+                  >
+                    <List size={18} />
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
-          {portfolioViewMode === "list" && (
+          {effectivePortfolioViewMode === "list" && (
             <div className="table-head">
               <span>Ticker</span>
               <span>Price</span>
@@ -107,15 +126,21 @@ export function WatchlistPage({
 
           <div
             className={
-              portfolioViewMode === "grid" ? "position-grid" : "position-list"
+              effectivePortfolioViewMode === "grid"
+                ? "position-grid"
+                : "position-list"
             }
           >
             {sortedWatchlist.map((item) =>
-              portfolioViewMode === "grid" ? (
+              effectivePortfolioViewMode === "grid" ? (
                 <WatchlistCard
                   key={item.ticker}
                   item={item}
-                  onOpen={() => setExpandedTicker(item.ticker)}
+                  onOpen={() =>
+                    setExpandedTicker(
+                      expandedTicker === item.ticker ? null : item.ticker,
+                    )
+                  }
                   onEdit={() => onEditWatchItem(item)}
                   onDelete={() => onDeleteWatchItem(item.ticker)}
                 />
@@ -135,6 +160,13 @@ export function WatchlistPage({
               ),
             )}
           </div>
+
+          {isMobile && (
+            <TickerInsightsPanel
+              asset={selectedAsset}
+              onClose={() => setExpandedTicker(null)}
+            />
+          )}
         </section>
 
         <WatchlistRightRail
@@ -164,6 +196,7 @@ function WatchlistRightRail({
           <Donut segments={riskDistribution} />
         </div>
       </section>
+
       <section className="side-card">
         <h3>Top Risk Drivers</h3>
         <ul className="driver-list">
@@ -183,6 +216,7 @@ function WatchlistRightRail({
           )}
         </ul>
       </section>
+
       <section className="side-card">
         <h3>Actions Summary</h3>
         <button

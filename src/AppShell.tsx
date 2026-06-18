@@ -78,15 +78,16 @@ export default function MainScreen() {
   } = useSellSmartData(session, setActiveView);
 
   const {
-    sortBy,
-    setSortBy,
-    portfolioViewMode,
-    setPortfolioViewMode,
-    expandedTicker,
-    setExpandedTicker,
-    sortedPositions,
-    sortedWatchlist,
-  } = useAssetSorting(activeView, positions, watchlist);
+  sortBy,
+  setSortBy,
+  portfolioViewMode,
+  setPortfolioViewMode,
+  expandedTicker,
+  setExpandedTicker,
+  isMobile,
+  sortedPositions,
+  sortedWatchlist,
+} = useAssetSorting(activeView, positions, watchlist);
 
   const analytics = usePortfolioAnalytics(activeView, positions, watchlist);
 
@@ -215,6 +216,7 @@ export default function MainScreen() {
           setActiveView={setActiveView}
           onEditPosition={setEditingPosition}
           onDeletePosition={handleDeletePosition}
+          isMobile={isMobile}
         />
       )}
 
@@ -233,6 +235,7 @@ export default function MainScreen() {
           onAddTicker={addWatchItemModal.open}
           onEditWatchItem={setEditingWatchItem}
           onDeleteWatchItem={handleDeleteWatchItem}
+          isMobile={isMobile}
         />
       )}
 

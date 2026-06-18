@@ -81,6 +81,7 @@ export function SellSmartLayout({
             return (
               <button
                 key={item.label}
+                type="button"
                 className={`nav-item ${isActive ? "active" : ""}`}
                 onClick={() => setActiveView(item.view)}
               >
@@ -107,6 +108,7 @@ export function SellSmartLayout({
 
         <div className="sidebar-footer">
           <button
+            type="button"
             className={`nav-item ${activeView === "help" ? "active" : ""}`}
             onClick={() => setActiveView("help")}
           >
@@ -114,7 +116,7 @@ export function SellSmartLayout({
             Help Center
           </button>
 
-          <button className="nav-item" onClick={onLogout}>
+          <button type="button" className="nav-item" onClick={onLogout}>
             <LogOut size={18} />
             Log out
           </button>
@@ -133,7 +135,7 @@ export function SellSmartLayout({
               onMarkAllAlertsAsRead={onMarkAllAlertsAsRead}
             />
 
-            <button className="secondary-button" onClick={onImportDemo}>
+            <button type="button" className="secondary-button" onClick={onImportDemo}>
               <Import size={16} />
               Import Demo
             </button>
@@ -177,6 +179,40 @@ export function SellSmartLayout({
 
         {children}
 
+        <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = item.view === activeView;
+
+            return (
+              <button
+                key={item.label}
+                type="button"
+                className={`mobile-nav-button ${isActive ? "active" : ""}`}
+                onClick={() => setActiveView(item.view)}
+                aria-label={item.label}
+                title={item.label}
+              >
+                <Icon size={20} />
+
+                {item.label === "Alerts" && unreadAlertsCount > 0 && (
+                  <span className="mobile-nav-badge">{unreadAlertsCount}</span>
+                )}
+              </button>
+            );
+          })}
+
+          <button
+            type="button"
+            className={`mobile-nav-button ${activeView === "help" ? "active" : ""}`}
+            onClick={() => setActiveView("help")}
+            aria-label="Help"
+            title="Help"
+          >
+            <CircleHelp size={20} />
+          </button>
+        </nav>
+
         <footer className="disclaimer">
           <CircleHelp size={18} />
           <p>
@@ -203,7 +239,7 @@ function TopbarPrimaryAction({
 }) {
   if (activeView === "portfolio") {
     return (
-      <button className="secondary-button" onClick={onAddPosition}>
+      <button type="button" className="secondary-button" onClick={onAddPosition}>
         <Plus size={18} />
         Add Position
       </button>
@@ -212,7 +248,7 @@ function TopbarPrimaryAction({
 
   if (activeView === "watchlist") {
     return (
-      <button className="secondary-button" onClick={onAddTicker}>
+      <button type="button" className="secondary-button" onClick={onAddTicker}>
         <Plus size={18} />
         Add Ticker
       </button>
@@ -221,7 +257,11 @@ function TopbarPrimaryAction({
 
   if (activeView === "alerts") {
     return (
-      <button className="secondary-button" onClick={onMarkAllAlertsAsRead}>
+      <button
+        type="button"
+        className="secondary-button"
+        onClick={onMarkAllAlertsAsRead}
+      >
         Mark All Read
       </button>
     );
@@ -229,7 +269,7 @@ function TopbarPrimaryAction({
 
   if (activeView === "reports") {
     return (
-      <button className="secondary-button" onClick={() => window.print()}>
+      <button type="button" className="secondary-button" onClick={() => window.print()}>
         <FileText size={18} />
         Export PDF
       </button>
@@ -237,7 +277,7 @@ function TopbarPrimaryAction({
   }
 
   return (
-    <button className="secondary-button" onClick={onAddPosition}>
+    <button type="button" className="secondary-button" onClick={onAddPosition}>
       <Plus size={18} />
       Add Position
     </button>

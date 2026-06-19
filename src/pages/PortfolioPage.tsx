@@ -65,7 +65,7 @@ export function PortfolioPage({
   );
 
   return (
-    <>
+    <section data-tour="portfolio-page">
       <section className="summary-grid">
         <SummaryCard title="Portfolio Value">
           <h2>{money.format(totalValue)}</h2>
@@ -208,6 +208,7 @@ export function PortfolioPage({
           )}
 
           <div
+            data-tour="portfolio-list"
             className={
               effectivePortfolioViewMode === "grid"
                 ? "position-grid"
@@ -260,7 +261,7 @@ export function PortfolioPage({
           setActiveView={setActiveView}
         />
       </div>
-    </>
+    </section>
   );
 }
 

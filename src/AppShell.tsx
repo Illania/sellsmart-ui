@@ -3,6 +3,7 @@ import type { Session } from "@supabase/supabase-js";
 
 import "./AppShell.css";
 
+import { SellSmartOnboarding } from "./components/onboarding/SellSmartOnboarding";
 import {
   AddPositionModal,
   AddWatchItemModal,
@@ -186,6 +187,13 @@ export default function MainScreen() {
         undefined
       }
     >
+
+      <SellSmartOnboarding
+        user={session.user}
+        setActiveView={setActiveView}
+        onImportDemo={importDemoPortfolio}
+      />
+
       {activeView === "dashboard" && (
         <DashboardPage
           overallRisk={analytics.overallRisk}

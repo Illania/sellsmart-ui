@@ -52,7 +52,7 @@ export function WatchlistPage({
   );
 
   return (
-    <>
+    <section data-tour="watchlist-page">
       <section className="insight-card">
         <div className="insight-copy">
           <Brain size={34} />
@@ -65,7 +65,12 @@ export function WatchlistPage({
           </div>
         </div>
 
-        <button type="button" className="primary-button" onClick={onAddTicker}>
+        <button
+          type="button"
+          className="primary-button"
+          onClick={onAddTicker}
+          data-tour="add-watchlist"
+        >
           Add Ticker <Plus size={18} />
         </button>
       </section>
@@ -172,7 +177,7 @@ export function WatchlistPage({
           setActiveView={setActiveView}
         />
       </div>
-    </>
+    </section>
   );
 }
 

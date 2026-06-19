@@ -32,7 +32,7 @@ export function InsightsPage({
   setExpandedTicker,
 }: Props) {
   return (
-    <section className="insights-page">
+    <section className="insights-page" data-tour="insights-page">
       <div className="panel-header">
         <div>
           <h2>AI Insights</h2>

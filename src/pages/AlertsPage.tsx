@@ -10,7 +10,7 @@ type Props = {
 
 export function AlertsPage({ alerts, unreadAlertsCount, markAlertAsRead, markAllAlertsAsRead }: Props) {
   return (
-    <section className="alerts-page">
+    <section className="alerts-page" data-tour="alerts-page">
       <div className="panel-header">
         <div>
           <h2>Risk Alerts</h2>

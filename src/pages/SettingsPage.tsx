@@ -8,7 +8,7 @@ type Props = {
 
 export function SettingsPage({ settings, updateSetting, resetAppData }: Props) {
   return (
-    <section className="settings-page">
+    <section className="settings-page" data-tour="settings-page">
       <section className="settings-grid">
         <article className="settings-card">
           <h2>Risk Thresholds</h2>
@@ -85,6 +85,18 @@ export function SettingsPage({ settings, updateSetting, resetAppData }: Props) {
               <option value="reports">Reports</option>
             </select>
           </label>
+        </article>
+
+        <article className="settings-card">
+          <h2>Onboarding</h2>
+          <p>Replay the SellSmart product tour at any time.</p>
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => window.sellsmartReplayOnboarding?.()}
+          >
+            Replay onboarding
+          </button>
         </article>
 
         <article className="settings-card danger-zone">

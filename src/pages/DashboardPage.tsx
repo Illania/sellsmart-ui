@@ -28,8 +28,8 @@ export function DashboardPage({
   setActiveView,
 }: Props) {
   return (
-    <section className="dashboard-page">
-      <section className="summary-grid">
+    <section className="dashboard-page" data-tour="dashboard-page">
+      <section className="summary-grid" data-tour="dashboard-summary">
         <SummaryCard title="Portfolio Risk">
           <div className="score-line">
             <strong>{overallRisk}</strong>

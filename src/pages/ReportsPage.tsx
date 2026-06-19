@@ -26,7 +26,7 @@ export function ReportsPage({
   topDrivers,
 }: Props) {
   return (
-    <section id="sellsmart-report" className="reports-page">
+    <section id="sellsmart-report" className="reports-page" data-tour="reports-page">
       <div className="panel-header no-print">
         <div>
           <h2>Weekly AI Risk Report</h2>

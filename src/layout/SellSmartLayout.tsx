@@ -347,7 +347,12 @@ function TopbarPrimaryAction({
 }) {
   if (activeView === "portfolio") {
     return (
-      <button type="button" className="secondary-button" onClick={onAddPosition}>
+      <button
+        type="button"
+        className="secondary-button"
+        onClick={onAddPosition}
+        data-tour="add-position"
+      >
         <Plus size={18} />
         Add Position
       </button>
@@ -356,7 +361,12 @@ function TopbarPrimaryAction({
 
   if (activeView === "watchlist") {
     return (
-      <button type="button" className="secondary-button" onClick={onAddTicker}>
+      <button
+        type="button"
+        className="secondary-button"
+        onClick={onAddTicker}
+        data-tour="add-watchlist"
+      >
         <Plus size={18} />
         Add Ticker
       </button>
@@ -385,7 +395,12 @@ function TopbarPrimaryAction({
   }
 
   return (
-    <button type="button" className="secondary-button" onClick={onAddPosition}>
+    <button
+      type="button"
+      className="secondary-button"
+      onClick={onAddPosition}
+      data-tour="add-position"
+    >
       <Plus size={18} />
       Add Position
     </button>

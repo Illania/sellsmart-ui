@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { driver, type DriveStep } from "driver.js";
+import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
 
 import type { User } from "@supabase/supabase-js";

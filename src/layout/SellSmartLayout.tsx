@@ -30,6 +30,7 @@ type Props = {
   onMarkAllAlertsAsRead: () => void;
   onLogout: () => void;
   userEmail?: string;
+  userDisplayName?: string;
   userAvatarUrl?: string;
 };
 
@@ -59,28 +60,15 @@ export function SellSmartLayout({
   onMarkAllAlertsAsRead,
   onLogout,
   userEmail,
+  userDisplayName,
   userAvatarUrl,
 }: Props) {
-  const avatarText = getAvatarText(userEmail);
-  const [avatarUrl, setAvatarUrl] = useState(() =>
-    getResolvedAvatarUrl(userEmail, userAvatarUrl),
-  );
+  const avatarText = getAvatarText(userDisplayName || userEmail);
+  const [avatarUrl, setAvatarUrl] = useState(userAvatarUrl ?? "");
 
   useEffect(() => {
-    const updateAvatar = () => {
-      setAvatarUrl(getResolvedAvatarUrl(userEmail, userAvatarUrl));
-    };
-
-    updateAvatar();
-
-    window.addEventListener("storage", updateAvatar);
-    window.addEventListener("sellsmart-profile-updated", updateAvatar);
-
-    return () => {
-      window.removeEventListener("storage", updateAvatar);
-      window.removeEventListener("sellsmart-profile-updated", updateAvatar);
-    };
-  }, [userEmail, userAvatarUrl, activeView]);
+    setAvatarUrl(userAvatarUrl ?? "");
+  }, [userAvatarUrl]);
 
   return (
     <div className="app-shell">
@@ -405,28 +393,6 @@ function TopbarPrimaryAction({
       Add Position
     </button>
   );
-}
-
-function getResolvedAvatarUrl(email?: string, googleAvatarUrl?: string) {
-  const uploadedAvatarUrl = getProfileAvatar(email);
-
-  return uploadedAvatarUrl || googleAvatarUrl || "";
-}
-
-function getProfileAvatar(email?: string) {
-  if (!email) return "";
-
-  const storageKey = `sellsmart-profile-${email}`;
-  const raw = localStorage.getItem(storageKey);
-
-  if (!raw) return "";
-
-  try {
-    const profile = JSON.parse(raw) as { avatarUrl?: string };
-    return profile.avatarUrl ?? "";
-  } catch {
-    return "";
-  }
 }
 
 function getAvatarText(email?: string) {

@@ -1,58 +1,85 @@
-import { Camera, Crown, LogOut, ShieldAlert, User } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Camera, Crown, LogOut, ShieldAlert, User as UserIcon } from "lucide-react";
+import { useEffect, useState, type ChangeEvent } from "react";
+import type { User } from "@supabase/supabase-js";
+
+import {
+  saveUserProfile,
+  type UserProfile,
+} from "../api/userProfile";
+
+const SAVE_FEEDBACK_MS = 1800;
+
+const emptyProfile = {
+  displayName: "",
+  avatarUrl: "",
+};
 
 type Props = {
+  user: User;
+  userProfile: UserProfile | null;
   userEmail?: string;
   userAvatarUrl?: string;
+  onProfileSaved: (profile: UserProfile) => void;
   onLogout: () => void;
   onResetAppData: () => void;
 };
 
-export function ProfilePage({ userEmail, userAvatarUrl, onLogout, onResetAppData }: Props) {
-  const storageKey = userEmail ? `sellsmart-profile-${userEmail}` : "sellsmart-profile";
-
-  const savedProfile = useMemo(() => {
-    const raw = localStorage.getItem(storageKey);
-
-    if (!raw) {
-      return {
-        displayName: "",
-        avatarUrl: "",
-      };
-    }
-
-    try {
-      return JSON.parse(raw) as {
-        displayName: string;
-        avatarUrl: string;
-      };
-    } catch {
-      return {
-        displayName: "",
-        avatarUrl: "",
-      };
-    }
-  }, [storageKey]);
-
-  const [displayName, setDisplayName] = useState(savedProfile.displayName);
-  const [avatarUrl, setAvatarUrl] = useState(savedProfile.avatarUrl || userAvatarUrl || "",);
+export function ProfilePage({
+  user,
+  userProfile,
+  userEmail,
+  userAvatarUrl,
+  onProfileSaved,
+  onLogout,
+  onResetAppData,
+}: Props) {
+  const [displayName, setDisplayName] = useState(
+    userProfile?.displayName ?? emptyProfile.displayName,
+  );
+  const [avatarUrl, setAvatarUrl] = useState(
+    userProfile?.avatarUrl || userAvatarUrl || emptyProfile.avatarUrl,
+  );
   const [saved, setSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setDisplayName(userProfile?.displayName ?? emptyProfile.displayName);
+    setAvatarUrl(userProfile?.avatarUrl || userAvatarUrl || emptyProfile.avatarUrl);
+  }, [userProfile, userAvatarUrl]);
 
   const avatarText = getAvatarText(displayName || userEmail);
 
-  const saveProfile = (next?: { displayName?: string; avatarUrl?: string }) => {
+  const saveProfile = async (next?: {
+    displayName?: string;
+    avatarUrl?: string;
+  }) => {
     const profile = {
       displayName: next?.displayName ?? displayName,
       avatarUrl: next?.avatarUrl ?? avatarUrl,
     };
 
-    localStorage.setItem(storageKey, JSON.stringify(profile));
-    setSaved(true);
+    try {
+      setIsSaving(true);
+      setSaveError(null);
 
-    window.setTimeout(() => setSaved(false), 1800);
+      const savedProfile = await saveUserProfile(user, profile);
+
+      onProfileSaved(savedProfile);
+      setDisplayName(savedProfile.displayName);
+      setAvatarUrl(savedProfile.avatarUrl || userAvatarUrl || "");
+      setSaved(true);
+
+      window.setTimeout(() => setSaved(false), SAVE_FEEDBACK_MS);
+    } catch (error) {
+      console.error(error);
+      setSaveError("Could not save profile. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
 
     if (!file) return;
@@ -63,17 +90,18 @@ export function ProfilePage({ userEmail, userAvatarUrl, onLogout, onResetAppData
       const nextAvatarUrl = String(reader.result ?? "");
 
       setAvatarUrl(nextAvatarUrl);
-      saveProfile({ avatarUrl: nextAvatarUrl });
+      void saveProfile({ avatarUrl: nextAvatarUrl });
     };
 
     reader.readAsDataURL(file);
   };
 
   const handleResetProfile = () => {
-    localStorage.removeItem(storageKey);
     setDisplayName("");
-    setAvatarUrl("");
+    setAvatarUrl(userAvatarUrl || "");
     setSaved(false);
+    setSaveError(null);
+    void saveProfile({ displayName: "", avatarUrl: "" });
   };
 
   return (
@@ -119,12 +147,14 @@ export function ProfilePage({ userEmail, userAvatarUrl, onLogout, onResetAppData
             <button
               type="button"
               className="primary-button profile-save-button"
-              onClick={() => saveProfile()}
+              onClick={() => void saveProfile()}
+              disabled={isSaving}
             >
-              Save profile
+              {isSaving ? "Saving..." : "Save profile"}
             </button>
 
             {saved && <p className="profile-saved-note">Profile saved</p>}
+            {saveError && <p className="profile-saved-note">{saveError}</p>}
           </div>
         </div>
 
@@ -149,7 +179,7 @@ export function ProfilePage({ userEmail, userAvatarUrl, onLogout, onResetAppData
 
         <div className="profile-card">
           <div className="profile-card-header">
-            <User size={22} />
+            <UserIcon size={22} />
             <div>
               <h2>Account actions</h2>
               <p>Manage your active session.</p>
@@ -167,7 +197,7 @@ export function ProfilePage({ userEmail, userAvatarUrl, onLogout, onResetAppData
             <ShieldAlert size={22} />
             <div>
               <h2>Danger zone</h2>
-              <p>These actions affect locally saved SellSmart data.</p>
+              <p>These actions affect your saved SellSmart data.</p>
             </div>
           </div>
 
@@ -176,6 +206,7 @@ export function ProfilePage({ userEmail, userAvatarUrl, onLogout, onResetAppData
               type="button"
               className="secondary-button profile-action-button"
               onClick={handleResetProfile}
+              disabled={isSaving}
             >
               Reset profile
             </button>

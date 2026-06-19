@@ -4,7 +4,7 @@ import "driver.js/dist/driver.css";
 
 import type { User } from "@supabase/supabase-js";
 import type { ViewType } from "../../types";
-import { supabase } from "../../supabaseClient";
+import { ensureUserProfile, updateOnboardingVersion } from "../../api/userProfile";
 import { onboardingSteps } from "./OnboardingSteps";
 import { OnboardingWelcomeModal } from "./OnboardingWelcomeModal";
 import "./onboarding.css";
@@ -38,13 +38,11 @@ export function SellSmartOnboarding({
 
     if (!user) return;
 
-    await supabase
-      .from("profiles")
-      .update({
-        onboarding_version: CURRENT_ONBOARDING_VERSION,
-        onboarding_completed_at: new Date().toISOString(),
-      })
-      .eq("id", user.id);
+    try {
+      await updateOnboardingVersion(user, CURRENT_ONBOARDING_VERSION);
+    } catch (error) {
+      console.error("Could not save onboarding completion", error);
+    }
   }, [user]);
 
   const checkCompleted = useCallback(async () => {
@@ -56,20 +54,19 @@ export function SellSmartOnboarding({
       return;
     }
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("onboarding_version")
-      .eq("id", user.id)
-      .maybeSingle();
+    let profile;
 
-    if (error) {
+    try {
+      profile = await ensureUserProfile(user);
+    } catch (error) {
+      console.error("Could not load user profile", error);
       setIsCompleted(localCompleted);
       setShowWelcome(!localCompleted);
       return;
     }
 
     const completed =
-      data?.onboarding_version === CURRENT_ONBOARDING_VERSION || localCompleted;
+      profile.onboardingVersion === CURRENT_ONBOARDING_VERSION || localCompleted;
 
     setIsCompleted(completed);
     setShowWelcome(!completed);

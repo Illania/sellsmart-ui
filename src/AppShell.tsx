@@ -32,6 +32,7 @@ import { ReportsPage } from "./pages/ReportsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { WatchlistPage } from "./pages/WatchlistPage";
 import { ProfilePage } from "./pages/ProfilePage";
+import { ensureUserProfile, type UserProfile } from "./api/userProfile";
 import { supabase } from "./supabaseClient";
 import type { Position, WatchItem } from "./types";
 
@@ -44,6 +45,7 @@ export default function MainScreen() {
   );
 
   const [session, setSession] = useState<Session | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
@@ -60,6 +62,34 @@ export default function MainScreen() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+
+  useEffect(() => {
+    if (!session?.user) {
+      setUserProfile(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadProfile = async () => {
+      try {
+        const profile = await ensureUserProfile(session.user);
+
+        if (!cancelled) {
+          setUserProfile(profile);
+        }
+      } catch (error) {
+        console.error("Could not load user profile", error);
+      }
+    };
+
+    void loadProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
 
   const {
     positions,
@@ -129,6 +159,7 @@ export default function MainScreen() {
   const reportGeneratedAt = new Date().toLocaleDateString();
 
   const handleLogout = async () => {
+    setUserProfile(null);
     await supabase.auth.signOut();
   };
 
@@ -181,9 +212,11 @@ export default function MainScreen() {
       onMarkAllAlertsAsRead={markAllAlertsAsRead}
       onLogout={handleLogout}
       userEmail={session.user.email ?? undefined}
+      userDisplayName={userProfile?.displayName || undefined}
       userAvatarUrl={
-        session.user.user_metadata.avatar_url ??
-        session.user.user_metadata.picture ??
+        userProfile?.avatarUrl ||
+        session.user.user_metadata.avatar_url ||
+        session.user.user_metadata.picture ||
         undefined
       }
     >
@@ -302,12 +335,15 @@ export default function MainScreen() {
 
       {activeView === "profile" && (
         <ProfilePage
+          user={session.user}
+          userProfile={userProfile}
           userEmail={session.user.email ?? undefined}
           userAvatarUrl={
             session.user.user_metadata.avatar_url ??
             session.user.user_metadata.picture ??
             undefined
           }
+          onProfileSaved={setUserProfile}
           onLogout={handleLogout}
           onResetAppData={resetAppData}
         />

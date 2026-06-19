@@ -3,10 +3,10 @@ import type { AppSettings, ViewType } from "../types";
 type Props = {
   settings: AppSettings;
   updateSetting: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
-  resetAppData: () => void;
+  resetDemoData: () => void;
 };
 
-export function SettingsPage({ settings, updateSetting, resetAppData }: Props) {
+export function SettingsPage({ settings, updateSetting, resetDemoData }: Props) {
   return (
     <section className="settings-page" data-tour="settings-page">
       <section className="settings-grid">
@@ -101,8 +101,8 @@ export function SettingsPage({ settings, updateSetting, resetAppData }: Props) {
 
         <article className="settings-card danger-zone">
           <h2>Demo Data</h2>
-          <p>Reset local portfolio, watchlist and alert read status.</p>
-          <button className="secondary-button" onClick={resetAppData}>Reset Demo Data</button>
+          <p>Remove only demo portfolio and watchlist items. Your real positions stay untouched.</p>
+          <button className="secondary-button" onClick={resetDemoData}>Reset Demo Data</button>
         </article>
       </section>
     </section>

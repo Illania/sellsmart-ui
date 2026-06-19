@@ -63,6 +63,7 @@ export function PositionCard({
           {position.currentPrice && (
             <> · {money.format(position.currentPrice)}</>
           )}
+          {position.isDemo && <em className="demo-data-badge">Demo</em>}
         </span>
       </div>
 
@@ -126,6 +127,7 @@ export function PositionRow({
             {position.currentPrice && (
               <> · {money.format(position.currentPrice)}</>
             )}
+            {position.isDemo && <em className="demo-data-badge">Demo</em>}
           </span>
         </div>
       </div>
@@ -202,7 +204,7 @@ export function WatchlistCard({
         <div className="watchlist-card-title">
           <h3>{item.ticker}</h3>
           <p>{item.company}</p>
-          <span>Watchlist</span>
+          <span>Watchlist{item.isDemo && <em className="demo-data-badge">Demo</em>}</span>
         </div>
 
         <div className="asset-card-actions">
@@ -275,7 +277,7 @@ export function WatchlistRow({
         <div>
           <h3>{item.ticker}</h3>
           <p>{item.company}</p>
-          <span>Watchlist</span>
+          <span>Watchlist{item.isDemo && <em className="demo-data-badge">Demo</em>}</span>
         </div>
       </div>
 

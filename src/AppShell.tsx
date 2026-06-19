@@ -99,7 +99,7 @@ export default function MainScreen() {
     isLoadingPredictions,
     saveReadAlerts,
     updateSetting,
-    resetAppData,
+    resetDemoData,
     importDemoPortfolio,
     addPosition,
     updatePosition,
@@ -329,7 +329,7 @@ export default function MainScreen() {
         <SettingsPage
           settings={settings}
           updateSetting={updateSetting}
-          resetAppData={resetAppData}
+          resetDemoData={resetDemoData}
         />
       )}
 
@@ -345,7 +345,7 @@ export default function MainScreen() {
           }
           onProfileSaved={setUserProfile}
           onLogout={handleLogout}
-          onResetAppData={resetAppData}
+          onResetDemoData={resetDemoData}
         />
       )}
 

@@ -38,7 +38,8 @@ export const getLogoClass = (ticker: string) => {
   return known[ticker] ?? "logo-jpm";
 };
 
-export const createBaseRiskAsset = (ticker: string): RiskAsset => ({
+export const createBaseRiskAsset = (ticker: string, isDemo = false): RiskAsset => ({
+  isDemo,
   ticker,
   company: getCompanyName(ticker),
   riskScore: 50,
@@ -52,8 +53,13 @@ export const createBaseRiskAsset = (ticker: string): RiskAsset => ({
   supportiveSignals: [],
 });
 
-export const createBasePosition = (ticker: string, shares: number, avgBuyPrice: number): Position => ({
-  ...createBaseRiskAsset(ticker),
+export const createBasePosition = (
+  ticker: string,
+  shares: number,
+  avgBuyPrice: number,
+  isDemo = false,
+): Position => ({
+  ...createBaseRiskAsset(ticker, isDemo),
   shares,
   avgBuyPrice,
   value: shares * avgBuyPrice,
@@ -61,8 +67,8 @@ export const createBasePosition = (ticker: string, shares: number, avgBuyPrice: 
   pnlPct: 0,
 });
 
-export const createBaseWatchItem = (ticker: string): WatchItem => ({
-  ...createBaseRiskAsset(ticker),
+export const createBaseWatchItem = (ticker: string, isDemo = false): WatchItem => ({
+  ...createBaseRiskAsset(ticker, isDemo),
 });
 
 export const normalizePosition = (position: Partial<Position>): Position => {
@@ -72,7 +78,7 @@ export const normalizePosition = (position: Partial<Position>): Position => {
     (Number(position.value) && shares > 0 ? Number(position.value) / shares : 100);
 
   return {
-    ...createBasePosition(ticker, shares, avgBuyPrice),
+    ...createBasePosition(ticker, shares, avgBuyPrice, Boolean(position.isDemo)),
     ...position,
     ticker,
     company: position.company ?? getCompanyName(ticker),
@@ -86,6 +92,7 @@ export const normalizePosition = (position: Partial<Position>): Position => {
     action: position.action ?? "Watch",
     drivers: position.drivers ?? [],
     supportiveSignals: position.supportiveSignals ?? [],
+    isDemo: Boolean(position.isDemo),
   };
 };
 
@@ -93,7 +100,7 @@ export const normalizeWatchItem = (item: Partial<WatchItem>): WatchItem => {
   const ticker = (item.ticker ?? "TSLA").toUpperCase();
 
   return {
-    ...createBaseWatchItem(ticker),
+    ...createBaseWatchItem(ticker, Boolean(item.isDemo)),
     ...item,
     ticker,
     company: item.company ?? getCompanyName(ticker),
@@ -102,6 +109,7 @@ export const normalizeWatchItem = (item: Partial<WatchItem>): WatchItem => {
     action: item.action ?? "Watch",
     drivers: item.drivers ?? [],
     supportiveSignals: item.supportiveSignals ?? [],
+    isDemo: Boolean(item.isDemo),
   };
 };
 

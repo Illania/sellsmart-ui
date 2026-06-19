@@ -21,7 +21,7 @@ type Props = {
   userAvatarUrl?: string;
   onProfileSaved: (profile: UserProfile) => void;
   onLogout: () => void;
-  onResetAppData: () => void;
+  onResetDemoData: () => void;
 };
 
 export function ProfilePage({
@@ -31,7 +31,7 @@ export function ProfilePage({
   userAvatarUrl,
   onProfileSaved,
   onLogout,
-  onResetAppData,
+  onResetDemoData,
 }: Props) {
   const [displayName, setDisplayName] = useState(
     userProfile?.displayName ?? emptyProfile.displayName,
@@ -214,9 +214,9 @@ export function ProfilePage({
             <button
               type="button"
               className="secondary-button profile-action-button danger-button"
-              onClick={onResetAppData}
+              onClick={onResetDemoData}
             >
-              Reset app data
+              Reset demo data
             </button>
           </div>
         </div>

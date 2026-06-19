@@ -11,6 +11,7 @@ import {
   loadReadAlertIds,
   loadSettings,
   loadWatchlist,
+  deleteDemoData,
   replacePositions,
   replaceReadAlertIds,
   replaceWatchlist,
@@ -107,34 +108,64 @@ export function useSellSmartData(
     void saveSettings(nextSettings);
   };
 
-  const resetAppData = async () => {
-    setPositions(demoPositions);
-    setWatchlist(demoWatchlist);
+  const resetDemoData = async () => {
+    const nextPositions = positions.filter((position) => !position.isDemo);
+    const nextWatchlist = watchlist.filter((item) => !item.isDemo);
+
+    setPositions(nextPositions);
+    setWatchlist(nextWatchlist);
     setReadAlertIds([]);
 
     await Promise.all([
-      replacePositions(demoPositions),
-      replaceWatchlist(demoWatchlist),
+      deleteDemoData(),
       replaceReadAlertIds([]),
     ]);
 
-    void refreshPositions(demoPositions);
-    void refreshWatchlist(demoWatchlist);
+    if (nextPositions.length > 0) {
+      void refreshPositions(nextPositions);
+    }
+
+    if (nextWatchlist.length > 0) {
+      void refreshWatchlist(nextWatchlist);
+    }
   };
 
   const importDemoPortfolio = async () => {
-    setPositions(demoPositions);
-    setWatchlist(demoWatchlist);
+    const realPositionTickers = new Set(
+      positions
+        .filter((position) => !position.isDemo)
+        .map((position) => position.ticker),
+    );
+    const realWatchlistTickers = new Set(
+      watchlist
+        .filter((item) => !item.isDemo)
+        .map((item) => item.ticker),
+    );
+
+    const nextPositions = [
+      ...positions.filter((position) => !position.isDemo),
+      ...demoPositions.filter(
+        (position) => !realPositionTickers.has(position.ticker),
+      ),
+    ];
+
+    const nextWatchlist = [
+      ...watchlist.filter((item) => !item.isDemo),
+      ...demoWatchlist.filter((item) => !realWatchlistTickers.has(item.ticker)),
+    ];
+
+    setPositions(nextPositions);
+    setWatchlist(nextWatchlist);
     setReadAlertIds([]);
 
     await Promise.all([
-      replacePositions(demoPositions),
-      replaceWatchlist(demoWatchlist),
+      replacePositions(nextPositions),
+      replaceWatchlist(nextWatchlist),
       replaceReadAlertIds([]),
     ]);
 
-    void refreshPositions(demoPositions);
-    void refreshWatchlist(demoWatchlist);
+    void refreshPositions(nextPositions);
+    void refreshWatchlist(nextWatchlist);
   };
 
   const addPosition = async (
@@ -273,28 +304,19 @@ export function useSellSmartData(
           loadReadAlertIds(),
         ]);
 
-        const basePositions =
-          loadedPositions.length > 0 ? loadedPositions : demoPositions;
-
-        const baseWatchlist =
-          loadedWatchlist.length > 0 ? loadedWatchlist : demoWatchlist;
-
         setSettings(loadedSettings);
         setActiveView(loadedSettings.defaultView);
         setReadAlertIds(loadedReadAlertIds);
-        setPositions(basePositions);
-        setWatchlist(baseWatchlist);
+        setPositions(loadedPositions);
+        setWatchlist(loadedWatchlist);
 
-        if (loadedPositions.length === 0) {
-          await replacePositions(basePositions);
+        if (loadedPositions.length > 0) {
+          void refreshPositions(loadedPositions);
         }
 
-        if (loadedWatchlist.length === 0) {
-          await replaceWatchlist(baseWatchlist);
+        if (loadedWatchlist.length > 0) {
+          void refreshWatchlist(loadedWatchlist);
         }
-
-        void refreshPositions(basePositions);
-        void refreshWatchlist(baseWatchlist);
       } catch (error) {
         console.error(error);
       }
@@ -311,7 +333,7 @@ export function useSellSmartData(
     isLoadingPredictions,
     saveReadAlerts,
     updateSetting,
-    resetAppData,
+    resetDemoData,
     importDemoPortfolio,
     addPosition,
     updatePosition,

@@ -43,6 +43,7 @@ export type ApiPrediction = {
 };
 
 export type RiskAsset = {
+  isDemo?: boolean;
   ticker: string;
   company: string;
   riskScore: number;

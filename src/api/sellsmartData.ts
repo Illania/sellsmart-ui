@@ -68,9 +68,10 @@ export async function loadPositions(): Promise<Position[]> {
   if (error) throw error;
 
   return (data ?? []).map((row) =>
-    normalizePosition(
-      createBasePosition(row.ticker, Number(row.shares), Number(row.avg_buy_price))
-    )
+    normalizePosition({
+      ...createBasePosition(row.ticker, Number(row.shares), Number(row.avg_buy_price)),
+      isDemo: Boolean(row.is_demo),
+    })
   );
 }
 
@@ -91,6 +92,7 @@ export async function replacePositions(positions: Position[]) {
       ticker: position.ticker,
       shares: position.shares,
       avg_buy_price: position.avgBuyPrice,
+      is_demo: Boolean(position.isDemo),
     }))
   );
 
@@ -106,7 +108,7 @@ export async function loadWatchlist(): Promise<WatchItem[]> {
   if (error) throw error;
 
   return (data ?? []).map((row) =>
-    normalizeWatchItem(createBaseWatchItem(row.ticker))
+    normalizeWatchItem({ ...createBaseWatchItem(row.ticker), isDemo: Boolean(row.is_demo) })
   );
 }
 
@@ -125,10 +127,37 @@ export async function replaceWatchlist(watchlist: WatchItem[]) {
     watchlist.map((item) => ({
       user_id: user.id,
       ticker: item.ticker,
+      is_demo: Boolean(item.isDemo),
     }))
   );
 
   if (error) throw error;
+}
+
+
+export async function deleteDemoData() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("No authenticated user");
+
+  const [{ error: positionsError }, { error: watchlistError }] =
+    await Promise.all([
+      supabase
+        .from("positions")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("is_demo", true),
+      supabase
+        .from("watchlist")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("is_demo", true),
+    ]);
+
+  if (positionsError) throw positionsError;
+  if (watchlistError) throw watchlistError;
 }
 
 export async function loadReadAlertIds(): Promise<string[]> {

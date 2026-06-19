@@ -103,7 +103,7 @@ export function PortfolioPage({
           </div>
         </SummaryCard>
 
-        <SummaryCard title="Daily PNL">
+        <SummaryCard title="Total P&L">
           <h2 className={totalPnl >= 0 ? "positive" : "negative"}>
             {totalPnl >= 0 ? "+" : ""}
             {money.format(totalPnl)}
@@ -280,6 +280,26 @@ function PortfolioRightRail({
         <h3>Risk Distribution</h3>
         <div className="distribution-layout">
           <Donut segments={riskDistribution} />
+
+          <div className="risk-distribution-legend">
+            <div className="risk-legend-row">
+              <span className="risk-dot low" />
+              <span>Low Risk (0–39)</span>
+              <small>Hold</small>
+            </div>
+
+            <div className="risk-legend-row">
+              <span className="risk-dot medium" />
+              <span>Medium Risk (40–69)</span>
+              <small>Watch</small>
+            </div>
+
+            <div className="risk-legend-row">
+              <span className="risk-dot high" />
+              <span>High Risk (70–100)</span>
+              <small>Reduce</small>
+            </div>
+          </div>
         </div>
       </section>
 

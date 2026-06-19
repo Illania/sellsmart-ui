@@ -9,11 +9,22 @@ export const mapRiskLevel = (category?: string, score?: number): RiskLevel => {
   return "low";
 };
 
-export const mapAction = (action?: string): ActionType => {
+export const mapAction = (action?: string, score?: number): ActionType => {
   const value = action?.toLowerCase() ?? "";
 
-  if (value.includes("reduce") || value.includes("exit") || value.includes("sell")) return "Reduce";
-  if (value.includes("hold")) return "Hold";
+  if (score !== undefined) {
+    if (score >= 70) return "Reduce";
+    if (score >= 40) return "Watch";
+    return "Hold";
+  }
+
+  if (value.includes("reduce") || value.includes("exit") || value.includes("sell")) {
+    return "Reduce";
+  }
+
+  if (value.includes("hold")) {
+    return "Hold";
+  }
 
   return "Watch";
 };
@@ -119,7 +130,7 @@ export const applyPredictionToAsset = <T extends RiskAsset>(asset: T, data: ApiP
   currentPrice: data.current_price ?? asset.currentPrice,
   riskScore: data.risk_score,
   riskLevel: mapRiskLevel(data.category, data.risk_score),
-  action: mapAction(data.action_label ?? data.action),
+  action: mapAction(data.action_label ?? data.action, data.risk_score),
   explanation: data.summary ?? data.action_explanation ?? "SellSmart AI prediction loaded.",
   marketRegime: data.market_regime,
   confidence: data.confidence,

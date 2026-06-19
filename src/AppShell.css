@@ -4192,3 +4192,43 @@ button {
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
+
+
+.risk-distribution-legend {
+  width: 100%;
+  margin-top: 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.risk-legend-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: #dbe4f0;
+}
+
+.risk-legend-row small {
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.risk-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.risk-dot.low {
+  background: #22c55e;
+}
+
+.risk-dot.medium {
+  background: #facc15;
+}
+
+.risk-dot.high {
+  background: #ef4444;
+}

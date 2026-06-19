@@ -34,7 +34,7 @@ import { WatchlistPage } from "./pages/WatchlistPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { ensureUserProfile, type UserProfile } from "./api/userProfile";
 import { supabase } from "./supabaseClient";
-import type { Position, WatchItem } from "./types";
+import type { ViewType, Position, WatchItem } from "./types";
 
 export default function MainScreen() {
   const [activeView, setActiveView] = useInitialView();
@@ -47,6 +47,20 @@ export default function MainScreen() {
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+  const titles: Record<ViewType, string> = {
+    dashboard: "Dashboard | SellSmart",
+    portfolio: "Portfolio | SellSmart",
+    watchlist: "Watchlist | SellSmart",
+    alerts: "Alerts | SellSmart",
+    insights: "Insights | SellSmart",
+    reports: "Reports | SellSmart",
+    settings: "Settings | SellSmart",
+  };
+
+  document.title = titles[activeView] ?? "SellSmart";
+}, [activeView]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {

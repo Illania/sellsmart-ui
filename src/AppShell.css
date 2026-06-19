@@ -4028,3 +4028,30 @@ button {
     padding-top: 92px !important;
   }
 }
+
+/* Privacy policy/terms pages */
+.legal-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+}
+
+.legal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.legal-content h2 {
+  margin-top: 12px;
+}
+
+.legal-content p,
+.legal-content li {
+  color: #cbd5e1;
+  line-height: 1.7;
+}
+
+.legal-content ul {
+  padding-left: 20px;
+}

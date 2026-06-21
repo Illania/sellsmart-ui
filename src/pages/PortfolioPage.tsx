@@ -12,6 +12,20 @@ import { TickerInsightsPanel } from "../components/TickerInsightsPanel";
 import type { ApiDriver, Position, RiskLevel, ViewType } from "../types";
 import { money } from "../utils/format";
 
+const formatPriceTimestamp = (timestamp?: string) => {
+  if (!timestamp) return undefined;
+
+  const date = new Date(timestamp);
+
+  if (Number.isNaN(date.getTime())) return undefined;
+
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
 type DriverWithTicker = ApiDriver & { ticker: string };
 
 type Props = {
@@ -26,6 +40,9 @@ type Props = {
   totalValue: number;
   totalPnl: number;
   totalPnlPct: number;
+  dailyPnl: number;
+  dailyPnlPct: number;
+  latestPriceTimestamp?: string;
   overallRisk: number;
   overallRiskLevel: RiskLevel;
   riskDistribution: { value: number; level: RiskLevel }[];
@@ -49,6 +66,9 @@ export function PortfolioPage({
   totalValue,
   totalPnl,
   totalPnlPct,
+  dailyPnl,
+  dailyPnlPct,
+  latestPriceTimestamp,
   overallRisk,
   overallRiskLevel,
   riskDistribution,
@@ -69,10 +89,16 @@ export function PortfolioPage({
       <section className="summary-grid">
         <SummaryCard title="Portfolio Value">
           <h2>{money.format(totalValue)}</h2>
-          <p className={totalPnl >= 0 ? "positive" : "negative"}>
-            {totalPnl >= 0 ? "+" : ""}
-            {money.format(totalPnl)} ({totalPnlPct.toFixed(2)}%)
+          <p className={dailyPnl >= 0 ? "positive" : "negative"}>
+            Today: {dailyPnl >= 0 ? "+" : ""}
+            {money.format(dailyPnl)} ({dailyPnl >= 0 ? "+" : ""}
+            {dailyPnlPct.toFixed(2)}%)
           </p>
+          {formatPriceTimestamp(latestPriceTimestamp) && (
+            <p className="muted-text">
+              Prices updated {formatPriceTimestamp(latestPriceTimestamp)}
+            </p>
+          )}
           <Sparkline
             data={[
               12, 16, 24, 19, 28, 32, 27, 20, 17, 22, 36, 42, 39, 31, 36, 47,

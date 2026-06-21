@@ -36,6 +36,10 @@ export type ApiPrediction = {
   confidence?: string;
   risk_score: number;
   current_price?: number;
+  previous_close?: number;
+  daily_change?: number;
+  daily_change_percent?: number;
+  price_timestamp?: string;
   market_regime?: string;
   probability_of_drop?: number;
   cache_status?: string;
@@ -54,6 +58,10 @@ export type RiskAsset = {
   logoClass: string;
   chart: number[];
   currentPrice?: number;
+  previousClose?: number;
+  dailyChange?: number;
+  dailyChangePercent?: number;
+  priceTimestamp?: string;
   marketRegime?: string;
   confidence?: string;
   probabilityOfDrop?: number;
@@ -69,6 +77,8 @@ export type Position = RiskAsset & {
   value: number;
   pnl: number;
   pnlPct: number;
+  dailyPnl: number;
+  dailyPnlPct: number;
 };
 
 export type WatchItem = RiskAsset;

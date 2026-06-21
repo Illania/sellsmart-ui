@@ -76,6 +76,8 @@ export const createBasePosition = (
   value: shares * avgBuyPrice,
   pnl: 0,
   pnlPct: 0,
+  dailyPnl: 0,
+  dailyPnlPct: 0,
 });
 
 export const createBaseWatchItem = (ticker: string, isDemo = false): WatchItem => ({
@@ -98,6 +100,8 @@ export const normalizePosition = (position: Partial<Position>): Position => {
     value: Number(position.value ?? shares * avgBuyPrice),
     pnl: Number(position.pnl ?? 0),
     pnlPct: Number(position.pnlPct ?? 0),
+    dailyPnl: Number(position.dailyPnl ?? 0),
+    dailyPnlPct: Number(position.dailyPnlPct ?? 0),
     riskScore: Number(position.riskScore ?? 50),
     riskLevel: mapRiskLevel(position.riskLevel, position.riskScore),
     action: position.action ?? "Watch",
@@ -128,6 +132,10 @@ export const applyPredictionToAsset = <T extends RiskAsset>(asset: T, data: ApiP
   ...asset,
   company: getCompanyName(asset.ticker),
   currentPrice: data.current_price ?? asset.currentPrice,
+  previousClose: data.previous_close ?? asset.previousClose,
+  dailyChange: data.daily_change ?? asset.dailyChange,
+  dailyChangePercent: data.daily_change_percent ?? asset.dailyChangePercent,
+  priceTimestamp: data.price_timestamp ?? asset.priceTimestamp,
   riskScore: data.risk_score,
   riskLevel: mapRiskLevel(data.category, data.risk_score),
   action: mapAction(data.action_label ?? data.action, data.risk_score),

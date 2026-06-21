@@ -29,18 +29,31 @@ export const enrichPositionWithApi = async (
   accessToken?: string
 ): Promise<Position> => {
   const data = await fetchPrediction(position.ticker, accessToken);
+
   const currentPrice = data.current_price ?? position.currentPrice ?? position.avgBuyPrice;
+  const previousClose = data.previous_close ?? position.previousClose;
+
   const value = position.shares * currentPrice;
   const costBasis = position.shares * position.avgBuyPrice;
+
+  // Total P/L: compares current market value with the user's average buy price.
   const pnl = value - costBasis;
   const pnlPct = costBasis > 0 ? (pnl / costBasis) * 100 : 0;
+
+  // Daily P/L: compares current price with previous market close, not buy price.
+  const dailyPnl = previousClose ? position.shares * (currentPrice - previousClose) : 0;
+  const previousValue = previousClose ? position.shares * previousClose : 0;
+  const dailyPnlPct = previousValue > 0 ? (dailyPnl / previousValue) * 100 : 0;
 
   return {
     ...applyPredictionToAsset(position, data),
     currentPrice,
+    previousClose,
     value,
     pnl,
     pnlPct,
+    dailyPnl,
+    dailyPnlPct,
   };
 };
 

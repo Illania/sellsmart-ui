@@ -269,6 +269,9 @@ export default function MainScreen() {
           totalValue={analytics.totalValue}
           totalPnl={analytics.totalPnl}
           totalPnlPct={analytics.totalPnlPct}
+          dailyPnl={analytics.dailyPnl}
+          dailyPnlPct={analytics.dailyPnlPct}
+          latestPriceTimestamp={analytics.latestPriceTimestamp}
           overallRisk={analytics.overallRisk}
           overallRiskLevel={analytics.overallRiskLevel}
           riskDistribution={analytics.riskDistribution}

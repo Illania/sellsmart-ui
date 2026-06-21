@@ -9,6 +9,23 @@ export function usePortfolioAnalytics(activeView: ViewType, positions: Position[
   const totalCostBasis = positions.reduce((sum, item) => sum + item.shares * item.avgBuyPrice, 0);
   const totalPnlPct = totalCostBasis > 0 ? (totalPnl / totalCostBasis) * 100 : 0;
 
+  const dailyPnl = positions.reduce((sum, item) => sum + item.dailyPnl, 0);
+  const previousPortfolioValue = positions.reduce((sum, item) => {
+    if (!item.previousClose) return sum;
+    return sum + item.shares * item.previousClose;
+  }, 0);
+  const dailyPnlPct = previousPortfolioValue > 0 ? (dailyPnl / previousPortfolioValue) * 100 : 0;
+
+  const latestPriceTimestamp = useMemo(() => {
+    const timestamps = positions
+      .map((position) => position.priceTimestamp)
+      .filter((timestamp): timestamp is string => Boolean(timestamp));
+
+    if (!timestamps.length) return undefined;
+
+    return timestamps.sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0];
+  }, [positions]);
+
   const overallRisk =
     positions.length > 0
       ? Math.round(positions.reduce((sum, item) => sum + item.riskScore, 0) / positions.length)
@@ -78,6 +95,9 @@ export function usePortfolioAnalytics(activeView: ViewType, positions: Position[
     totalValue,
     totalPnl,
     totalPnlPct,
+    dailyPnl,
+    dailyPnlPct,
+    latestPriceTimestamp,
     overallRisk,
     overallRiskLevel,
     highRiskPositions,

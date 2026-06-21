@@ -3,6 +3,22 @@ import type { Position, RiskAsset, WatchItem } from "../types";
 import { money } from "../utils/format";
 import { RiskRing, Sparkline } from "./Charts";
 
+const formatPriceTimestamp = (timestamp?: string) => {
+  if (!timestamp) return undefined;
+
+  const date = new Date(timestamp);
+
+  if (Number.isNaN(date.getTime())) return undefined;
+
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+};
+
+const formatSignedMoney = (value: number) => `${value >= 0 ? "+" : ""}${money.format(value)}`;
+const formatSignedPercent = (value: number) => `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+
 export function PositionCard({
   position,
   onOpen,
@@ -15,6 +31,8 @@ export function PositionCard({
   onDelete: () => void;
 }) {
   const isPositive = position.pnl >= 0;
+  const isDailyPositive = position.dailyPnl >= 0;
+  const priceDate = formatPriceTimestamp(position.priceTimestamp);
   const actionClass = position.action.toLowerCase();
 
   return (
@@ -63,6 +81,7 @@ export function PositionCard({
           {position.currentPrice && (
             <> · {money.format(position.currentPrice)}</>
           )}
+          {priceDate && <> · Updated {priceDate}</>}
           {position.isDemo && <em className="demo-data-badge">Demo</em>}
         </span>
       </div>
@@ -70,9 +89,12 @@ export function PositionCard({
       <div className="position-card-value">
         <strong>{money.format(position.value)}</strong>
         <span className={isPositive ? "positive" : "negative"}>
-          {isPositive ? "+" : ""}
+          Total: {isPositive ? "+" : ""}
           {money.format(position.pnl)} ({isPositive ? "+" : ""}
           {position.pnlPct.toFixed(2)}%)
+        </span>
+        <span className={isDailyPositive ? "positive" : "negative"}>
+          Today: {formatSignedMoney(position.dailyPnl)} ({formatSignedPercent(position.dailyPnlPct)})
         </span>
       </div>
 
@@ -111,6 +133,8 @@ export function PositionRow({
   onDelete: () => void;
 }) {
   const isPositive = position.pnl >= 0;
+  const isDailyPositive = position.dailyPnl >= 0;
+  const priceDate = formatPriceTimestamp(position.priceTimestamp);
   const actionClass = position.action.toLowerCase();
 
   return (
@@ -127,6 +151,7 @@ export function PositionRow({
             {position.currentPrice && (
               <> · {money.format(position.currentPrice)}</>
             )}
+            {priceDate && <> · Updated {priceDate}</>}
             {position.isDemo && <em className="demo-data-badge">Demo</em>}
           </span>
         </div>
@@ -134,12 +159,12 @@ export function PositionRow({
 
       <div className="value-cell">
         <strong>{money.format(position.value)}</strong>
-        <span className={isPositive ? "positive" : "negative"}>
-          {isPositive ? "+" : ""}
-          {money.format(position.pnl)}
+        <span className={isDailyPositive ? "positive" : "negative"}>
+          Today: {formatSignedMoney(position.dailyPnl)}
         </span>
         <span className={isPositive ? "positive" : "negative"}>
-          ({isPositive ? "+" : ""}
+          Total: {isPositive ? "+" : ""}
+          {money.format(position.pnl)} ({isPositive ? "+" : ""}
           {position.pnlPct.toFixed(2)}%)
         </span>
         <Sparkline
@@ -195,6 +220,7 @@ export function WatchlistCard({
   onDelete: () => void;
 }) {
   const actionClass = item.action.toLowerCase();
+  const priceDate = formatPriceTimestamp(item.priceTimestamp);
 
   return (
     <article className="watchlist-card">
@@ -235,7 +261,7 @@ export function WatchlistCard({
         <strong>
           {item.currentPrice ? money.format(item.currentPrice) : "Loading..."}
         </strong>
-        <span>Current price</span>
+        <span>{priceDate ? `Updated ${priceDate}` : "Current price"}</span>
       </div>
 
       <Sparkline data={item.chart} tone="purple" />
@@ -269,6 +295,7 @@ export function WatchlistRow({
   onDelete: () => void;
 }) {
   const actionClass = item.action.toLowerCase();
+  const priceDate = formatPriceTimestamp(item.priceTimestamp);
 
   return (
     <article className="position-row">
@@ -285,7 +312,9 @@ export function WatchlistRow({
         <strong>
           {item.currentPrice ? money.format(item.currentPrice) : "Loading..."}
         </strong>
-        <span className="muted-text">Current price</span>
+        <span className="muted-text">
+          {priceDate ? `Updated ${priceDate}` : "Current price"}
+        </span>
         <Sparkline data={item.chart} tone="purple" />
       </div>
 
@@ -406,9 +435,11 @@ export function AssetDetails({ asset }: { asset: RiskAsset }) {
             {asset.confidence
               ? `Confidence: ${asset.confidence}`
               : "SellSmart AI signal"}
-            {asset.cacheGeneratedAt
-              ? ` · ${new Date(asset.cacheGeneratedAt).toLocaleString()}`
-              : ""}
+            {asset.priceTimestamp
+              ? ` · Price data: ${formatPriceTimestamp(asset.priceTimestamp)}`
+              : asset.cacheGeneratedAt
+                ? ` · ${new Date(asset.cacheGeneratedAt).toLocaleString()}`
+                : ""}
           </p>
         </div>
       </div>

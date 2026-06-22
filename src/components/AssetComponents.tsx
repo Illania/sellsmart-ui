@@ -230,7 +230,7 @@ export function WatchlistCard({
         <div className="watchlist-card-title">
           <h3>{item.ticker}</h3>
           <p>{item.company}</p>
-          <span>Watchlist{item.isDemo && <em className="demo-data-badge">Demo</em>}</span>
+          {item.isDemo && <em className="demo-data-badge">Demo</em>}
         </div>
 
         <div className="asset-card-actions">
@@ -304,7 +304,7 @@ export function WatchlistRow({
         <div>
           <h3>{item.ticker}</h3>
           <p>{item.company}</p>
-          <span>Watchlist{item.isDemo && <em className="demo-data-badge">Demo</em>}</span>
+          {item.isDemo && <em className="demo-data-badge">Demo</em>}
         </div>
       </div>
 

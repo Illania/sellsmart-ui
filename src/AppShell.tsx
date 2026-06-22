@@ -49,15 +49,18 @@ export default function MainScreen() {
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-  const titles: Record<ViewType, string> = {
-    dashboard: "Dashboard | SellSmart",
-    portfolio: "Portfolio | SellSmart",
-    watchlist: "Watchlist | SellSmart",
-    alerts: "Alerts | SellSmart",
-    insights: "Insights | SellSmart",
-    reports: "Reports | SellSmart",
-    settings: "Settings | SellSmart",
-  };
+
+const titles: Record<ViewType, string> = {
+  dashboard: "Dashboard | SellSmart",
+  portfolio: "Portfolio | SellSmart",
+  watchlist: "Watchlist | SellSmart",
+  alerts: "Alerts | SellSmart",
+  insights: "Insights | SellSmart",
+  reports: "Reports | SellSmart",
+  settings: "Settings | SellSmart",
+  help: "Help Center | SellSmart",
+  profile: "Profile | SellSmart",
+};
 
   document.title = titles[activeView] ?? "SellSmart";
 }, [activeView]);

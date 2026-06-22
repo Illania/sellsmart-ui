@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 
 import {
@@ -22,6 +22,7 @@ import { demoPositions, demoWatchlist } from "../data/demoData";
 import type { AppSettings, Position, ViewType, WatchItem } from "../types";
 import { createBasePosition, createBaseWatchItem } from "../utils/risk";
 
+
 export function useSellSmartData(
   session: Session | null,
   setActiveView: (view: ViewType) => void,
@@ -31,6 +32,7 @@ export function useSellSmartData(
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [readAlertIds, setReadAlertIds] = useState<string[]>([]);
   const [isLoadingPredictions, setIsLoadingPredictions] = useState(false);
+  const hasAppliedDefaultView = useRef(false);
 
   const saveReadAlerts = async (nextReadAlertIds: string[]) => {
     setReadAlertIds(nextReadAlertIds);
@@ -286,7 +288,10 @@ export function useSellSmartData(
   };
 
   useEffect(() => {
-    if (!session) return;
+    if (!session) {
+      hasAppliedDefaultView.current = false;
+      return;
+    }
 
     const loadUserData = async () => {
       try {
@@ -305,7 +310,12 @@ export function useSellSmartData(
         ]);
 
         setSettings(loadedSettings);
-        setActiveView(loadedSettings.defaultView);
+
+        if (!hasAppliedDefaultView.current) {
+          setActiveView(loadedSettings.defaultView);
+          hasAppliedDefaultView.current = true;
+        }
+
         setReadAlertIds(loadedReadAlertIds);
         setPositions(loadedPositions);
         setWatchlist(loadedWatchlist);
@@ -323,7 +333,7 @@ export function useSellSmartData(
     };
 
     void loadUserData();
-  }, [session]);
+  }, [session?.user.id]);
 
   return {
     positions,

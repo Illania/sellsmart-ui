@@ -18,8 +18,8 @@ export function PrivacyPolicyPage() {
 
         <h2>2. Information We Collect</h2>
         <ul>
-          <li>Google account information used for authentication.</li>
-          <li>Name, email address, and profile picture provided by Google.</li>
+          <li>Email address and authentication information used to create and secure your account.</li>
+          <li>Google account information, name, email address, and profile picture when you choose Google sign-in.</li>
           <li>Portfolio and watchlist data entered into SellSmart.</li>
           <li>Technical information such as browser type and device information.</li>
         </ul>

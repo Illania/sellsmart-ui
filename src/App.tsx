@@ -3,6 +3,7 @@ import { Analytics } from '@vercel/analytics/react';
 import MainScreen from "./AppShell";
 import { PrivacyPolicyPage } from "./pages/PrivacyPolicyPage";
 import { TermsPage } from "./pages/TermsPage";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 
 
 export default function App() {
@@ -14,6 +15,10 @@ export default function App() {
 
   if (path === "/terms") {
     return <TermsPage />;
+  }
+
+  if (path === "/reset-password") {
+    return <ResetPasswordPage />;
   }
 
   return (

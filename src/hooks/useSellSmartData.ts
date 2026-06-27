@@ -319,6 +319,7 @@ export function useSellSmartData(
         basePosition,
         session.access_token,
         (job) => applyPositionJobUpdate(normalizedTicker, job),
+        { queued: true },
       );
 
       setPositions((currentPositions) =>
@@ -385,6 +386,7 @@ export function useSellSmartData(
         baseItem,
         session.access_token,
         (job) => applyWatchJobUpdate(normalizedTicker, job),
+        { queued: true },
       );
 
       setWatchlist((currentWatchlist) =>

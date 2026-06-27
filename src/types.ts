@@ -57,6 +57,7 @@ export type PredictionJob = {
   progress?: number;
   message?: string | null;
   prediction?: ApiPrediction | null;
+  prediction_json?: ApiPrediction | null;
   error_message?: string | null;
   created_at?: string;
   updated_at?: string;

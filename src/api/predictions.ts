@@ -74,8 +74,10 @@ export const fetchPredictionQueued = async (
   let job = await enqueuePrediction(ticker, accessToken);
   onJobUpdate?.(job);
 
-  if (job.status === "completed" && job.prediction) {
-    return job.prediction;
+  const firstPrediction = job.prediction ?? job.prediction_json;
+
+  if (job.status === "completed" && firstPrediction) {
+    return firstPrediction;
   }
 
   if (job.status === "failed") {
@@ -96,8 +98,10 @@ export const fetchPredictionQueued = async (
     job = await fetchPredictionJob(jobId, accessToken);
     onJobUpdate?.(job);
 
-    if (job.status === "completed" && job.prediction) {
-      return job.prediction;
+    const completedPrediction = job.prediction ?? job.prediction_json;
+
+    if (job.status === "completed" && completedPrediction) {
+      return completedPrediction;
     }
 
     if (job.status === "failed") {
@@ -112,8 +116,11 @@ export const enrichPositionWithApi = async (
   position: Position,
   accessToken?: string,
   onJobUpdate?: (job: PredictionJob) => void,
+  options: { queued?: boolean } = {},
 ): Promise<Position> => {
-  const data = await fetchPredictionQueued(position.ticker, accessToken, onJobUpdate);
+  const data = options.queued
+    ? await fetchPredictionQueued(position.ticker, accessToken, onJobUpdate)
+    : await fetchPrediction(position.ticker, accessToken);
 
   const currentPrice = data.current_price ?? position.currentPrice ?? position.avgBuyPrice;
   const previousClose = data.previous_close ?? position.previousClose;
@@ -150,8 +157,11 @@ export const enrichWatchItemWithApi = async (
   item: WatchItem,
   accessToken?: string,
   onJobUpdate?: (job: PredictionJob) => void,
+  options: { queued?: boolean } = {},
 ): Promise<WatchItem> => {
-  const data = await fetchPredictionQueued(item.ticker, accessToken, onJobUpdate);
+  const data = options.queued
+    ? await fetchPredictionQueued(item.ticker, accessToken, onJobUpdate)
+    : await fetchPrediction(item.ticker, accessToken);
   return {
     ...applyPredictionToAsset(item, data),
     predictionStatus: "completed",

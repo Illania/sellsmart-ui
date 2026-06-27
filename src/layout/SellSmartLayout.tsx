@@ -27,6 +27,7 @@ type Props = {
   onAddPosition: () => void;
   onAddTicker: () => void;
   onImportDemo: () => void;
+  onImportCsv: () => void;
   onMarkAllAlertsAsRead: () => void;
   onLogout: () => void;
   userEmail?: string;
@@ -57,6 +58,7 @@ export function SellSmartLayout({
   onAddPosition,
   onAddTicker,
   onImportDemo,
+  onImportCsv,
   onMarkAllAlertsAsRead,
   onLogout,
   userEmail,
@@ -154,6 +156,7 @@ export function SellSmartLayout({
               onAddPosition={onAddPosition}
               onAddTicker={onAddTicker}
               onMarkAllAlertsAsRead={onMarkAllAlertsAsRead}
+              onImportCsv={onImportCsv}
             />
 
             <button type="button" className="secondary-button" onClick={onImportDemo}>
@@ -327,23 +330,35 @@ function TopbarPrimaryAction({
   onAddPosition,
   onAddTicker,
   onMarkAllAlertsAsRead,
+  onImportCsv,
 }: {
   activeView: ViewType;
   onAddPosition: () => void;
   onAddTicker: () => void;
   onMarkAllAlertsAsRead: () => void;
+  onImportCsv: () => void;
 }) {
   if (activeView === "portfolio") {
     return (
-      <button
-        type="button"
-        className="secondary-button"
-        onClick={onAddPosition}
-        data-tour="add-position"
-      >
-        <Plus size={18} />
-        Add Position
-      </button>
+      <div className="topbar-group">
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={onImportCsv}
+        >
+          <Import size={17} />
+          Import CSV
+        </button>
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={onAddPosition}
+          data-tour="add-position"
+        >
+          <Plus size={18} />
+          Add Position
+        </button>
+      </div>
     );
   }
 

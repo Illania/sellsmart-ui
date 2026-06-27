@@ -225,6 +225,15 @@ export function useSellSmartData(
     }
   };
 
+  const importPositions = async (nextPositions: Position[]) => {
+    setPositions(nextPositions);
+    await replacePositions(nextPositions);
+
+    if (nextPositions.length > 0) {
+      void refreshPositions(nextPositions);
+    }
+  };
+
   const deletePosition = async (ticker: string) => {
     const normalizedTicker = ticker.trim().toUpperCase();
     const nextPositions = positions.filter(
@@ -347,6 +356,7 @@ export function useSellSmartData(
     importDemoPortfolio,
     addPosition,
     updatePosition,
+    importPositions,
     deletePosition,
     addWatchItem,
     updateWatchItem,

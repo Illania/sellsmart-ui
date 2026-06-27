@@ -10,6 +10,7 @@ import {
   EditPositionModal,
   EditWatchItemModal,
 } from "./components/AddModals";
+import { ImportPortfolioModal } from "./components/PortfolioImport/ImportPortfolioModal";
 import {
   useAddPositionModal,
   useAddWatchItemModal,
@@ -43,6 +44,7 @@ export default function MainScreen() {
   const [editingWatchItem, setEditingWatchItem] = useState<WatchItem | null>(
     null,
   );
+  const [isImportPortfolioOpen, setIsImportPortfolioOpen] = useState(false);
 
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -120,6 +122,7 @@ const titles: Record<ViewType, string> = {
     importDemoPortfolio,
     addPosition,
     updatePosition,
+    importPositions,
     deletePosition,
     addWatchItem,
     updateWatchItem,
@@ -226,6 +229,7 @@ const titles: Record<ViewType, string> = {
       onAddPosition={addPositionModal.open}
       onAddTicker={addWatchItemModal.open}
       onImportDemo={importDemoPortfolio}
+      onImportCsv={() => setIsImportPortfolioOpen(true)}
       onMarkAllAlertsAsRead={markAllAlertsAsRead}
       onLogout={handleLogout}
       userEmail={session.user.email ?? undefined}
@@ -379,6 +383,14 @@ const titles: Record<ViewType, string> = {
           setNewAvgBuyPrice={addPositionModal.setNewAvgBuyPrice}
           onSubmit={addPositionModal.submit}
           onClose={addPositionModal.close}
+        />
+      )}
+
+      {isImportPortfolioOpen && (
+        <ImportPortfolioModal
+          positions={positions}
+          onImport={importPositions}
+          onClose={() => setIsImportPortfolioOpen(false)}
         />
       )}
 

@@ -4920,3 +4920,21 @@ button:disabled {
   font-weight: 800;
   text-transform: uppercase;
 }
+
+.symbol-search-logo img[src=""],
+.symbol-search-logo img:not([src]) {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .symbol-search-result {
+    grid-template-columns: 40px minmax(0, 1fr);
+    align-items: flex-start;
+  }
+
+  .symbol-search-meta {
+    grid-column: 2;
+    justify-content: flex-start;
+    max-width: 100%;
+  }
+}

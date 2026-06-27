@@ -12,6 +12,33 @@ type SymbolSearchProps = {
 
 const getInitials = (symbol: string) => symbol.slice(0, 3).toUpperCase();
 
+type SymbolLogoProps = {
+  symbol: string;
+  logoUrl?: string;
+};
+
+function SymbolLogo({ symbol, logoUrl }: SymbolLogoProps) {
+  const [hasLogoError, setHasLogoError] = useState(false);
+  const shouldShowLogo = Boolean(logoUrl) && !hasLogoError;
+
+  useEffect(() => {
+    setHasLogoError(false);
+  }, [logoUrl]);
+
+  if (!shouldShowLogo) {
+    return <>{getInitials(symbol)}</>;
+  }
+
+  return (
+    <img
+      src={logoUrl}
+      alt={`${symbol} logo`}
+      loading="lazy"
+      onError={() => setHasLogoError(true)}
+    />
+  );
+}
+
 export function SymbolSearch({
   value,
   accessToken,
@@ -144,8 +171,8 @@ export function SymbolSearch({
               onMouseEnter={() => setHighlightedIndex(index)}
               onClick={() => selectResult(item)}
             >
-              <span className="symbol-search-logo">
-                {item.logoUrl ? <img src={item.logoUrl} alt="" /> : getInitials(item.symbol)}
+              <span className="symbol-search-logo" aria-hidden="true">
+                <SymbolLogo symbol={item.symbol} logoUrl={item.logoUrl} />
               </span>
 
               <span className="symbol-search-main">

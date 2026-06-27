@@ -48,8 +48,8 @@ export function AddPositionModal({
               placeholder="Apple, AAPL, Vanguard..."
             />
           </label>
-          <label>Shares<input value={newShares} onChange={(event) => setNewShares(event.target.value)} placeholder="10" type="number" min="0" /></label>
-          <label>Average Buy Price<input value={newAvgBuyPrice} onChange={(event) => setNewAvgBuyPrice(event.target.value)} placeholder="120" type="number" min="0" /></label>
+          <label>Shares<input value={newShares} onChange={(event) => setNewShares(event.target.value)} placeholder="10" type="number" step="any" min="0" inputMode="decimal" /></label>
+          <label>Average Buy Price<input value={newAvgBuyPrice} onChange={(event) => setNewAvgBuyPrice(event.target.value)} placeholder="120.00" type="number" step="any" min="0" inputMode="decimal" /></label>
         </div>
 
         <div className="modal-actions">
@@ -98,11 +98,12 @@ export function EditPositionModal({ position, onSubmit, onClose }: EditPositionM
 
         <div className="modal-form">
           <label>Ticker<input value={ticker} onChange={(event) => setTicker(event.target.value)} placeholder="AMD" /></label>
-          <label>Shares<input value={shares} onChange={(event) => setShares(event.target.value)} placeholder="10" type="number" min="0" /></label>
+          <label>Shares<input value={shares} onChange={(event) => setShares(event.target.value)} placeholder="10" type="number" step="any" min="0" inputMode="decimal" /></label>
           <label>Average Buy Price
             <input
               type="number"
-              step="0.001"
+              step="any"
+              inputMode="decimal"
               min="0"
               value={avgBuyPrice}
               onChange={(e) => setAvgBuyPrice(e.target.value)}

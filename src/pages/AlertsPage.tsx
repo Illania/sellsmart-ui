@@ -8,7 +8,7 @@ type Props = {
   markAllAlertsAsRead: () => void;
 };
 
-export function AlertsPage({ alerts, unreadAlertsCount, markAlertAsRead, markAllAlertsAsRead }: Props) {
+export function AlertsPage({ alerts, unreadAlertsCount, markAlertAsRead }: Props) {
   return (
     <section className="alerts-page" data-tour="alerts-page">
       <div className="panel-header">
@@ -16,10 +16,6 @@ export function AlertsPage({ alerts, unreadAlertsCount, markAlertAsRead, markAll
           <h2>Risk Alerts</h2>
           <p className="muted-text">{unreadAlertsCount} unread alert{unreadAlertsCount === 1 ? "" : "s"}</p>
         </div>
-
-        {alerts.length > 0 && (
-          <button className="secondary-button" onClick={markAllAlertsAsRead}>Mark all as read</button>
-        )}
       </div>
 
       {alerts.length > 0 ? (

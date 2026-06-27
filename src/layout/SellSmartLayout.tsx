@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import type { ViewType } from "../types";
+import { exportReportPdf } from "../utils/reportPdf";
 
 type Props = {
   activeView: ViewType;
@@ -383,14 +384,14 @@ function TopbarPrimaryAction({
         className="secondary-button"
         onClick={onMarkAllAlertsAsRead}
       >
-        Mark All Read
+        Mark all as read
       </button>
     );
   }
 
   if (activeView === "reports") {
     return (
-      <button type="button" className="secondary-button" onClick={() => window.print()}>
+      <button type="button" className="secondary-button" onClick={exportReportPdf}>
         <FileText size={18} />
         Export PDF
       </button>

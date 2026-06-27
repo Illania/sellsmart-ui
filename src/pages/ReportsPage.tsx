@@ -1,6 +1,5 @@
 import { FileText } from "lucide-react";
 import type { ApiDriver, Position, RiskLevel } from "../types";
-import { exportReportPdf } from "../utils/reportPdf";
 
 type DriverWithTicker = ApiDriver & { ticker: string };
 
@@ -32,11 +31,6 @@ export function ReportsPage({
           <h2>Weekly AI Risk Report</h2>
           <p className="muted-text">Generated {reportGeneratedAt} · Based on current SellSmart AI signals.</p>
         </div>
-
-        <button className="secondary-button" onClick={exportReportPdf}>
-          <FileText size={16} />
-          Export PDF
-        </button>
       </div>
 
       <div className="printable-report">

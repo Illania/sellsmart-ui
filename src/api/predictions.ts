@@ -82,7 +82,9 @@ export const fetchPredictionQueued = async (
     throw new Error(job.error_message || `Prediction failed for ${ticker}`);
   }
 
-  if (!job.job_id) {
+  const jobId = job.job_id;
+
+  if (!jobId) {
     throw new Error(`Prediction job was not created for ${ticker}`);
   }
 
@@ -91,7 +93,7 @@ export const fetchPredictionQueued = async (
   while (Date.now() - startedAt < PREDICTION_POLL_TIMEOUT_MS) {
     await sleep(PREDICTION_POLL_INTERVAL_MS);
 
-    job = await fetchPredictionJob(job.job_id, accessToken);
+    job = await fetchPredictionJob(jobId, accessToken);
     onJobUpdate?.(job);
 
     if (job.status === "completed" && job.prediction) {

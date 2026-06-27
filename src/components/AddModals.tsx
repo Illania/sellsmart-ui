@@ -1,6 +1,7 @@
 import type React from "react";
 import { useState } from "react";
-import type { Position, WatchItem } from "../types";
+import type { Position, SymbolSearchResult, WatchItem } from "../types";
+import { SymbolSearch } from "./SymbolSearch";
 
 // Existing add modal, now also supports custom title/labels if you want to reuse it later.
 type AddPositionModalProps = {
@@ -12,6 +13,8 @@ type AddPositionModalProps = {
   setNewAvgBuyPrice: (value: string) => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
   onClose: () => void;
+  accessToken?: string;
+  onSymbolSelect?: (symbol: SymbolSearchResult) => void;
 };
 
 export function AddPositionModal({
@@ -23,6 +26,8 @@ export function AddPositionModal({
   setNewAvgBuyPrice,
   onSubmit,
   onClose,
+  accessToken,
+  onSymbolSelect,
 }: AddPositionModalProps) {
   return (
     <div className="modal-backdrop">
@@ -33,7 +38,16 @@ export function AddPositionModal({
         </div>
 
         <div className="modal-form">
-          <label>Ticker<input value={newTicker} onChange={(event) => setNewTicker(event.target.value)} placeholder="AMD" /></label>
+          <label>
+            Search company or ticker
+            <SymbolSearch
+              value={newTicker}
+              accessToken={accessToken}
+              onChange={setNewTicker}
+              onSelect={onSymbolSelect}
+              placeholder="Apple, AAPL, Vanguard..."
+            />
+          </label>
           <label>Shares<input value={newShares} onChange={(event) => setNewShares(event.target.value)} placeholder="10" type="number" min="0" /></label>
           <label>Average Buy Price<input value={newAvgBuyPrice} onChange={(event) => setNewAvgBuyPrice(event.target.value)} placeholder="120" type="number" min="0" /></label>
         </div>
@@ -110,9 +124,11 @@ type AddWatchItemModalProps = {
   setNewWatchTicker: (value: string) => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
   onClose: () => void;
+  accessToken?: string;
+  onSymbolSelect?: (symbol: SymbolSearchResult) => void;
 };
 
-export function AddWatchItemModal({ newWatchTicker, setNewWatchTicker, onSubmit, onClose }: AddWatchItemModalProps) {
+export function AddWatchItemModal({ newWatchTicker, setNewWatchTicker, onSubmit, onClose, accessToken, onSymbolSelect }: AddWatchItemModalProps) {
   return (
     <div className="modal-backdrop">
       <form className="add-modal" onSubmit={onSubmit}>
@@ -122,7 +138,16 @@ export function AddWatchItemModal({ newWatchTicker, setNewWatchTicker, onSubmit,
         </div>
 
         <div className="modal-form">
-          <label>Ticker<input value={newWatchTicker} onChange={(event) => setNewWatchTicker(event.target.value)} placeholder="TSLA" /></label>
+          <label>
+            Search company or ticker
+            <SymbolSearch
+              value={newWatchTicker}
+              accessToken={accessToken}
+              onChange={setNewWatchTicker}
+              onSelect={onSymbolSelect}
+              placeholder="Tesla, TSLA, VUSA..."
+            />
+          </label>
         </div>
 
         <div className="modal-actions">

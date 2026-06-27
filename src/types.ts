@@ -91,3 +91,16 @@ export type AppSettings = {
   enableNewsAlerts: boolean;
   defaultView: ViewType;
 };
+
+export type SymbolSearchResult = {
+  symbol: string;
+  companyName: string;
+  exchange?: string;
+  exchangeName?: string;
+  country?: string;
+  currency?: string;
+  type: string;
+  logoUrl?: string;
+  provider?: string;
+  providerSymbol?: string;
+};

@@ -383,6 +383,7 @@ const titles: Record<ViewType, string> = {
           setNewAvgBuyPrice={addPositionModal.setNewAvgBuyPrice}
           onSubmit={addPositionModal.submit}
           onClose={addPositionModal.close}
+          accessToken={session.access_token}
         />
       )}
 
@@ -408,6 +409,7 @@ const titles: Record<ViewType, string> = {
           setNewWatchTicker={addWatchItemModal.setNewWatchTicker}
           onSubmit={addWatchItemModal.submit}
           onClose={addWatchItemModal.close}
+          accessToken={session.access_token}
         />
       )}
 

@@ -5634,3 +5634,20 @@ button:disabled {
 :root[data-theme="light"] .help-search input::placeholder {
   color: var(--muted) !important;
 }
+
+/* Light theme readability fix for right-rail Top Risk Drivers ---------------- */
+:root[data-theme="light"] .driver-list li {
+  color: var(--text) !important;
+}
+
+:root[data-theme="light"] .driver-list li svg {
+  color: #7c8fd6 !important;
+}
+
+:root[data-theme="light"] .driver-list strong.high {
+  color: #dc2626 !important;
+}
+
+:root[data-theme="light"] .driver-list strong.moderate {
+  color: #b7791f !important;
+}

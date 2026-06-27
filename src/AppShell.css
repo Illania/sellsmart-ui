@@ -5766,3 +5766,23 @@ button:disabled {
   background: currentColor;
   transition: width 180ms ease;
 }
+
+/* Light theme: keep appearing portfolio/watchlist edit/delete actions consistent */
+:root[data-theme="light"] .asset-action-button {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-color: var(--border-strong) !important;
+  color: var(--muted) !important;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08) !important;
+}
+
+:root[data-theme="light"] .asset-action-button:hover {
+  background: var(--blue-soft) !important;
+  border-color: rgba(49, 95, 220, 0.34) !important;
+  color: var(--blue) !important;
+}
+
+:root[data-theme="light"] .asset-action-button.danger:hover {
+  background: rgba(239, 68, 68, 0.10) !important;
+  border-color: rgba(239, 68, 68, 0.30) !important;
+  color: var(--red) !important;
+}

@@ -1,4 +1,26 @@
-import type { AppSettings, ViewType } from "../types";
+import type { AppearanceMode, AppSettings, ViewType } from "../types";
+
+
+const appearanceOptions: { value: AppearanceMode; icon: string; title: string; description: string }[] = [
+  {
+    value: "light",
+    icon: "☀️",
+    title: "Light",
+    description: "Soft neutral interface for bright environments.",
+  },
+  {
+    value: "dark",
+    icon: "🌙",
+    title: "Dark",
+    description: "Existing low-light SellSmart experience.",
+  },
+  {
+    value: "system",
+    icon: "💻",
+    title: "System",
+    description: "Automatically follows your device appearance.",
+  },
+];
 
 type Props = {
   settings: AppSettings;
@@ -10,6 +32,33 @@ export function SettingsPage({ settings, updateSetting, resetDemoData }: Props) 
   return (
     <section className="settings-page" data-tour="settings-page">
       <section className="settings-grid">
+        <article className="settings-card settings-card-wide">
+          <h2>Appearance</h2>
+          <p>Choose the interface theme that feels best for your working environment.</p>
+
+          <div className="appearance-options" role="radiogroup" aria-label="Appearance">
+            {appearanceOptions.map((option) => (
+              <label
+                key={option.value}
+                className={`appearance-option ${settings.appearance === option.value ? "active" : ""}`}
+              >
+                <input
+                  type="radio"
+                  name="appearance"
+                  value={option.value}
+                  checked={settings.appearance === option.value}
+                  onChange={() => updateSetting("appearance", option.value)}
+                />
+                <span className="appearance-icon">{option.icon}</span>
+                <span>
+                  <strong>{option.title}</strong>
+                  <small>{option.description}</small>
+                </span>
+              </label>
+            ))}
+          </div>
+        </article>
+
         <article className="settings-card">
           <h2>Risk Thresholds</h2>
           <p>Control when SellSmart creates portfolio and position alerts.</p>

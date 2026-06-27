@@ -2,6 +2,7 @@ export type RiskLevel = "high" | "moderate" | "low";
 export type ActionType = "Reduce" | "Watch" | "Hold";
 export type ViewType = "dashboard" | "portfolio" | "watchlist" | "alerts" | "insights" | "reports" | "settings" | "help" | "profile" ;
 export type AlertSeverity = "high" | "medium" | "low";
+export type AppearanceMode = "light" | "dark" | "system";
 
 export type PortfolioAlert = {
   id: string;
@@ -90,6 +91,7 @@ export type AppSettings = {
   enableReduceAlerts: boolean;
   enableNewsAlerts: boolean;
   defaultView: ViewType;
+  appearance: AppearanceMode;
 };
 
 export type SymbolSearchResult = {

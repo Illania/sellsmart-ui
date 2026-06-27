@@ -35,6 +35,7 @@ export async function loadSettings(): Promise<AppSettings> {
     enableReduceAlerts: data.enable_reduce_alerts,
     enableNewsAlerts: data.enable_news_alerts,
     defaultView: data.default_view ?? defaultSettings.defaultView,
+    appearance: data.appearance ?? defaultSettings.appearance,
   };
 }
 
@@ -53,6 +54,7 @@ export async function saveSettings(settings: AppSettings) {
     enable_reduce_alerts: settings.enableReduceAlerts,
     enable_news_alerts: settings.enableNewsAlerts,
     default_view: settings.defaultView,
+    appearance: settings.appearance,
     updated_at: new Date().toISOString(),
   });
 

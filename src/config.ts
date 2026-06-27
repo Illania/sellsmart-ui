@@ -9,4 +9,5 @@ export const defaultSettings: AppSettings = {
   enableReduceAlerts: true,
   enableNewsAlerts: true,
   defaultView: "dashboard",
+  appearance: "system",
 };

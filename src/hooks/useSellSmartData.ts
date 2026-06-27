@@ -19,9 +19,8 @@ import {
 } from "../api/sellsmartData";
 import { defaultSettings } from "../config";
 import { demoPositions, demoWatchlist } from "../data/demoData";
-import type { AppSettings, Position, ViewType, WatchItem } from "../types";
+import type { AppSettings, Position, PredictionJob, ViewType, WatchItem } from "../types";
 import { createBasePosition, createBaseWatchItem } from "../utils/risk";
-
 
 export function useSellSmartData(
   session: Session | null,
@@ -32,7 +31,98 @@ export function useSellSmartData(
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [readAlertIds, setReadAlertIds] = useState<string[]>([]);
   const [isLoadingPredictions, setIsLoadingPredictions] = useState(false);
+  const activePredictionRequests = useRef(0);
   const hasAppliedDefaultView = useRef(false);
+
+  const beginPredictionLoading = () => {
+    activePredictionRequests.current += 1;
+    setIsLoadingPredictions(true);
+  };
+
+  const endPredictionLoading = () => {
+    activePredictionRequests.current = Math.max(0, activePredictionRequests.current - 1);
+    setIsLoadingPredictions(activePredictionRequests.current > 0);
+  };
+
+  const getPredictionMessage = (job: PredictionJob) => {
+    if (job.status === "completed") return "Prediction ready.";
+    if (job.status === "failed") return job.error_message || "Prediction failed.";
+    return job.message || "Generating prediction...";
+  };
+
+  const applyPositionJobUpdate = (ticker: string, job: PredictionJob) => {
+    const normalizedTicker = ticker.trim().toUpperCase();
+    const message = getPredictionMessage(job);
+
+    setPositions((currentPositions) =>
+      currentPositions.map((position) =>
+        position.ticker === normalizedTicker
+          ? {
+              ...position,
+              predictionStatus: job.status,
+              predictionJobId: job.job_id ?? position.predictionJobId,
+              predictionProgress: job.progress ?? position.predictionProgress,
+              predictionMessage: message,
+              explanation: job.status === "completed" ? position.explanation : message,
+            }
+          : position,
+      ),
+    );
+  };
+
+  const applyWatchJobUpdate = (ticker: string, job: PredictionJob) => {
+    const normalizedTicker = ticker.trim().toUpperCase();
+    const message = getPredictionMessage(job);
+
+    setWatchlist((currentWatchlist) =>
+      currentWatchlist.map((item) =>
+        item.ticker === normalizedTicker
+          ? {
+              ...item,
+              predictionStatus: job.status,
+              predictionJobId: job.job_id ?? item.predictionJobId,
+              predictionProgress: job.progress ?? item.predictionProgress,
+              predictionMessage: message,
+              explanation: job.status === "completed" ? item.explanation : message,
+            }
+          : item,
+      ),
+    );
+  };
+
+  const markPositionPredictionFailed = (ticker: string) => {
+    const normalizedTicker = ticker.trim().toUpperCase();
+    setPositions((currentPositions) =>
+      currentPositions.map((position) =>
+        position.ticker === normalizedTicker
+          ? {
+              ...position,
+              predictionStatus: "failed",
+              predictionProgress: 100,
+              predictionMessage: `Could not load API prediction for ${normalizedTicker}.`,
+              explanation: `Could not load API prediction for ${normalizedTicker}.`,
+            }
+          : position,
+      ),
+    );
+  };
+
+  const markWatchPredictionFailed = (ticker: string) => {
+    const normalizedTicker = ticker.trim().toUpperCase();
+    setWatchlist((currentWatchlist) =>
+      currentWatchlist.map((item) =>
+        item.ticker === normalizedTicker
+          ? {
+              ...item,
+              predictionStatus: "failed",
+              predictionProgress: 100,
+              predictionMessage: `Could not load API prediction for ${normalizedTicker}.`,
+              explanation: `Could not load API prediction for ${normalizedTicker}.`,
+            }
+          : item,
+      ),
+    );
+  };
 
   const saveReadAlerts = async (nextReadAlertIds: string[]) => {
     setReadAlertIds(nextReadAlertIds);
@@ -40,7 +130,7 @@ export function useSellSmartData(
   };
 
   const refreshPositions = async (basePositions: Position[]) => {
-    setIsLoadingPredictions(true);
+    beginPredictionLoading();
 
     try {
       if (!session?.access_token) {
@@ -50,12 +140,19 @@ export function useSellSmartData(
       const enriched = await Promise.all(
         basePositions.map(async (position) => {
           try {
-            return await enrichPositionWithApi(position, session.access_token);
+            return await enrichPositionWithApi(
+              position,
+              session.access_token,
+              (job) => applyPositionJobUpdate(position.ticker, job),
+            );
           } catch (error) {
             console.error(error);
 
             return {
               ...position,
+              predictionStatus: "failed" as const,
+              predictionProgress: 100,
+              predictionMessage: `Could not load API prediction for ${position.ticker}.`,
               explanation: `Could not load API prediction for ${position.ticker}.`,
             };
           }
@@ -64,12 +161,12 @@ export function useSellSmartData(
 
       setPositions(enriched);
     } finally {
-      setIsLoadingPredictions(false);
+      endPredictionLoading();
     }
   };
 
   const refreshWatchlist = async (baseWatchlist: WatchItem[]) => {
-    setIsLoadingPredictions(true);
+    beginPredictionLoading();
 
     try {
       if (!session?.access_token) {
@@ -79,12 +176,19 @@ export function useSellSmartData(
       const enriched = await Promise.all(
         baseWatchlist.map(async (item) => {
           try {
-            return await enrichWatchItemWithApi(item, session.access_token);
+            return await enrichWatchItemWithApi(
+              item,
+              session.access_token,
+              (job) => applyWatchJobUpdate(item.ticker, job),
+            );
           } catch (error) {
             console.error(error);
 
             return {
               ...item,
+              predictionStatus: "failed" as const,
+              predictionProgress: 100,
+              predictionMessage: `Could not load API prediction for ${item.ticker}.`,
               explanation: `Could not load API prediction for ${item.ticker}.`,
             };
           }
@@ -93,7 +197,7 @@ export function useSellSmartData(
 
       setWatchlist(enriched);
     } finally {
-      setIsLoadingPredictions(false);
+      endPredictionLoading();
     }
   };
 
@@ -209,10 +313,12 @@ export function useSellSmartData(
     setPositions(nextPositions);
     await replacePositions(nextPositions);
 
+    beginPredictionLoading();
     try {
       const enrichedPosition = await enrichPositionWithApi(
         basePosition,
         session.access_token,
+        (job) => applyPositionJobUpdate(normalizedTicker, job),
       );
 
       setPositions((currentPositions) =>
@@ -222,6 +328,9 @@ export function useSellSmartData(
       );
     } catch (error) {
       console.error(error);
+      markPositionPredictionFailed(normalizedTicker);
+    } finally {
+      endPredictionLoading();
     }
   };
 
@@ -270,10 +379,12 @@ export function useSellSmartData(
     setWatchlist(nextWatchlist);
     await replaceWatchlist(nextWatchlist);
 
+    beginPredictionLoading();
     try {
       const enrichedItem = await enrichWatchItemWithApi(
         baseItem,
         session.access_token,
+        (job) => applyWatchJobUpdate(normalizedTicker, job),
       );
 
       setWatchlist((currentWatchlist) =>
@@ -283,6 +394,9 @@ export function useSellSmartData(
       );
     } catch (error) {
       console.error(error);
+      markWatchPredictionFailed(normalizedTicker);
+    } finally {
+      endPredictionLoading();
     }
   };
 
@@ -299,6 +413,8 @@ export function useSellSmartData(
   useEffect(() => {
     if (!session) {
       hasAppliedDefaultView.current = false;
+      activePredictionRequests.current = 0;
+      setIsLoadingPredictions(false);
       return;
     }
 

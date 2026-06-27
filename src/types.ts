@@ -47,6 +47,23 @@ export type ApiPrediction = {
   cache_generated_at?: string;
 };
 
+
+export type PredictionJobStatus = "pending" | "processing" | "completed" | "failed" | "cancelled";
+
+export type PredictionJob = {
+  job_id?: string | null;
+  ticker: string;
+  status: PredictionJobStatus;
+  progress?: number;
+  message?: string | null;
+  prediction?: ApiPrediction | null;
+  error_message?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  started_at?: string | null;
+  completed_at?: string | null;
+};
+
 export type RiskAsset = {
   isDemo?: boolean;
   ticker: string;
@@ -70,6 +87,10 @@ export type RiskAsset = {
   cacheGeneratedAt?: string;
   drivers: ApiDriver[];
   supportiveSignals: ApiDriver[];
+  predictionStatus?: PredictionJobStatus;
+  predictionJobId?: string;
+  predictionProgress?: number;
+  predictionMessage?: string;
 };
 
 export type Position = RiskAsset & {

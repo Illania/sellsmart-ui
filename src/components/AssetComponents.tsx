@@ -19,6 +19,24 @@ const formatPriceTimestamp = (timestamp?: string) => {
 const formatSignedMoney = (value: number) => `${value >= 0 ? "+" : ""}${money.format(value)}`;
 const formatSignedPercent = (value: number) => `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 
+
+function PredictionProgress({ asset }: { asset: RiskAsset }) {
+  if (asset.predictionStatus !== "pending" && asset.predictionStatus !== "processing") {
+    return null;
+  }
+
+  const progress = Math.max(0, Math.min(100, asset.predictionProgress ?? 0));
+
+  return (
+    <div className="prediction-progress" aria-label={`${asset.ticker} prediction progress`}>
+      <div className="prediction-progress-bar">
+        <span style={{ width: `${progress}%` }} />
+      </div>
+      <small>{progress > 0 ? `${progress}%` : "Queued"}</small>
+    </div>
+  );
+}
+
 export function PositionCard({
   position,
   onOpen,
@@ -113,6 +131,7 @@ export function PositionCard({
           </strong>
 
           <p className="position-summary">{position.explanation}</p>
+          <PredictionProgress asset={position} />
         </div>
       </div>
     </article>
@@ -277,6 +296,7 @@ export function WatchlistCard({
           </strong>
 
           <p className="position-summary">{item.explanation}</p>
+          <PredictionProgress asset={item} />
         </div>
       </div>
     </article>
@@ -376,6 +396,7 @@ export function RiskAndAction({
         </strong>
 
         <p className="position-summary">{asset.explanation}</p>
+        <PredictionProgress asset={asset} />
 
         {asset.marketRegime && (
           <div className="position-meta">

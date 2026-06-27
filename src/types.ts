@@ -15,6 +15,36 @@ export type PortfolioAlert = {
   read: boolean;
 };
 
+
+export type NewsSentiment = "Positive" | "Neutral" | "Negative";
+export type NewsImpactLevel = "High" | "Medium" | "Low";
+
+export type NewsImpactArticle = {
+  title: string;
+  source: string;
+  published_at?: string | null;
+  url?: string | null;
+  image_url?: string | null;
+  summary: string;
+  sentiment: NewsSentiment;
+  sentiment_score?: number;
+  impact: NewsImpactLevel;
+  impact_reasons?: string[];
+};
+
+export type NewsImpact = {
+  has_news: boolean;
+  overall_sentiment: "positive" | "neutral" | "negative";
+  overall_score: number;
+  confidence: number;
+  article_count: number;
+  positive_articles: number;
+  neutral_articles: number;
+  negative_articles: number;
+  summary: string;
+  articles: NewsImpactArticle[];
+};
+
 export type ApiDriver = {
   label: string;
   value: number;
@@ -45,6 +75,7 @@ export type ApiPrediction = {
   probability_of_drop?: number;
   cache_status?: string;
   cache_generated_at?: string;
+  news_impact?: NewsImpact;
 };
 
 
@@ -88,6 +119,7 @@ export type RiskAsset = {
   cacheGeneratedAt?: string;
   drivers: ApiDriver[];
   supportiveSignals: ApiDriver[];
+  newsImpact?: NewsImpact;
   predictionStatus?: PredictionJobStatus;
   predictionJobId?: string;
   predictionProgress?: number;

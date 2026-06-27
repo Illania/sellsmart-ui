@@ -1930,6 +1930,9 @@ button {
 
 .position-card-title {
   margin-top: 26px;
+  min-height: 126px;
+  display: flex;
+  flex-direction: column;
 }
 
 .position-card-title h3 {
@@ -1941,6 +1944,12 @@ button {
 .position-card-title p,
 .position-card-title span {
   color: var(--muted);
+}
+
+.position-card-title span {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .position-card-value {
@@ -3037,6 +3046,7 @@ button {
   .position-card-title {
     grid-area: title !important;
     margin: 0 !important;
+    min-height: 0 !important;
   }
 
   .position-card-title h3 {

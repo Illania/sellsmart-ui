@@ -65,8 +65,14 @@ export function SellSmartOnboarding({
       return;
     }
 
-    const completed =
-      profile.onboardingVersion === CURRENT_ONBOARDING_VERSION || localCompleted;
+    // For authenticated users, Supabase is the source of truth.
+    // Do not let a stale localStorage flag hide onboarding after the
+    // profiles table has been reset for testing or for a new onboarding version.
+    const completed = profile.onboardingVersion === CURRENT_ONBOARDING_VERSION;
+
+    if (!completed && localCompleted) {
+      localStorage.removeItem(ONBOARDING_KEY);
+    }
 
     setIsCompleted(completed);
     setShowWelcome(!completed);

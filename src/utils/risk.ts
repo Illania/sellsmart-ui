@@ -43,10 +43,24 @@ export const getCompanyName = (ticker: string) => {
 
 export const getLogoClass = (ticker: string) => {
   const known: Record<string, string> = {
-    NVDA: "logo-nvda", TSLA: "logo-tsla", AAPL: "logo-aapl", MSFT: "logo-msft", AMZN: "logo-amzn",
+    NVDA: "logo-nvda",
+    TSLA: "logo-tsla",
+    AAPL: "logo-aapl",
+    MSFT: "logo-msft",
+    AMZN: "logo-amzn",
+    GOOGL: "logo-googl",
+    META: "logo-meta",
+    JPM: "logo-jpm",
   };
 
   return known[ticker] ?? "logo-jpm";
+};
+
+export const getLogoText = (ticker: string) => {
+  const normalized = ticker.toUpperCase();
+
+  // Keep the displayed ticker consistent with the actual symbol.
+  return normalized;
 };
 
 export const createBaseRiskAsset = (ticker: string, isDemo = false): RiskAsset => ({
@@ -57,7 +71,7 @@ export const createBaseRiskAsset = (ticker: string, isDemo = false): RiskAsset =
   riskLevel: "moderate",
   action: "Watch",
   explanation: "Loading SellSmart AI prediction...",
-  logo: ticker.slice(0, 3),
+  logo: getLogoText(ticker),
   logoClass: getLogoClass(ticker),
   chart: [18, 24, 20, 28, 26, 31, 29, 34, 32, 38, 35, 40],
   drivers: [],

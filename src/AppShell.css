@@ -667,20 +667,60 @@ button {
   width: 52px;
   height: 52px;
   flex: 0 0 auto;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 10px;
-  font-size: 25px;
-  font-weight: 900;
   overflow: hidden;
+  padding: 2px;
+  text-align: center;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.08em;
+  white-space: nowrap;
 }
 
-.logo-nvda { color: #7bd923; background: #071211; }
-.logo-tsla { color: #ff2e3e; background: #241018; font-family: Georgia, serif; }
-.logo-aapl { color: #f8fafc; background: #1f2937; }
-.logo-msft { color: #4ade80; background: linear-gradient(135deg, #f97316 0 25%, #22c55e 25% 50%, #38bdf8 50% 75%, #facc15 75%); }
-.logo-amzn { color: #fff; background: #111827; font-family: Georgia, serif; }
-.logo-jpm { color: #fff; background: #202124; font-family: Georgia, serif; font-size: 18px; }
+.logo-nvda {
+  color: #7bd923;
+  background: #071211;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 16px;
+}
+
+.logo-tsla {
+  color: #ff2e3e;
+  background: #241018;
+  font-family: Georgia, serif;
+  font-size: 15px;
+  letter-spacing: -0.09em;
+}
+
+.logo-aapl {
+  color: #f8fafc;
+  background: #1f2937;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 16px;
+}
+
+.logo-msft {
+  color: #4ade80;
+  background: linear-gradient(135deg, #f97316 0 25%, #22c55e 25% 50%, #38bdf8 50% 75%, #facc15 75%);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 16px;
+}
+
+.logo-amzn,
+.logo-googl,
+.logo-meta,
+.logo-jpm {
+  color: #fff;
+  background: #202124;
+  font-family: Georgia, serif;
+  font-size: 14px;
+  letter-spacing: -0.11em;
+}
 
 .position-main h3 {
   margin: 0 0 6px;
@@ -2982,8 +3022,9 @@ button {
     grid-area: logo !important;
     width: 56px !important;
     height: 56px !important;
-    font-size: 22px !important;
-}
+    padding: 2px !important;
+    line-height: 1 !important;
+  }
 
   .position-card-top .asset-card-actions {
     grid-area: actions !important;
@@ -3103,7 +3144,8 @@ button {
     grid-area: logo !important;
     width: 56px !important;
     height: 56px !important;
-    font-size: 22px !important;
+    padding: 2px !important;
+    line-height: 1 !important;
   }
 
   .watchlist-card-title {

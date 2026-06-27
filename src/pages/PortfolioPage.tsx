@@ -201,9 +201,8 @@ export function PortfolioPage({
                 <>
                   <button
                     type="button"
-                    className={`icon-button ${
-                      portfolioViewMode === "grid" ? "active" : ""
-                    }`}
+                    className={`icon-button ${portfolioViewMode === "grid" ? "active" : ""
+                      }`}
                     onClick={() => setPortfolioViewMode("grid")}
                     aria-label="Grid view"
                   >
@@ -211,9 +210,8 @@ export function PortfolioPage({
                   </button>
                   <button
                     type="button"
-                    className={`icon-button ${
-                      portfolioViewMode === "list" ? "active" : ""
-                    }`}
+                    className={`icon-button ${portfolioViewMode === "list" ? "active" : ""
+                      }`}
                     onClick={() => setPortfolioViewMode("list")}
                     aria-label="List view"
                   >
@@ -273,7 +271,7 @@ export function PortfolioPage({
             )}
           </div>
 
-          {isMobile && (
+          {selectedAsset && (isMobile || effectivePortfolioViewMode === "grid") && (
             <TickerInsightsPanel
               asset={selectedAsset}
               onClose={() => setExpandedTicker(null)}

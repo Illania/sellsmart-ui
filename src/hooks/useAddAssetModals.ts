@@ -31,7 +31,7 @@ export function useAddPositionModal(
     setNewShares("");
     setNewAvgBuyPrice("");
     close();
-    setExpandedTicker(ticker);
+    setExpandedTicker(null);
     setActiveView("portfolio");
 
     await addPosition(ticker, shares, avgBuyPrice);
@@ -74,7 +74,7 @@ export function useAddWatchItemModal(
 
     setNewWatchTicker("");
     close();
-    setExpandedTicker(ticker);
+    setExpandedTicker(null);
     setActiveView("watchlist");
 
     await addWatchItem(ticker);

@@ -2983,7 +2983,7 @@ button {
     width: 56px !important;
     height: 56px !important;
     font-size: 22px !important;
-  }
+}
 
   .position-card-top .asset-card-actions {
     grid-area: actions !important;
@@ -3524,11 +3524,23 @@ button {
   line-height: 1.6;
 }
 
+
 @media (min-width: 981px) {
   .ticker-insights-backdrop {
-    display: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+  }
+
+  .ticker-insights-panel {
+    width: min(920px, 90vw);
+    max-height: 78vh;
+    border-radius: 28px;
+    box-shadow: 0 30px 120px rgba(0, 0, 0, 0.65);
   }
 }
+
 
 /* ==========================================================
    Mobile Account Menu + Bottom Navigation Final Fix

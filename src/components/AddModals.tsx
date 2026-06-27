@@ -85,7 +85,15 @@ export function EditPositionModal({ position, onSubmit, onClose }: EditPositionM
         <div className="modal-form">
           <label>Ticker<input value={ticker} onChange={(event) => setTicker(event.target.value)} placeholder="AMD" /></label>
           <label>Shares<input value={shares} onChange={(event) => setShares(event.target.value)} placeholder="10" type="number" min="0" /></label>
-          <label>Average Buy Price<input value={avgBuyPrice} onChange={(event) => setAvgBuyPrice(event.target.value)} placeholder="120" type="number" min="0" /></label>
+          <label>Average Buy Price
+            <input
+              type="number"
+              step="0.001"
+              min="0"
+              value={avgBuyPrice}
+              onChange={(e) => setAvgBuyPrice(e.target.value)}
+            />
+          </label>
         </div>
 
         <div className="modal-actions">

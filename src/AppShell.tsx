@@ -195,7 +195,7 @@ const titles: Record<ViewType, string> = {
     avgBuyPrice: number,
   ) => {
     await updatePosition(oldTicker, ticker, shares, avgBuyPrice);
-    setExpandedTicker(ticker);
+    setExpandedTicker(null);
     setActiveView("portfolio");
   };
 
@@ -206,7 +206,7 @@ const titles: Record<ViewType, string> = {
 
   const handleUpdateWatchItem = async (oldTicker: string, ticker: string) => {
     await updateWatchItem(oldTicker, ticker);
-    setExpandedTicker(ticker);
+    setExpandedTicker(null);
     setActiveView("watchlist");
   };
 

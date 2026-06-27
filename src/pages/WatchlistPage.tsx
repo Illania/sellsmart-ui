@@ -161,7 +161,7 @@ export function WatchlistPage({
             )}
           </div>
 
-          {isMobile && (
+          {selectedAsset && (isMobile || effectivePortfolioViewMode === "grid") && (
             <TickerInsightsPanel
               asset={selectedAsset}
               onClose={() => setExpandedTicker(null)}

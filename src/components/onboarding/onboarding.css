@@ -116,3 +116,101 @@
     width: 100%;
   }
 }
+
+/* Light theme onboarding final pass -------------------------------------- */
+:root[data-theme="light"] .onboarding-modal-backdrop {
+  background: rgba(15, 23, 42, 0.34);
+  backdrop-filter: blur(14px);
+}
+
+:root[data-theme="light"] .onboarding-modal {
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  background:
+    radial-gradient(circle at top left, rgba(79, 70, 229, 0.08), transparent 36%),
+    radial-gradient(circle at top right, rgba(192, 132, 252, 0.10), transparent 34%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98));
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.18);
+  color: #0f172a;
+}
+
+:root[data-theme="light"] .onboarding-logo {
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.10);
+}
+
+:root[data-theme="light"] .onboarding-modal h2 {
+  color: #0f172a;
+}
+
+:root[data-theme="light"] .onboarding-modal p {
+  color: #475569;
+}
+
+:root[data-theme="light"] .onboarding-note {
+  border-color: rgba(59, 130, 246, 0.22);
+  color: #334155;
+  background: rgba(59, 130, 246, 0.07);
+}
+
+:root[data-theme="light"] .onboarding-actions .secondary-button,
+:root[data-theme="light"] .onboarding-actions button:not(.primary-button) {
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: rgba(255, 255, 255, 0.92);
+  color: #0f172a;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+:root[data-theme="light"] .onboarding-actions .primary-button,
+:root[data-theme="light"] .onboarding-actions button.primary-button {
+  border: 0;
+  background: linear-gradient(135deg, #4f46e5, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.24);
+}
+
+:root[data-theme="light"] .sellsmart-driver-popover {
+  border: 1px solid rgba(148, 163, 184, 0.36);
+  background:
+    radial-gradient(circle at top right, rgba(192, 132, 252, 0.10), transparent 34%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98));
+  color: #0f172a;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.20);
+}
+
+:root[data-theme="light"] .sellsmart-driver-popover .driver-popover-title {
+  color: #0f172a;
+}
+
+:root[data-theme="light"] .sellsmart-driver-popover .driver-popover-description {
+  color: #475569;
+}
+
+:root[data-theme="light"] .sellsmart-driver-popover .driver-popover-progress-text {
+  color: #64748b;
+}
+
+:root[data-theme="light"] .sellsmart-driver-popover .driver-popover-close-btn {
+  color: #64748b;
+  background: transparent;
+  text-shadow: none;
+}
+
+:root[data-theme="light"] .sellsmart-driver-popover .driver-popover-close-btn:hover {
+  color: #0f172a;
+}
+
+:root[data-theme="light"] .sellsmart-driver-popover .driver-popover-next-btn,
+:root[data-theme="light"] .sellsmart-driver-popover .driver-popover-done-btn {
+  border: 0;
+  background: linear-gradient(135deg, #4f46e5, #2563eb);
+  color: #ffffff;
+  text-shadow: none;
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.24);
+}
+
+:root[data-theme="light"] .sellsmart-driver-popover .driver-popover-prev-btn {
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: rgba(255, 255, 255, 0.92);
+  color: #0f172a;
+  text-shadow: none;
+}

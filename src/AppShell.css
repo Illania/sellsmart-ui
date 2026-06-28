@@ -5786,3 +5786,62 @@ button:disabled {
   border-color: rgba(239, 68, 68, 0.30) !important;
   color: var(--red) !important;
 }
+
+/* Light theme report readability fixes ------------------------------------ */
+:root[data-theme="light"] .report-section h4,
+:root[data-theme="light"] .report-preview h3 {
+  color: var(--text) !important;
+}
+
+:root[data-theme="light"] .report-section p,
+:root[data-theme="light"] .report-section .muted-text {
+  color: var(--muted) !important;
+}
+
+:root[data-theme="light"] .report-table {
+  border-color: var(--border) !important;
+}
+
+:root[data-theme="light"] .report-row {
+  color: var(--text) !important;
+  border-bottom-color: var(--border) !important;
+}
+
+:root[data-theme="light"] .report-row span {
+  color: var(--text) !important;
+  font-weight: 800;
+}
+
+:root[data-theme="light"] .report-row strong {
+  color: var(--red) !important;
+}
+
+:root[data-theme="light"] .report-row em {
+  color: #7c3aed !important;
+  font-style: normal;
+  font-weight: 800;
+}
+
+:root[data-theme="light"] .report-driver {
+  background: rgba(255, 255, 255, 0.70) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+}
+
+:root[data-theme="light"] .report-driver strong {
+  color: var(--text) !important;
+  font-weight: 800;
+}
+
+:root[data-theme="light"] .report-driver p {
+  color: var(--muted) !important;
+}
+
+:root[data-theme="light"] .report-driver span {
+  color: var(--red) !important;
+  background: rgba(239, 68, 68, 0.10);
+  border-radius: 999px;
+  padding: 3px 8px;
+  display: inline-flex;
+  width: fit-content;
+}

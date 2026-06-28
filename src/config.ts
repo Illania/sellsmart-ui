@@ -1,6 +1,9 @@
 import type { AppSettings } from "./types";
 
-export const API_BASE_URL = "https://sellsmart-ml-api.onrender.com";
+export const API_BASE_URL =
+  import.meta.env.DEV
+    ? "http://localhost:8000"
+    : "https://sellsmart-ml-api.onrender.com";
 
 export const defaultSettings: AppSettings = {
   highRiskThreshold: 70,

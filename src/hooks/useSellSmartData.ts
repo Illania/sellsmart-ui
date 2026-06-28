@@ -144,6 +144,7 @@ export function useSellSmartData(
               position,
               session.access_token,
               (job) => applyPositionJobUpdate(position.ticker, job),
+              { queued: true },
             );
           } catch (error) {
             console.error(error);
@@ -180,6 +181,7 @@ export function useSellSmartData(
               item,
               session.access_token,
               (job) => applyWatchJobUpdate(item.ticker, job),
+              { queued: true },
             );
           } catch (error) {
             console.error(error);

@@ -22,11 +22,17 @@ export function applyAppearanceMode(mode: AppearanceMode) {
   localStorage.setItem(THEME_STORAGE_KEY, mode);
 }
 
+export function getStoredAppearanceMode(): AppearanceMode {
+  if (typeof window === "undefined") return "system";
+
+  const stored = localStorage.getItem(THEME_STORAGE_KEY) as AppearanceMode | null;
+  return stored === "light" || stored === "dark" || stored === "system"
+    ? stored
+    : "system";
+}
+
 export function applyStoredAppearanceBeforeRender() {
   if (typeof window === "undefined") return;
 
-  const stored = localStorage.getItem(THEME_STORAGE_KEY) as AppearanceMode | null;
-  const mode: AppearanceMode = stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
-
-  applyAppearanceMode(mode);
+  applyAppearanceMode(getStoredAppearanceMode());
 }

@@ -23,6 +23,7 @@ import { usePageHeader } from "./hooks/usePageHeader";
 import { usePortfolioAnalytics } from "./hooks/usePortfolioAnalytics";
 import { useSellSmartData } from "./hooks/useSellSmartData";
 import { useAppearance } from "./hooks/useAppearance";
+import { getStoredAppearanceMode } from "./themeScript";
 import { SellSmartLayout } from "./layout/SellSmartLayout";
 import { AlertsPage } from "./pages/AlertsPage";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -131,7 +132,8 @@ const titles: Record<ViewType, string> = {
     deleteWatchItem,
   } = useSellSmartData(session, setActiveView);
 
-  useAppearance(settings.appearance);
+  const effectiveAppearance = isUserDataReady ? settings.appearance : getStoredAppearanceMode();
+  useAppearance(effectiveAppearance);
 
   const {
     sortBy,

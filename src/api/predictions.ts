@@ -17,9 +17,15 @@ const sleep = (ms: number) => new Promise((resolve) => window.setTimeout(resolve
 export const fetchPrediction = async (
   ticker: string,
   accessToken?: string,
+  options: { forceCache?: boolean } = {},
 ): Promise<ApiPrediction> => {
+  const params = new URLSearchParams({ ticker });
+  if (options.forceCache) {
+    params.set("force_cache", "true");
+  }
+
   const response = await fetch(
-    `${API_BASE_URL}/predict?ticker=${encodeURIComponent(ticker)}&live=false`,
+    `${API_BASE_URL}/predict?${params.toString()}`,
     {
       headers: authHeaders(accessToken),
     },
@@ -35,9 +41,15 @@ export const fetchPrediction = async (
 export const enqueuePrediction = async (
   ticker: string,
   accessToken?: string,
+  options: { forceCache?: boolean } = {},
 ): Promise<PredictionJob> => {
+  const params = new URLSearchParams({ ticker });
+  if (options.forceCache) {
+    params.set("force_cache", "true");
+  }
+
   const response = await fetch(
-    `${API_BASE_URL}/prediction-jobs?ticker=${encodeURIComponent(ticker)}&live=false`,
+    `${API_BASE_URL}/prediction-jobs?${params.toString()}`,
     {
       method: "POST",
       headers: authHeaders(accessToken),
@@ -70,8 +82,9 @@ export const fetchPredictionQueued = async (
   ticker: string,
   accessToken?: string,
   onJobUpdate?: (job: PredictionJob) => void,
+  options: { forceCache?: boolean } = {},
 ): Promise<ApiPrediction> => {
-  let job = await enqueuePrediction(ticker, accessToken);
+  let job = await enqueuePrediction(ticker, accessToken, options);
   onJobUpdate?.(job);
 
   const firstPrediction = job.prediction ?? job.prediction_json;
@@ -116,11 +129,15 @@ export const enrichPositionWithApi = async (
   position: Position,
   accessToken?: string,
   onJobUpdate?: (job: PredictionJob) => void,
-  options: { queued?: boolean } = {},
+  options: { queued?: boolean; forceCache?: boolean } = {},
 ): Promise<Position> => {
   const data = options.queued
-    ? await fetchPredictionQueued(position.ticker, accessToken, onJobUpdate)
-    : await fetchPrediction(position.ticker, accessToken);
+    ? await fetchPredictionQueued(position.ticker, accessToken, onJobUpdate, {
+        forceCache: options.forceCache,
+      })
+    : await fetchPrediction(position.ticker, accessToken, {
+        forceCache: options.forceCache,
+      });
 
   const currentPrice = data.current_price ?? position.currentPrice ?? position.avgBuyPrice;
   const previousClose = data.previous_close ?? position.previousClose;
@@ -157,11 +174,15 @@ export const enrichWatchItemWithApi = async (
   item: WatchItem,
   accessToken?: string,
   onJobUpdate?: (job: PredictionJob) => void,
-  options: { queued?: boolean } = {},
+  options: { queued?: boolean; forceCache?: boolean } = {},
 ): Promise<WatchItem> => {
   const data = options.queued
-    ? await fetchPredictionQueued(item.ticker, accessToken, onJobUpdate)
-    : await fetchPrediction(item.ticker, accessToken);
+    ? await fetchPredictionQueued(item.ticker, accessToken, onJobUpdate, {
+        forceCache: options.forceCache,
+      })
+    : await fetchPrediction(item.ticker, accessToken, {
+        forceCache: options.forceCache,
+      });
   return {
     ...applyPredictionToAsset(item, data),
     predictionStatus: "completed",

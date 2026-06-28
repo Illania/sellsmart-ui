@@ -117,6 +117,7 @@ const titles: Record<ViewType, string> = {
     settings,
     readAlertIds,
     isLoadingPredictions,
+    isUserDataReady,
     saveReadAlerts,
     updateSetting,
     resetDemoData,
@@ -213,7 +214,7 @@ const titles: Record<ViewType, string> = {
     setActiveView("watchlist");
   };
 
-  if (authLoading) {
+  if (authLoading || (session && !isUserDataReady)) {
     return <div className="app-loading">Loading SellSmart...</div>;
   }
 

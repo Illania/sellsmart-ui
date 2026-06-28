@@ -20,6 +20,7 @@ import {
 } from "../api/sellsmartData";
 import { searchSymbols } from "../api/symbols";
 import { defaultSettings } from "../config";
+import { applyAppearanceMode } from "../themeScript";
 import { demoPositions, demoWatchlist } from "../data/demoData";
 import type { AppSettings, Position, PredictionJob, SymbolSearchResult, ViewType, WatchItem } from "../types";
 import { createBasePosition, createBaseWatchItem } from "../utils/risk";
@@ -33,6 +34,7 @@ export function useSellSmartData(
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [readAlertIds, setReadAlertIds] = useState<string[]>([]);
   const [isLoadingPredictions, setIsLoadingPredictions] = useState(false);
+  const [isUserDataReady, setIsUserDataReady] = useState(false);
   const activePredictionRequests = useRef(0);
   const hasAppliedDefaultView = useRef(false);
 
@@ -505,6 +507,7 @@ export function useSellSmartData(
 
   useEffect(() => {
     if (!session) {
+      setIsUserDataReady(false);
       hasAppliedDefaultView.current = false;
       activePredictionRequests.current = 0;
       setIsLoadingPredictions(false);
@@ -512,6 +515,7 @@ export function useSellSmartData(
     }
 
     const loadUserData = async () => {
+      setIsUserDataReady(false);
       try {
         await ensureUserSettings();
 
@@ -527,7 +531,9 @@ export function useSellSmartData(
           loadReadAlertIds(),
         ]);
 
+        applyAppearanceMode(loadedSettings.appearance);
         setSettings(loadedSettings);
+        setIsUserDataReady(true);
 
         if (!hasAppliedDefaultView.current) {
           setActiveView(loadedSettings.defaultView);
@@ -552,6 +558,7 @@ export function useSellSmartData(
         }
       } catch (error) {
         console.error(error);
+        setIsUserDataReady(true);
       }
     };
 
@@ -564,6 +571,7 @@ export function useSellSmartData(
     settings,
     readAlertIds,
     isLoadingPredictions,
+    isUserDataReady,
     saveReadAlerts,
     updateSetting,
     resetDemoData,

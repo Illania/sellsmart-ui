@@ -6095,3 +6095,143 @@ button:disabled {
     -webkit-backdrop-filter: blur(18px) !important;
   }
 }
+
+/* ==========================================================
+   Login polish — light theme
+   ========================================================== */
+
+:root[data-theme="light"] .login-page {
+  background:
+    radial-gradient(circle at 16% 12%, rgba(49, 95, 220, 0.10), transparent 34%),
+    radial-gradient(circle at 84% 82%, rgba(124, 58, 237, 0.08), transparent 34%),
+    var(--bg);
+}
+
+:root[data-theme="light"] .login-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,250,252,0.94)), var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  box-shadow:
+    0 12px 40px rgba(15, 23, 42, 0.08),
+    0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+:root[data-theme="light"] .login-brand p,
+:root[data-theme="light"] .login-subtitle,
+:root[data-theme="light"] .login-note,
+:root[data-theme="light"] .login-divider,
+:root[data-theme="light"] .login-switch-row {
+  color: var(--muted);
+}
+
+:root[data-theme="light"] .login-hero-icon {
+  background: rgba(49, 95, 220, 0.10);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px rgba(49, 95, 220, 0.06);
+}
+
+.google-login-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.google-icon {
+  width: 20px;
+  height: 20px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.google-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+:root[data-theme="light"] .google-login-button {
+  background: #f8fafc;
+  color: var(--text);
+  border: 1px solid #d7dee8;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
+}
+
+:root[data-theme="light"] .google-login-button:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+:root[data-theme="light"] .email-login-button {
+  background: var(--blue);
+  color: #ffffff;
+  box-shadow: 0 14px 28px rgba(49, 95, 220, 0.22);
+}
+
+:root[data-theme="light"] .email-login-button:hover:not(:disabled) {
+  background: #244fc7;
+  transform: translateY(-1px);
+}
+
+:root[data-theme="light"] .email-login-button:disabled {
+  background: #e2e8f0;
+  color: #94a3b8;
+  border: 1px solid #d7dee8;
+  box-shadow: none;
+  opacity: 1;
+}
+
+:root[data-theme="light"] .google-login-button:disabled {
+  background: #f8fafc;
+  color: #94a3b8;
+  border-color: #e2e8f0;
+  box-shadow: none;
+  opacity: 1;
+}
+
+:root[data-theme="light"] .login-field {
+  color: var(--text);
+}
+
+:root[data-theme="light"] .login-field input {
+  background: #ffffff;
+  border: 1px solid #d7dee8;
+  color: var(--text);
+  box-shadow: inset 0 1px 0 rgba(15, 23, 42, 0.02);
+}
+
+:root[data-theme="light"] .login-field input::placeholder {
+  color: #8fa0b7;
+}
+
+:root[data-theme="light"] .login-field input:focus {
+  border-color: rgba(49, 95, 220, 0.72);
+  box-shadow: 0 0 0 3px rgba(49, 95, 220, 0.13);
+}
+
+:root[data-theme="light"] .login-divider::before,
+:root[data-theme="light"] .login-divider::after {
+  background: #d7dee8;
+}
+
+:root[data-theme="light"] .login-switch-row button {
+  color: var(--blue);
+}
+
+:root[data-theme="light"] .login-switch-row button:hover {
+  color: #244fc7;
+}
+
+:root[data-theme="light"] .login-alert-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+:root[data-theme="light"] .login-alert-success {
+  background: #ecfdf5;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}

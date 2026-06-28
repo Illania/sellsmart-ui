@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
   Bell,
+  CheckCheck,
   CircleHelp,
   FileText,
   Home,
@@ -160,7 +161,7 @@ export function SellSmartLayout({
               onImportCsv={onImportCsv}
             />
 
-            <button type="button" className="secondary-button" onClick={onImportDemo}>
+            <button type="button" className="secondary-button desktop-import-demo-button" onClick={onImportDemo}>
               <Import size={16} />
               Import Demo
             </button>
@@ -195,6 +196,7 @@ export function SellSmartLayout({
               avatarUrl={avatarUrl}
               userEmail={userEmail}
               setActiveView={setActiveView}
+              onImportDemo={onImportDemo}
               onLogout={onLogout}
             />
           </div>
@@ -258,18 +260,25 @@ function MobileAccountMenu({
   avatarUrl,
   userEmail,
   setActiveView,
+  onImportDemo,
   onLogout,
 }: {
   avatarText: string;
   avatarUrl: string;
   userEmail?: string;
   setActiveView: (view: ViewType) => void;
+  onImportDemo: () => void;
   onLogout: () => void;
 }) {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
   const openView = (view: ViewType) => {
     setActiveView(view);
+    setAccountMenuOpen(false);
+  };
+
+  const importDemo = () => {
+    onImportDemo();
     setAccountMenuOpen(false);
   };
 
@@ -297,6 +306,10 @@ function MobileAccountMenu({
 
           <button type="button" onClick={() => openView("help")}>
             Help Center
+          </button>
+
+          <button type="button" onClick={importDemo}>
+            Import Demo
           </button>
 
           <button
@@ -383,7 +396,10 @@ function TopbarPrimaryAction({
         type="button"
         className="secondary-button"
         onClick={onMarkAllAlertsAsRead}
+        aria-label="Mark all alerts as read"
+        title="Mark all alerts as read"
       >
+        <CheckCheck size={18} />
         Mark all as read
       </button>
     );

@@ -387,6 +387,7 @@ const titles: Record<ViewType, string> = {
           onSubmit={addPositionModal.submit}
           onClose={addPositionModal.close}
           accessToken={session.access_token}
+          onSymbolSelect={addPositionModal.handleSymbolSelect}
         />
       )}
 
@@ -413,6 +414,7 @@ const titles: Record<ViewType, string> = {
           onSubmit={addWatchItemModal.submit}
           onClose={addWatchItemModal.close}
           accessToken={session.access_token}
+          onSymbolSelect={addWatchItemModal.handleSymbolSelect}
         />
       )}
 

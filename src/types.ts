@@ -75,6 +75,7 @@ export type RiskAsset = {
   explanation: string;
   logo: string;
   logoClass: string;
+  logoUrl?: string;
   chart: number[];
   currentPrice?: number;
   previousClose?: number;

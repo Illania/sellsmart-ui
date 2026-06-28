@@ -16,10 +16,12 @@ import {
   replaceReadAlertIds,
   replaceWatchlist,
   saveSettings,
+  upsertTickerFromSearchResult,
 } from "../api/sellsmartData";
+import { searchSymbols } from "../api/symbols";
 import { defaultSettings } from "../config";
 import { demoPositions, demoWatchlist } from "../data/demoData";
-import type { AppSettings, Position, PredictionJob, ViewType, WatchItem } from "../types";
+import type { AppSettings, Position, PredictionJob, SymbolSearchResult, ViewType, WatchItem } from "../types";
 import { createBasePosition, createBaseWatchItem } from "../utils/risk";
 
 export function useSellSmartData(
@@ -48,6 +50,73 @@ export function useSellSmartData(
     if (job.status === "completed") return "Prediction ready.";
     if (job.status === "failed") return job.error_message || "Prediction failed.";
     return job.message || "Generating prediction...";
+  };
+
+  const applySelectedSymbolMetadata = <T extends Position | WatchItem>(
+    asset: T,
+    symbolMetadata?: SymbolSearchResult,
+  ): T => {
+    if (!symbolMetadata || symbolMetadata.symbol.trim().toUpperCase() !== asset.ticker) {
+      return asset;
+    }
+
+    return {
+      ...asset,
+      company: symbolMetadata.companyName || asset.company,
+      logoUrl: symbolMetadata.logoUrl || asset.logoUrl,
+    };
+  };
+
+  const hydrateMissingTickerMetadata = async (
+    basePositions: Position[],
+    baseWatchlist: WatchItem[],
+  ) => {
+    if (!session?.access_token) {
+      return { positions: basePositions, watchlist: baseWatchlist };
+    }
+
+    const missingTickers = Array.from(
+      new Set(
+        [...basePositions, ...baseWatchlist]
+          .filter((asset) => !asset.logoUrl)
+          .map((asset) => asset.ticker.trim().toUpperCase())
+          .filter(Boolean),
+      ),
+    );
+
+    if (!missingTickers.length) {
+      return { positions: basePositions, watchlist: baseWatchlist };
+    }
+
+    const metadataByTicker = new Map<string, SymbolSearchResult>();
+
+    await Promise.allSettled(
+      missingTickers.map(async (ticker) => {
+        const results = await searchSymbols(ticker, session.access_token);
+        const exactMatch = results.find(
+          (result) => result.symbol.trim().toUpperCase() === ticker,
+        );
+        const metadata = exactMatch ?? results[0];
+
+        if (!metadata) return;
+
+        await upsertTickerFromSearchResult(metadata);
+        metadataByTicker.set(ticker, metadata);
+      }),
+    );
+
+    if (!metadataByTicker.size) {
+      return { positions: basePositions, watchlist: baseWatchlist };
+    }
+
+    return {
+      positions: basePositions.map((position) =>
+        applySelectedSymbolMetadata(position, metadataByTicker.get(position.ticker)),
+      ),
+      watchlist: baseWatchlist.map((item) =>
+        applySelectedSymbolMetadata(item, metadataByTicker.get(item.ticker)),
+      ),
+    };
   };
 
   const applyPositionJobUpdate = (ticker: string, job: PredictionJob) => {
@@ -280,8 +349,9 @@ export function useSellSmartData(
     ticker: string,
     shares: number,
     avgBuyPrice: number,
+    symbolMetadata?: SymbolSearchResult,
   ) => {
-    await updatePosition(ticker, ticker, shares, avgBuyPrice);
+    await updatePosition(ticker, ticker, shares, avgBuyPrice, symbolMetadata);
   };
 
   const updatePosition = async (
@@ -289,6 +359,7 @@ export function useSellSmartData(
     ticker: string,
     shares: number,
     avgBuyPrice: number,
+    symbolMetadata?: SymbolSearchResult,
   ) => {
     if (!session?.access_token) {
       console.error("You must be signed in to update positions.");
@@ -297,11 +368,18 @@ export function useSellSmartData(
 
     const normalizedOldTicker = oldTicker.trim().toUpperCase();
     const normalizedTicker = ticker.trim().toUpperCase();
-    const basePosition = createBasePosition(
-      normalizedTicker,
-      shares,
-      avgBuyPrice,
+    const basePosition = applySelectedSymbolMetadata(
+      createBasePosition(
+        normalizedTicker,
+        shares,
+        avgBuyPrice,
+      ),
+      symbolMetadata,
     );
+
+    if (symbolMetadata) {
+      await upsertTickerFromSearchResult(symbolMetadata);
+    }
 
     const nextPositions = [
       ...positions.filter(
@@ -356,11 +434,15 @@ export function useSellSmartData(
     await replacePositions(nextPositions);
   };
 
-  const addWatchItem = async (ticker: string) => {
-    await updateWatchItem(ticker, ticker);
+  const addWatchItem = async (ticker: string, symbolMetadata?: SymbolSearchResult) => {
+    await updateWatchItem(ticker, ticker, symbolMetadata);
   };
 
-  const updateWatchItem = async (oldTicker: string, ticker: string) => {
+  const updateWatchItem = async (
+    oldTicker: string,
+    ticker: string,
+    symbolMetadata?: SymbolSearchResult,
+  ) => {
     if (!session?.access_token) {
       console.error("You must be signed in to update watchlist items.");
       return;
@@ -368,7 +450,14 @@ export function useSellSmartData(
 
     const normalizedOldTicker = oldTicker.trim().toUpperCase();
     const normalizedTicker = ticker.trim().toUpperCase();
-    const baseItem = createBaseWatchItem(normalizedTicker);
+    const baseItem = applySelectedSymbolMetadata(
+      createBaseWatchItem(normalizedTicker),
+      symbolMetadata,
+    );
+
+    if (symbolMetadata) {
+      await upsertTickerFromSearchResult(symbolMetadata);
+    }
 
     const nextWatchlist = [
       ...watchlist.filter(
@@ -445,16 +534,21 @@ export function useSellSmartData(
           hasAppliedDefaultView.current = true;
         }
 
-        setReadAlertIds(loadedReadAlertIds);
-        setPositions(loadedPositions);
-        setWatchlist(loadedWatchlist);
+        const hydratedAssets = await hydrateMissingTickerMetadata(
+          loadedPositions,
+          loadedWatchlist,
+        );
 
-        if (loadedPositions.length > 0) {
-          void refreshPositions(loadedPositions);
+        setReadAlertIds(loadedReadAlertIds);
+        setPositions(hydratedAssets.positions);
+        setWatchlist(hydratedAssets.watchlist);
+
+        if (hydratedAssets.positions.length > 0) {
+          void refreshPositions(hydratedAssets.positions);
         }
 
-        if (loadedWatchlist.length > 0) {
-          void refreshWatchlist(loadedWatchlist);
+        if (hydratedAssets.watchlist.length > 0) {
+          void refreshWatchlist(hydratedAssets.watchlist);
         }
       } catch (error) {
         console.error(error);

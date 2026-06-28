@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { ChevronRight, Edit3, Trash2, TrendingDown } from "lucide-react";
 import type { Position, RiskAsset, WatchItem } from "../types";
 import { money } from "../utils/format";
@@ -19,6 +20,30 @@ const formatPriceTimestamp = (timestamp?: string) => {
 const formatSignedMoney = (value: number) => `${value >= 0 ? "+" : ""}${money.format(value)}`;
 const formatSignedPercent = (value: number) => `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 
+
+function AssetLogo({ asset }: { asset: Pick<RiskAsset, "ticker" | "logo" | "logoClass" | "logoUrl"> }) {
+  const [hasLogoError, setHasLogoError] = useState(false);
+  const shouldShowLogo = Boolean(asset.logoUrl) && !hasLogoError;
+
+  useEffect(() => {
+    setHasLogoError(false);
+  }, [asset.logoUrl]);
+
+  return (
+    <div className={`position-logo ${asset.logoClass} ${shouldShowLogo ? "has-image" : ""}`}>
+      {shouldShowLogo ? (
+        <img
+          src={asset.logoUrl}
+          alt={`${asset.ticker} logo`}
+          loading="lazy"
+          onError={() => setHasLogoError(true)}
+        />
+      ) : (
+        asset.logo
+      )}
+    </div>
+  );
+}
 
 function PredictionProgress({ asset }: { asset: RiskAsset }) {
   if (asset.predictionStatus !== "pending" && asset.predictionStatus !== "processing") {
@@ -56,9 +81,7 @@ export function PositionCard({
   return (
     <article className="position-card">
       <div className="position-card-top">
-        <div className={`position-logo ${position.logoClass}`}>
-          {position.logo}
-        </div>
+        <AssetLogo asset={position} />
 
         <div className="asset-card-actions">
           <button
@@ -159,9 +182,7 @@ export function PositionRow({
   return (
     <article className="position-row">
       <div className="position-main">
-        <div className={`position-logo ${position.logoClass}`}>
-          {position.logo}
-        </div>
+        <AssetLogo asset={position} />
         <div>
           <h3>{position.ticker}</h3>
           <p>{position.company}</p>
@@ -244,7 +265,7 @@ export function WatchlistCard({
   return (
     <article className="watchlist-card">
       <div className="watchlist-card-header">
-        <div className={`position-logo ${item.logoClass}`}>{item.logo}</div>
+        <AssetLogo asset={item} />
 
         <div className="watchlist-card-title">
           <h3>{item.ticker}</h3>
@@ -320,7 +341,7 @@ export function WatchlistRow({
   return (
     <article className="position-row">
       <div className="position-main">
-        <div className={`position-logo ${item.logoClass}`}>{item.logo}</div>
+        <AssetLogo asset={item} />
         <div>
           <h3>{item.ticker}</h3>
           <p>{item.company}</p>

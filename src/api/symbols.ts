@@ -28,6 +28,35 @@ const normalizeSymbolResult = (item: RawSymbolSearchResult): SymbolSearchResult 
   providerSymbol: item.providerSymbol ?? item.provider_symbol,
 });
 
+
+const PRIMARY_EXCHANGES = new Set([
+  "NASDAQ",
+  "NYSE",
+  "AMEX",
+  "NYSEARCA",
+  "BATS",
+]);
+
+const scoreSymbolResult = (item: SymbolSearchResult, query: string) => {
+  const normalizedQuery = query.trim().toUpperCase();
+  const symbol = item.symbol.trim().toUpperCase();
+  const exchange = item.exchange?.trim().toUpperCase();
+  const companyName = item.companyName.trim().toUpperCase();
+
+  let score = 0;
+
+  if (symbol === normalizedQuery) score += 1000;
+  if (symbol.startsWith(normalizedQuery)) score += 200;
+  if (item.logoUrl) score += 260;
+  if (exchange && PRIMARY_EXCHANGES.has(exchange)) score += 200;
+  if (item.currency === "USD") score += 80;
+  if (item.type?.toLowerCase().includes("common stock")) score += 30;
+  if (companyName && companyName !== symbol) score += 80;
+  if (companyName === symbol) score -= 120;
+
+  return score;
+};
+
 export async function searchSymbols(
   query: string,
   accessToken?: string,
@@ -66,5 +95,9 @@ export async function searchSymbols(
 
   return items
     .map(normalizeSymbolResult)
-    .filter((item: SymbolSearchResult) => item.symbol && item.companyName);
+    .filter((item: SymbolSearchResult) => item.symbol && item.companyName)
+    .sort(
+      (a: SymbolSearchResult, b: SymbolSearchResult) =>
+        scoreSymbolResult(b, trimmedQuery) - scoreSymbolResult(a, trimmedQuery),
+    );
 }

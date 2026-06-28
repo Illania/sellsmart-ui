@@ -1,4 +1,5 @@
 import type { ActionType, ApiPrediction, Position, RiskAsset, RiskLevel, WatchItem } from "../types";
+import { getCachedSymbolMetadata } from "./symbolMetadata";
 
 export const mapRiskLevel = (category?: string, score?: number): RiskLevel => {
   if (category === "high" || category === "moderate" || category === "low") return category;
@@ -63,10 +64,13 @@ export const getLogoText = (ticker: string) => {
   return normalized;
 };
 
-export const createBaseRiskAsset = (ticker: string, isDemo = false): RiskAsset => ({
+export const createBaseRiskAsset = (ticker: string, isDemo = false): RiskAsset => {
+  const metadata = getCachedSymbolMetadata(ticker);
+
+  return {
   isDemo,
   ticker,
-  company: getCompanyName(ticker),
+  company: metadata?.company ?? getCompanyName(ticker),
   riskScore: 50,
   riskLevel: "moderate",
   action: "Watch",
@@ -76,10 +80,12 @@ export const createBaseRiskAsset = (ticker: string, isDemo = false): RiskAsset =
   predictionMessage: "Prediction request queued.",
   logo: getLogoText(ticker),
   logoClass: getLogoClass(ticker),
+  logoUrl: metadata?.logoUrl,
   chart: [18, 24, 20, 28, 26, 31, 29, 34, 32, 38, 35, 40],
   drivers: [],
   supportiveSignals: [],
-});
+};
+};
 
 export const createBasePosition = (
   ticker: string,
@@ -111,7 +117,8 @@ export const normalizePosition = (position: Partial<Position>): Position => {
     ...createBasePosition(ticker, shares, avgBuyPrice, Boolean(position.isDemo)),
     ...position,
     ticker,
-    company: position.company ?? getCompanyName(ticker),
+    company: position.company ?? getCachedSymbolMetadata(ticker)?.company ?? getCompanyName(ticker),
+    logoUrl: position.logoUrl ?? getCachedSymbolMetadata(ticker)?.logoUrl,
     shares,
     avgBuyPrice,
     value: Number(position.value ?? shares * avgBuyPrice),
@@ -135,7 +142,8 @@ export const normalizeWatchItem = (item: Partial<WatchItem>): WatchItem => {
     ...createBaseWatchItem(ticker, Boolean(item.isDemo)),
     ...item,
     ticker,
-    company: item.company ?? getCompanyName(ticker),
+    company: item.company ?? getCachedSymbolMetadata(ticker)?.company ?? getCompanyName(ticker),
+    logoUrl: item.logoUrl ?? getCachedSymbolMetadata(ticker)?.logoUrl,
     riskScore: Number(item.riskScore ?? 50),
     riskLevel: mapRiskLevel(item.riskLevel, item.riskScore),
     action: item.action ?? "Watch",
@@ -147,7 +155,7 @@ export const normalizeWatchItem = (item: Partial<WatchItem>): WatchItem => {
 
 export const applyPredictionToAsset = <T extends RiskAsset>(asset: T, data: ApiPrediction): T => ({
   ...asset,
-  company: getCompanyName(asset.ticker),
+  company: asset.company || getCompanyName(asset.ticker),
   currentPrice: data.current_price ?? asset.currentPrice,
   previousClose: data.previous_close ?? asset.previousClose,
   dailyChange: data.daily_change ?? asset.dailyChange,

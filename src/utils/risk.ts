@@ -79,7 +79,6 @@ export const createBaseRiskAsset = (ticker: string, isDemo = false): RiskAsset =
   chart: [18, 24, 20, 28, 26, 31, 29, 34, 32, 38, 35, 40],
   drivers: [],
   supportiveSignals: [],
-  newsImpact: undefined,
 });
 
 export const createBasePosition = (
@@ -165,5 +164,4 @@ export const applyPredictionToAsset = <T extends RiskAsset>(asset: T, data: ApiP
   cacheGeneratedAt: data.cache_generated_at,
   drivers: [...(data.drivers ?? []), ...(data.stress_signals ?? [])],
   supportiveSignals: data.supportive_signals ?? [],
-  newsImpact: data.news_impact ?? asset.newsImpact,
 });

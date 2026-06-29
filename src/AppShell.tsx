@@ -131,6 +131,7 @@ const titles: Record<ViewType, string> = {
     addWatchItem,
     updateWatchItem,
     deleteWatchItem,
+    deleteWatchItems,
   } = useSellSmartData(session, setActiveView);
 
   const effectiveAppearance = isUserDataReady ? settings.appearance : getStoredAppearanceMode();
@@ -213,6 +214,11 @@ const titles: Record<ViewType, string> = {
 
   const handleDeleteWatchItem = async (ticker: string) => {
     await deleteWatchItem(ticker);
+    setExpandedTicker(null);
+  };
+
+  const handleDeleteWatchItems = async (tickers: string[]) => {
+    await deleteWatchItems(tickers);
     setExpandedTicker(null);
   };
 
@@ -319,6 +325,7 @@ const titles: Record<ViewType, string> = {
           onAddTicker={addWatchItemModal.open}
           onEditWatchItem={setEditingWatchItem}
           onDeleteWatchItem={handleDeleteWatchItem}
+          onDeleteWatchItems={handleDeleteWatchItems}
           isMobile={isMobile}
         />
       )}

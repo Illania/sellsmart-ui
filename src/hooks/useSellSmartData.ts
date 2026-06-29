@@ -514,6 +514,21 @@ export function useSellSmartData(
     await replaceWatchlist(nextWatchlist);
   };
 
+  const deleteWatchItems = async (tickers: string[]) => {
+    const normalizedTickers = new Set(
+      tickers.map((ticker) => ticker.trim().toUpperCase()).filter(Boolean),
+    );
+
+    if (normalizedTickers.size === 0) return;
+
+    const nextWatchlist = watchlist.filter(
+      (item) => !normalizedTickers.has(item.ticker),
+    );
+
+    setWatchlist(nextWatchlist);
+    await replaceWatchlist(nextWatchlist);
+  };
+
   useEffect(() => {
     if (!session) {
       setIsUserDataReady(false);
@@ -597,5 +612,6 @@ export function useSellSmartData(
     addWatchItem,
     updateWatchItem,
     deleteWatchItem,
+    deleteWatchItems,
   };
 }

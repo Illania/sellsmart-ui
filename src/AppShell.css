@@ -6499,7 +6499,8 @@ button:disabled {
 }
 
 .position-card.selected,
-.position-row.selected {
+.position-row.selected,
+.watchlist-card.selected {
   border-color: rgba(124, 92, 255, 0.75);
   box-shadow: 0 0 0 1px rgba(124, 92, 255, 0.28), 0 18px 45px rgba(0, 0, 0, 0.22);
 }
@@ -6527,23 +6528,26 @@ button:disabled {
   border-radius: 12px;
   border: 1px solid var(--border-strong);
   background: rgba(255, 255, 255, 0.04);
-  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  color: #ffffff;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 
 .asset-select-control span::after {
   content: "";
   width: 12px;
   height: 7px;
-  border-left: 2px solid #fff;
-  border-bottom: 2px solid #fff;
+  border-left: 2.5px solid currentColor;
+  border-bottom: 2.5px solid currentColor;
   transform: rotate(-45deg) scale(0);
   transform-origin: center;
   transition: transform 0.2s ease;
 }
 
 .asset-select-control input:checked + span {
-  border-color: rgba(124, 92, 255, 0.9);
-  background: linear-gradient(135deg, var(--purple), #635bff);
+  border-color: rgba(124, 92, 255, 0.95);
+  background: linear-gradient(135deg, #6d5dfc, #4a56e2);
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(74, 86, 226, 0.28);
 }
 
 .asset-select-control input:checked + span::after {
@@ -6561,13 +6565,23 @@ button:disabled {
 }
 
 :root[data-theme="light"] .position-card.selected,
-:root[data-theme="light"] .position-row.selected {
+:root[data-theme="light"] .position-row.selected,
+:root[data-theme="light"] .watchlist-card.selected {
   border-color: rgba(74, 86, 226, 0.58);
   box-shadow: 0 0 0 1px rgba(74, 86, 226, 0.16), 0 18px 45px rgba(33, 42, 70, 0.12);
 }
 
 :root[data-theme="light"] .asset-select-control span {
-  background: rgba(255, 255, 255, 0.78);
+  border-color: rgba(74, 86, 226, 0.36);
+  background: #ffffff;
+  color: #ffffff;
+}
+
+:root[data-theme="light"] .asset-select-control input:checked + span {
+  border-color: #4a56e2;
+  background: linear-gradient(135deg, #6d5dfc, #4a56e2);
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(74, 86, 226, 0.22);
 }
 
 :root[data-theme="light"] .ghost-button.compact:hover {

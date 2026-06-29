@@ -384,18 +384,35 @@ export function WatchlistCard({
   item,
   onOpen,
   onDelete,
+  isSelected = false,
+  isSelectionMode = false,
+  onToggleSelected,
 }: {
   item: WatchItem;
   onOpen: () => void;
   onDelete: () => void;
+  isSelected?: boolean;
+  isSelectionMode?: boolean;
+  onToggleSelected?: () => void;
 }) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const actionClass = item.action.toLowerCase();
   const priceDate = formatPriceTimestamp(item.priceTimestamp);
 
   return (
-    <article className="watchlist-card">
+    <article className={`watchlist-card ${isSelected ? "selected" : ""}`}>
       <div className="watchlist-card-header">
+        {isSelectionMode && (
+          <label className="asset-select-control" onClick={(event) => event.stopPropagation()}>
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={onToggleSelected}
+              aria-label={`Select ${item.ticker}`}
+            />
+            <span />
+          </label>
+        )}
         <AssetLogo asset={item} />
 
         <div className="watchlist-card-title">
@@ -469,19 +486,36 @@ export function WatchlistRow({
   isExpanded,
   onToggle,
   onDelete,
+  isSelected = false,
+  isSelectionMode = false,
+  onToggleSelected,
 }: {
   item: WatchItem;
   isExpanded: boolean;
   onToggle: () => void;
   onDelete: () => void;
+  isSelected?: boolean;
+  isSelectionMode?: boolean;
+  onToggleSelected?: () => void;
 }) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const actionClass = item.action.toLowerCase();
   const priceDate = formatPriceTimestamp(item.priceTimestamp);
 
   return (
-    <article className="position-row">
+    <article className={`position-row ${isSelected ? "selected" : ""}`}>
       <div className="position-main">
+        {isSelectionMode && (
+          <label className="asset-select-control" onClick={(event) => event.stopPropagation()}>
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={onToggleSelected}
+              aria-label={`Select ${item.ticker}`}
+            />
+            <span />
+          </label>
+        )}
         <AssetLogo asset={item} />
         <div>
           <h3>{item.ticker}</h3>

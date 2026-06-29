@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import {
   Brain,
   ChevronRight,
@@ -6,8 +7,9 @@ import {
   List,
   Plus,
   SlidersHorizontal,
+  Trash2,
 } from "lucide-react";
-import { WatchlistCard, WatchlistRow } from "../components/AssetComponents";
+import { DeleteConfirmDialog, WatchlistCard, WatchlistRow } from "../components/AssetComponents";
 import { Donut } from "../components/Charts";
 import { TickerInsightsPanel } from "../components/TickerInsightsPanel";
 import type { ApiDriver, RiskLevel, ViewType, WatchItem } from "../types";
@@ -28,6 +30,7 @@ type Props = {
   onAddTicker: () => void;
   onEditWatchItem: (item: WatchItem) => void;
   onDeleteWatchItem: (ticker: string) => void;
+  onDeleteWatchItems: (tickers: string[]) => void;
   isMobile?: boolean;
 };
 
@@ -44,12 +47,51 @@ export function WatchlistPage({
   setActiveView,
   onAddTicker,
   onDeleteWatchItem,
+  onDeleteWatchItems,
   isMobile = false,
 }: Props) {
   const effectivePortfolioViewMode = isMobile ? "grid" : portfolioViewMode;
+  const [selectedTickers, setSelectedTickers] = useState<string[]>([]);
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
   const selectedAsset = sortedWatchlist.find(
     (item) => item.ticker === expandedTicker,
   );
+  const sortedTickerSet = useMemo(
+    () => new Set(sortedWatchlist.map((item) => item.ticker)),
+    [sortedWatchlist],
+  );
+  const isSelectionMode = selectedTickers.length > 0;
+  const allVisibleSelected =
+    sortedWatchlist.length > 0 &&
+    sortedWatchlist.every((item) => selectedTickers.includes(item.ticker));
+
+  useEffect(() => {
+    setSelectedTickers((current) =>
+      current.filter((ticker) => sortedTickerSet.has(ticker)),
+    );
+  }, [sortedTickerSet]);
+
+  const toggleSelectedTicker = (ticker: string) => {
+    setSelectedTickers((current) =>
+      current.includes(ticker)
+        ? current.filter((selectedTicker) => selectedTicker !== ticker)
+        : [...current, ticker],
+    );
+  };
+
+  const clearSelection = () => setSelectedTickers([]);
+
+  const selectAllVisible = () => {
+    setSelectedTickers(sortedWatchlist.map((item) => item.ticker));
+  };
+
+  const deleteSelectedWatchItems = () => {
+    if (selectedTickers.length === 0) return;
+
+    onDeleteWatchItems(selectedTickers);
+    clearSelection();
+    setIsBulkDeleteDialogOpen(false);
+  };
 
   return (
     <section data-tour="watchlist-page">
@@ -77,10 +119,47 @@ export function WatchlistPage({
 
       <div className="content-grid">
         <section className="positions-panel">
-          <div className="panel-header">
-            <h2>Your Watchlist</h2>
+          <div className="panel-header positions-panel-header">
+            <div>
+              <h2>Your Watchlist</h2>
+              {isSelectionMode && (
+                <p className="selection-count">
+                  {selectedTickers.length} selected
+                </p>
+              )}
+            </div>
 
             <div className="sort-area">
+              {sortedWatchlist.length > 0 && (
+                <button
+                  type="button"
+                  className="secondary-button compact"
+                  onClick={isSelectionMode ? clearSelection : selectAllVisible}
+                >
+                  {isSelectionMode ? "Cancel selection" : "Select"}
+                </button>
+              )}
+
+              {isSelectionMode && (
+                <button
+                  type="button"
+                  className="secondary-button danger-button compact"
+                  onClick={() => setIsBulkDeleteDialogOpen(true)}
+                >
+                  <Trash2 size={16} />
+                  Delete selected
+                </button>
+              )}
+
+              {isSelectionMode && !allVisibleSelected && (
+                <button
+                  type="button"
+                  className="ghost-button compact"
+                  onClick={selectAllVisible}
+                >
+                  Select all
+                </button>
+              )}
               <span>Sort by</span>
               <select
                 value={sortBy}
@@ -144,6 +223,9 @@ export function WatchlistPage({
                     )
                   }
                   onDelete={() => onDeleteWatchItem(item.ticker)}
+                  isSelectionMode={isSelectionMode}
+                  isSelected={selectedTickers.includes(item.ticker)}
+                  onToggleSelected={() => toggleSelectedTicker(item.ticker)}
                 />
               ) : (
                 <WatchlistRow
@@ -156,6 +238,9 @@ export function WatchlistPage({
                     )
                   }
                   onDelete={() => onDeleteWatchItem(item.ticker)}
+                  isSelectionMode={isSelectionMode}
+                  isSelected={selectedTickers.includes(item.ticker)}
+                  onToggleSelected={() => toggleSelectedTicker(item.ticker)}
                 />
               ),
             )}
@@ -168,6 +253,15 @@ export function WatchlistPage({
             />
           )}
         </section>
+
+        {isBulkDeleteDialogOpen && (
+          <DeleteConfirmDialog
+            title={`Delete ${selectedTickers.length} watchlist items?`}
+            description={`This will remove ${selectedTickers.length} selected tickers from your watchlist. You can add them again later.`}
+            onCancel={() => setIsBulkDeleteDialogOpen(false)}
+            onConfirm={deleteSelectedWatchItems}
+          />
+        )}
 
         <WatchlistRightRail
           riskDistribution={riskDistribution}

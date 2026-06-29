@@ -426,14 +426,23 @@ export function useSellSmartData(
     }
   };
 
-  const deletePosition = async (ticker: string) => {
-    const normalizedTicker = ticker.trim().toUpperCase();
+  const deletePositions = async (tickers: string[]) => {
+    const normalizedTickers = new Set(
+      tickers.map((ticker) => ticker.trim().toUpperCase()).filter(Boolean),
+    );
+
+    if (normalizedTickers.size === 0) return;
+
     const nextPositions = positions.filter(
-      (position) => position.ticker !== normalizedTicker,
+      (position) => !normalizedTickers.has(position.ticker),
     );
 
     setPositions(nextPositions);
     await replacePositions(nextPositions);
+  };
+
+  const deletePosition = async (ticker: string) => {
+    await deletePositions([ticker]);
   };
 
   const addWatchItem = async (ticker: string, symbolMetadata?: SymbolSearchResult) => {
@@ -511,6 +520,10 @@ export function useSellSmartData(
       hasAppliedDefaultView.current = false;
       activePredictionRequests.current = 0;
       setIsLoadingPredictions(false);
+      setPositions([]);
+      setWatchlist([]);
+      setReadAlertIds([]);
+      setSettings(defaultSettings);
       return;
     }
 
@@ -580,6 +593,7 @@ export function useSellSmartData(
     updatePosition,
     importPositions,
     deletePosition,
+    deletePositions,
     addWatchItem,
     updateWatchItem,
     deleteWatchItem,

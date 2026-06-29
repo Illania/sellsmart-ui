@@ -20,14 +20,18 @@ const formatPriceTimestamp = (timestamp?: string) => {
 const formatSignedMoney = (value: number) => `${value >= 0 ? "+" : ""}${money.format(value)}`;
 const formatSignedPercent = (value: number) => `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 
-function DeleteConfirmDialog({
+export function DeleteConfirmDialog({
   ticker,
   context,
+  title,
+  description,
   onCancel,
   onConfirm,
 }: {
-  ticker: string;
-  context: "portfolio" | "watchlist";
+  ticker?: string;
+  context?: "portfolio" | "watchlist";
+  title?: string;
+  description?: string;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
@@ -73,9 +77,9 @@ function DeleteConfirmDialog({
         </div>
 
         <div className="delete-dialog-copy">
-          <h2 id="delete-dialog-title">Delete {ticker}?</h2>
+          <h2 id="delete-dialog-title">{title ?? `Delete ${ticker}?`}</h2>
           <p id="delete-dialog-description">
-            This will remove {ticker} from your {context}. You can add it again later.
+            {description ?? `This will remove ${ticker} from your ${context}. You can add it again later.`}
           </p>
         </div>
 
@@ -83,7 +87,7 @@ function DeleteConfirmDialog({
           <button type="button" className="secondary-button" onClick={onCancel}>
             Cancel
           </button>
-          <button type="button" className="danger-button" onClick={onConfirm}>
+          <button type="button" className="secondary-button danger-button" onClick={onConfirm}>
             Delete
           </button>
         </div>
@@ -139,11 +143,17 @@ export function PositionCard({
   onOpen,
   onEdit,
   onDelete,
+  isSelected = false,
+  isSelectionMode = false,
+  onToggleSelected,
 }: {
   position: Position;
   onOpen: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  isSelected?: boolean;
+  isSelectionMode?: boolean;
+  onToggleSelected?: () => void;
 }) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const isPositive = position.pnl >= 0;
@@ -152,8 +162,19 @@ export function PositionCard({
   const actionClass = position.action.toLowerCase();
 
   return (
-    <article className="position-card">
+    <article className={`position-card ${isSelected ? "selected" : ""}`}>
       <div className="position-card-top">
+        {isSelectionMode && (
+          <label className="asset-select-control" onClick={(event) => event.stopPropagation()}>
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={onToggleSelected}
+              aria-label={`Select ${position.ticker}`}
+            />
+            <span />
+          </label>
+        )}
         <AssetLogo asset={position} />
 
         <div className="asset-card-actions">
@@ -249,12 +270,18 @@ export function PositionRow({
   onToggle,
   onEdit,
   onDelete,
+  isSelected = false,
+  isSelectionMode = false,
+  onToggleSelected,
 }: {
   position: Position;
   isExpanded: boolean;
   onToggle: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  isSelected?: boolean;
+  isSelectionMode?: boolean;
+  onToggleSelected?: () => void;
 }) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const isPositive = position.pnl >= 0;
@@ -263,8 +290,19 @@ export function PositionRow({
   const actionClass = position.action.toLowerCase();
 
   return (
-    <article className="position-row">
+    <article className={`position-row ${isSelected ? "selected" : ""}`}>
       <div className="position-main">
+        {isSelectionMode && (
+          <label className="asset-select-control" onClick={(event) => event.stopPropagation()}>
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={onToggleSelected}
+              aria-label={`Select ${position.ticker}`}
+            />
+            <span />
+          </label>
+        )}
         <AssetLogo asset={position} />
         <div>
           <h3>{position.ticker}</h3>

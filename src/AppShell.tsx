@@ -127,6 +127,7 @@ const titles: Record<ViewType, string> = {
     updatePosition,
     importPositions,
     deletePosition,
+    deletePositions,
     addWatchItem,
     updateWatchItem,
     deleteWatchItem,
@@ -191,6 +192,11 @@ const titles: Record<ViewType, string> = {
 
   const handleDeletePosition = async (ticker: string) => {
     await deletePosition(ticker);
+    setExpandedTicker(null);
+  };
+
+  const handleDeletePositions = async (tickers: string[]) => {
+    await deletePositions(tickers);
     setExpandedTicker(null);
   };
 
@@ -293,6 +299,7 @@ const titles: Record<ViewType, string> = {
           setActiveView={setActiveView}
           onEditPosition={setEditingPosition}
           onDeletePosition={handleDeletePosition}
+          onDeletePositions={handleDeletePositions}
           isMobile={isMobile}
         />
       )}

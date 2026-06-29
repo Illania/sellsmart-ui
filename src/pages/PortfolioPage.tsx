@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import {
   Brain,
   ChevronRight,
@@ -5,8 +6,9 @@ import {
   LayoutDashboard,
   List,
   SlidersHorizontal,
+  Trash2,
 } from "lucide-react";
-import { PositionCard, PositionRow } from "../components/AssetComponents";
+import { DeleteConfirmDialog, PositionCard, PositionRow } from "../components/AssetComponents";
 import { Donut, Sparkline, SummaryCard } from "../components/Charts";
 import { TickerInsightsPanel } from "../components/TickerInsightsPanel";
 import type { ApiDriver, Position, RiskLevel, ViewType } from "../types";
@@ -51,6 +53,7 @@ type Props = {
   setActiveView: (view: ViewType) => void;
   onEditPosition: (position: Position) => void;
   onDeletePosition: (ticker: string) => void;
+  onDeletePositions: (tickers: string[]) => void;
   isMobile?: boolean;
 };
 
@@ -77,12 +80,51 @@ export function PortfolioPage({
   setActiveView,
   onEditPosition,
   onDeletePosition,
+  onDeletePositions,
   isMobile = false,
 }: Props) {
   const effectivePortfolioViewMode = isMobile ? "grid" : portfolioViewMode;
+  const [selectedTickers, setSelectedTickers] = useState<string[]>([]);
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
   const selectedAsset = sortedPositions.find(
     (item) => item.ticker === expandedTicker,
   );
+  const sortedTickerSet = useMemo(
+    () => new Set(sortedPositions.map((position) => position.ticker)),
+    [sortedPositions],
+  );
+  const isSelectionMode = selectedTickers.length > 0;
+  const allVisibleSelected =
+    sortedPositions.length > 0 &&
+    sortedPositions.every((position) => selectedTickers.includes(position.ticker));
+
+  useEffect(() => {
+    setSelectedTickers((current) =>
+      current.filter((ticker) => sortedTickerSet.has(ticker)),
+    );
+  }, [sortedTickerSet]);
+
+  const toggleSelectedTicker = (ticker: string) => {
+    setSelectedTickers((current) =>
+      current.includes(ticker)
+        ? current.filter((selectedTicker) => selectedTicker !== ticker)
+        : [...current, ticker],
+    );
+  };
+
+  const clearSelection = () => setSelectedTickers([]);
+
+  const selectAllVisible = () => {
+    setSelectedTickers(sortedPositions.map((position) => position.ticker));
+  };
+
+  const deleteSelectedPositions = () => {
+    if (selectedTickers.length === 0) return;
+
+    onDeletePositions(selectedTickers);
+    clearSelection();
+    setIsBulkDeleteDialogOpen(false);
+  };
 
   return (
     <section data-tour="portfolio-page">
@@ -181,10 +223,48 @@ export function PortfolioPage({
 
       <div className="content-grid">
         <section className="positions-panel">
-          <div className="panel-header">
-            <h2>Your Positions</h2>
+          <div className="panel-header positions-panel-header">
+            <div>
+              <h2>Your Positions</h2>
+              {isSelectionMode && (
+                <p className="selection-count">
+                  {selectedTickers.length} selected
+                </p>
+              )}
+            </div>
 
             <div className="sort-area">
+              {positions.length > 0 && (
+                <button
+                  type="button"
+                  className="secondary-button compact"
+                  onClick={isSelectionMode ? clearSelection : selectAllVisible}
+                >
+                  {isSelectionMode ? "Cancel selection" : "Select"}
+                </button>
+              )}
+
+              {isSelectionMode && (
+                <button
+                  type="button"
+                  className="secondary-button danger-button compact"
+                  onClick={() => setIsBulkDeleteDialogOpen(true)}
+                >
+                  <Trash2 size={16} />
+                  Delete selected
+                </button>
+              )}
+
+              {isSelectionMode && !allVisibleSelected && (
+                <button
+                  type="button"
+                  className="ghost-button compact"
+                  onClick={selectAllVisible}
+                >
+                  Select all
+                </button>
+              )}
+
               <span>Sort by</span>
               <select
                 value={sortBy}
@@ -251,6 +331,9 @@ export function PortfolioPage({
                   }
                   onEdit={() => onEditPosition(position)}
                   onDelete={() => onDeletePosition(position.ticker)}
+                  isSelectionMode={isSelectionMode}
+                  isSelected={selectedTickers.includes(position.ticker)}
+                  onToggleSelected={() => toggleSelectedTicker(position.ticker)}
                 />
               ) : (
                 <PositionRow
@@ -266,6 +349,9 @@ export function PortfolioPage({
                   }
                   onEdit={() => onEditPosition(position)}
                   onDelete={() => onDeletePosition(position.ticker)}
+                  isSelectionMode={isSelectionMode}
+                  isSelected={selectedTickers.includes(position.ticker)}
+                  onToggleSelected={() => toggleSelectedTicker(position.ticker)}
                 />
               ),
             )}
@@ -285,6 +371,15 @@ export function PortfolioPage({
           setActiveView={setActiveView}
         />
       </div>
+
+      {isBulkDeleteDialogOpen && (
+        <DeleteConfirmDialog
+          title={`Delete ${selectedTickers.length} positions?`}
+          description={`This will remove ${selectedTickers.length} selected positions from your portfolio. You can add them again later.`}
+          onCancel={() => setIsBulkDeleteDialogOpen(false)}
+          onConfirm={deleteSelectedPositions}
+        />
+      )}
     </section>
   );
 }

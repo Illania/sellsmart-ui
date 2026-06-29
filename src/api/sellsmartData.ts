@@ -307,7 +307,17 @@ export async function deleteDemoData() {
 }
 
 export async function loadReadAlertIds(): Promise<string[]> {
-  const { data, error } = await supabase.from("read_alerts").select("alert_id");
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) throw new Error("No authenticated user");
+
+  const { data, error } = await supabase
+    .from("read_alerts")
+    .select("alert_id")
+    .eq("user_id", user.id)
+    .order("read_at", { ascending: false });
 
   if (error) throw error;
 
@@ -321,14 +331,31 @@ export async function replaceReadAlertIds(alertIds: string[]) {
 
   if (!user) throw new Error("No authenticated user");
 
-  await supabase.from("read_alerts").delete().eq("user_id", user.id);
+  const uniqueAlertIds = Array.from(new Set(alertIds)).filter(Boolean);
 
-  if (!alertIds.length) return;
+  if (!uniqueAlertIds.length) return;
+
+  const { data: existingRows, error: selectError } = await supabase
+    .from("read_alerts")
+    .select("alert_id")
+    .eq("user_id", user.id)
+    .in("alert_id", uniqueAlertIds);
+
+  if (selectError) throw selectError;
+
+  const existingAlertIds = new Set((existingRows ?? []).map((row) => row.alert_id));
+  const newAlertIds = uniqueAlertIds.filter((alertId) => !existingAlertIds.has(alertId));
+
+  if (!newAlertIds.length) return;
+
+  const now = new Date().toISOString();
 
   const { error } = await supabase.from("read_alerts").insert(
-    alertIds.map((alertId) => ({
+    newAlertIds.map((alertId) => ({
       user_id: user.id,
       alert_id: alertId,
+      created_at: now,
+      read_at: now,
     }))
   );
 

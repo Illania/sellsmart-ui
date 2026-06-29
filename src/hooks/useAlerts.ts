@@ -1,6 +1,19 @@
 import { useMemo } from "react";
 import type { AlertSeverity, AppSettings, PortfolioAlert, Position } from "../types";
 
+const alertDateKey = (value?: string) => {
+  const parsed = value ? new Date(value) : new Date();
+
+  if (Number.isNaN(parsed.getTime())) {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  return parsed.toISOString().slice(0, 10);
+};
+
+const buildAlertId = (type: PortfolioAlert["type"], tickerOrScope: string, createdAt?: string) =>
+  `${type}-${tickerOrScope.trim().toUpperCase()}-${alertDateKey(createdAt)}`;
+
 export function useAlerts(
   positions: Position[],
   overallRisk: number,
@@ -17,16 +30,21 @@ export function useAlerts(
           settings.enableRiskAlerts &&
           (position.riskLevel === "high" || position.riskScore >= settings.highRiskThreshold)
       )
-      .map((position) => ({
-        id: `risk-${position.ticker}`,
-        ticker: position.ticker,
-        title: `${position.ticker} high-risk signal`,
-        message: `${position.ticker} has a risk score of ${position.riskScore}/100. Suggested action: ${position.action}.`,
-        severity: "high" as AlertSeverity,
-        type: "risk" as const,
-        createdAt: position.cacheGeneratedAt ?? now,
-        read: readAlertIds.includes(`risk-${position.ticker}`),
-      }));
+      .map((position) => {
+        const createdAt = position.cacheGeneratedAt ?? now;
+        const id = buildAlertId("risk", position.ticker, createdAt);
+
+        return {
+          id,
+          ticker: position.ticker,
+          title: `${position.ticker} high-risk signal`,
+          message: `${position.ticker} has a risk score of ${position.riskScore}/100. Suggested action: ${position.action}.`,
+          severity: "high" as AlertSeverity,
+          type: "risk" as const,
+          createdAt,
+          read: readAlertIds.includes(id),
+        };
+      });
 
     const newsAlerts = positions
       .filter(
@@ -36,41 +54,53 @@ export function useAlerts(
             `${driver.label} ${driver.message}`.toLowerCase().includes("news")
           )
       )
-      .map((position) => ({
-        id: `news-${position.ticker}`,
-        ticker: position.ticker,
-        title: `${position.ticker} news risk detected`,
-        message: "SellSmart detected news-related pressure among the top risk drivers.",
-        severity: "medium" as AlertSeverity,
-        type: "news" as const,
-        createdAt: position.cacheGeneratedAt ?? now,
-        read: readAlertIds.includes(`news-${position.ticker}`),
-      }));
+      .map((position) => {
+        const createdAt = position.cacheGeneratedAt ?? now;
+        const id = buildAlertId("news", position.ticker, createdAt);
+
+        return {
+          id,
+          ticker: position.ticker,
+          title: `${position.ticker} news risk detected`,
+          message: "SellSmart detected news-related pressure among the top risk drivers.",
+          severity: "medium" as AlertSeverity,
+          type: "news" as const,
+          createdAt,
+          read: readAlertIds.includes(id),
+        };
+      });
 
     const actionAlerts = positions
       .filter((position) => settings.enableReduceAlerts && position.action === "Reduce")
-      .map((position) => ({
-        id: `action-${position.ticker}`,
-        ticker: position.ticker,
-        title: `${position.ticker} reduce signal`,
-        message: `${position.ticker} currently has a Reduce signal. Review exposure and risk drivers.`,
-        severity: "high" as AlertSeverity,
-        type: "action" as const,
-        createdAt: position.cacheGeneratedAt ?? now,
-        read: readAlertIds.includes(`action-${position.ticker}`),
-      }));
+      .map((position) => {
+        const createdAt = position.cacheGeneratedAt ?? now;
+        const id = buildAlertId("action", position.ticker, createdAt);
 
+        return {
+          id,
+          ticker: position.ticker,
+          title: `${position.ticker} reduce signal`,
+          message: `${position.ticker} currently has a Reduce signal. Review exposure and risk drivers.`,
+          severity: "high" as AlertSeverity,
+          type: "action" as const,
+          createdAt,
+          read: readAlertIds.includes(id),
+        };
+      });
+
+    const portfolioCreatedAt = now;
+    const portfolioAlertId = buildAlertId("portfolio", "risk", portfolioCreatedAt);
     const portfolioAlert =
       overallRisk >= settings.portfolioRiskThreshold
         ? [
             {
-              id: "portfolio-risk",
+              id: portfolioAlertId,
               title: "Portfolio risk requires attention",
               message: `Overall portfolio risk is ${overallRisk}/100. Review high-risk positions before adding more exposure.`,
               severity: overallRisk >= settings.highRiskThreshold ? ("high" as AlertSeverity) : ("medium" as AlertSeverity),
               type: "portfolio" as const,
-              createdAt: now,
-              read: readAlertIds.includes("portfolio-risk"),
+              createdAt: portfolioCreatedAt,
+              read: readAlertIds.includes(portfolioAlertId),
             },
           ]
         : [];
@@ -86,7 +116,7 @@ export function useAlerts(
   };
 
   const markAllAlertsAsRead = () => {
-    saveReadAlerts(alerts.map((alert) => alert.id));
+    saveReadAlerts(Array.from(new Set([...readAlertIds, ...alerts.map((alert) => alert.id)])));
   };
 
   return {

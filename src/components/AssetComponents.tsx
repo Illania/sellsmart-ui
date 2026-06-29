@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ChevronRight, Edit3, Trash2, TrendingDown } from "lucide-react";
+import { AlertTriangle, ChevronRight, Edit3, Trash2, TrendingDown, X } from "lucide-react";
 import type { Position, RiskAsset, WatchItem } from "../types";
 import { money } from "../utils/format";
 import { RiskRing, Sparkline } from "./Charts";
@@ -19,6 +19,78 @@ const formatPriceTimestamp = (timestamp?: string) => {
 
 const formatSignedMoney = (value: number) => `${value >= 0 ? "+" : ""}${money.format(value)}`;
 const formatSignedPercent = (value: number) => `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+
+function DeleteConfirmDialog({
+  ticker,
+  context,
+  onCancel,
+  onConfirm,
+}: {
+  ticker: string;
+  context: "portfolio" | "watchlist";
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onCancel();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onCancel]);
+
+  return (
+    <div
+      className="delete-dialog-backdrop"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onCancel();
+        }
+      }}
+    >
+      <section
+        className="delete-dialog"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+      >
+        <button
+          type="button"
+          className="delete-dialog-close"
+          onClick={onCancel}
+          aria-label="Cancel delete"
+        >
+          <X size={18} />
+        </button>
+
+        <div className="delete-dialog-icon">
+          <AlertTriangle size={22} />
+        </div>
+
+        <div className="delete-dialog-copy">
+          <h2 id="delete-dialog-title">Delete {ticker}?</h2>
+          <p id="delete-dialog-description">
+            This will remove {ticker} from your {context}. You can add it again later.
+          </p>
+        </div>
+
+        <div className="delete-dialog-actions">
+          <button type="button" className="secondary-button" onClick={onCancel}>
+            Cancel
+          </button>
+          <button type="button" className="danger-button" onClick={onConfirm}>
+            Delete
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
 
 
 function AssetLogo({ asset }: { asset: Pick<RiskAsset, "ticker" | "logo" | "logoClass" | "logoUrl"> }) {
@@ -73,6 +145,7 @@ export function PositionCard({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const isPositive = position.pnl >= 0;
   const isDailyPositive = position.dailyPnl >= 0;
   const priceDate = formatPriceTimestamp(position.priceTimestamp);
@@ -95,10 +168,7 @@ export function PositionCard({
           <button
             type="button"
             className="asset-action-button danger"
-            onClick={() => {
-              if (window.confirm(`Delete ${position.ticker} from portfolio?`))
-                onDelete();
-            }}
+            onClick={() => setIsDeleteDialogOpen(true)}
             aria-label={`Delete ${position.ticker}`}
           >
             <Trash2 size={16} />
@@ -157,6 +227,18 @@ export function PositionCard({
           <PredictionProgress asset={position} />
         </div>
       </div>
+
+      {isDeleteDialogOpen && (
+        <DeleteConfirmDialog
+          ticker={position.ticker}
+          context="portfolio"
+          onCancel={() => setIsDeleteDialogOpen(false)}
+          onConfirm={() => {
+            setIsDeleteDialogOpen(false);
+            onDelete();
+          }}
+        />
+      )}
     </article>
   );
 }
@@ -174,6 +256,7 @@ export function PositionRow({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const isPositive = position.pnl >= 0;
   const isDailyPositive = position.dailyPnl >= 0;
   const priceDate = formatPriceTimestamp(position.priceTimestamp);
@@ -227,10 +310,7 @@ export function PositionRow({
         <button
           type="button"
           className="asset-action-button danger"
-          onClick={() => {
-            if (window.confirm(`Delete ${position.ticker} from portfolio?`))
-              onDelete();
-          }}
+          onClick={() => setIsDeleteDialogOpen(true)}
           aria-label={`Delete ${position.ticker}`}
         >
           <Trash2 size={16} />
@@ -246,6 +326,18 @@ export function PositionRow({
       </div>
 
       {isExpanded && <AssetDetails asset={position} />}
+
+      {isDeleteDialogOpen && (
+        <DeleteConfirmDialog
+          ticker={position.ticker}
+          context="portfolio"
+          onCancel={() => setIsDeleteDialogOpen(false)}
+          onConfirm={() => {
+            setIsDeleteDialogOpen(false);
+            onDelete();
+          }}
+        />
+      )}
     </article>
   );
 }
@@ -259,6 +351,7 @@ export function WatchlistCard({
   onOpen: () => void;
   onDelete: () => void;
 }) {
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const actionClass = item.action.toLowerCase();
   const priceDate = formatPriceTimestamp(item.priceTimestamp);
 
@@ -277,10 +370,7 @@ export function WatchlistCard({
           <button
             type="button"
             className="asset-action-button danger"
-            onClick={() => {
-              if (window.confirm(`Delete ${item.ticker} from watchlist?`))
-                onDelete();
-            }}
+            onClick={() => setIsDeleteDialogOpen(true)}
             aria-label={`Delete ${item.ticker}`}
           >
             <Trash2 size={16} />
@@ -320,6 +410,18 @@ export function WatchlistCard({
           <PredictionProgress asset={item} />
         </div>
       </div>
+
+      {isDeleteDialogOpen && (
+        <DeleteConfirmDialog
+          ticker={item.ticker}
+          context="watchlist"
+          onCancel={() => setIsDeleteDialogOpen(false)}
+          onConfirm={() => {
+            setIsDeleteDialogOpen(false);
+            onDelete();
+          }}
+        />
+      )}
     </article>
   );
 }
@@ -335,6 +437,7 @@ export function WatchlistRow({
   onToggle: () => void;
   onDelete: () => void;
 }) {
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const actionClass = item.action.toLowerCase();
   const priceDate = formatPriceTimestamp(item.priceTimestamp);
 
@@ -365,10 +468,7 @@ export function WatchlistRow({
         <button
           type="button"
           className="asset-action-button danger"
-          onClick={() => {
-            if (window.confirm(`Delete ${item.ticker} from watchlist?`))
-              onDelete();
-          }}
+          onClick={() => setIsDeleteDialogOpen(true)}
           aria-label={`Delete ${item.ticker}`}
         >
           <Trash2 size={16} />
@@ -384,6 +484,18 @@ export function WatchlistRow({
       </div>
 
       {isExpanded && <AssetDetails asset={item} />}
+
+      {isDeleteDialogOpen && (
+        <DeleteConfirmDialog
+          ticker={item.ticker}
+          context="watchlist"
+          onCancel={() => setIsDeleteDialogOpen(false)}
+          onConfirm={() => {
+            setIsDeleteDialogOpen(false);
+            onDelete();
+          }}
+        />
+      )}
     </article>
   );
 }

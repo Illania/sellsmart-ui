@@ -6605,3 +6605,114 @@ button:disabled {
     justify-content: flex-start;
   }
 }
+
+.alerts-history-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.alerts-history-bar .alerts-history-toggle {
+  margin: 0;
+}
+
+.alerts-history-bar .danger-button.compact {
+  align-self: stretch;
+  white-space: nowrap;
+}
+
+.alert-card.read .alert-icon {
+  opacity: 0.72;
+}
+
+.alert-card.read .alert-time {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.compact-modal {
+  max-width: 420px;
+}
+
+.compact-modal h3 {
+  margin: 0 0 10px;
+  color: var(--text);
+}
+
+.compact-modal p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.alert-history-options {
+  display: grid;
+  gap: 10px;
+}
+
+.alert-history-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.35);
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+
+.alert-history-option:hover,
+.alert-history-option.active {
+  border-color: rgba(99, 102, 241, 0.45);
+  background: rgba(49, 95, 220, 0.12);
+}
+
+.alert-history-option input {
+  margin-top: 3px;
+  accent-color: var(--blue);
+}
+
+.alert-history-option strong,
+.alert-history-option small {
+  display: block;
+}
+
+.alert-history-option strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.alert-history-option small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.settings-clear-history {
+  margin-top: 18px;
+}
+
+:root[data-theme="light"] .alert-history-option {
+  background: rgba(255, 255, 255, 0.74);
+  border-color: var(--border);
+}
+
+:root[data-theme="light"] .alert-history-option:hover,
+:root[data-theme="light"] .alert-history-option.active {
+  background: var(--blue-soft);
+  border-color: rgba(49, 95, 220, 0.28);
+}
+
+@media (max-width: 720px) {
+  .alerts-history-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .alerts-history-bar .danger-button.compact {
+    width: 100%;
+    justify-content: center;
+  }
+}

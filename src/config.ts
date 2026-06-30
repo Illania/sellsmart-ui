@@ -13,4 +13,5 @@ export const defaultSettings: AppSettings = {
   enableNewsAlerts: true,
   defaultView: "dashboard",
   appearance: "system",
+  alertHistoryDays: 90,
 };

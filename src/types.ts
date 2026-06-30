@@ -13,6 +13,14 @@ export type PortfolioAlert = {
   type: "risk" | "news" | "portfolio" | "action";
   createdAt: string;
   read: boolean;
+  readAt?: string;
+  historyCleared?: boolean;
+};
+
+export type ReadAlertRecord = {
+  alertId: string;
+  readAt: string;
+  clearedAt?: string;
 };
 
 export type ApiDriver = {
@@ -115,6 +123,7 @@ export type AppSettings = {
   enableNewsAlerts: boolean;
   defaultView: ViewType;
   appearance: AppearanceMode;
+  alertHistoryDays: number | null;
 };
 
 export type SymbolSearchResult = {

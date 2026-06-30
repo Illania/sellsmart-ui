@@ -116,10 +116,11 @@ const titles: Record<ViewType, string> = {
     positions,
     watchlist,
     settings,
-    readAlertIds,
+    readAlerts,
     isLoadingPredictions,
     isUserDataReady,
     saveReadAlerts,
+    clearAlertHistory,
     updateSetting,
     resetDemoData,
     importDemoPortfolio,
@@ -161,7 +162,7 @@ const titles: Record<ViewType, string> = {
     positions,
     analytics.overallRisk,
     settings,
-    readAlertIds,
+    readAlerts,
     saveReadAlerts,
   );
 
@@ -336,6 +337,7 @@ const titles: Record<ViewType, string> = {
           unreadAlertsCount={unreadAlertsCount}
           markAlertAsRead={markAlertAsRead}
           markAllAlertsAsRead={markAllAlertsAsRead}
+          clearAlertHistory={clearAlertHistory}
         />
       )}
 
@@ -374,6 +376,7 @@ const titles: Record<ViewType, string> = {
           settings={settings}
           updateSetting={updateSetting}
           resetDemoData={resetDemoData}
+          clearAlertHistory={clearAlertHistory}
         />
       )}
 

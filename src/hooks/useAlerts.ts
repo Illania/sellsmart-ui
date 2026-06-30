@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { AlertSeverity, AppSettings, PortfolioAlert, Position } from "../types";
+import type { AlertSeverity, AppSettings, PortfolioAlert, Position, ReadAlertRecord } from "../types";
 
 const alertDateKey = (value?: string) => {
   const parsed = value ? new Date(value) : new Date();
@@ -18,11 +18,26 @@ export function useAlerts(
   positions: Position[],
   overallRisk: number,
   settings: AppSettings,
-  readAlertIds: string[],
+  readAlerts: ReadAlertRecord[],
   saveReadAlerts: (ids: string[]) => void
 ) {
+  const readAlertMap = useMemo(
+    () => new Map(readAlerts.map((alert) => [alert.alertId, alert])),
+    [readAlerts],
+  );
+
   const alerts = useMemo<PortfolioAlert[]>(() => {
     const now = new Date().toISOString();
+    const withReadStatus = <T extends Omit<PortfolioAlert, "read" | "readAt">>(alert: T): PortfolioAlert => {
+      const readRecord = readAlertMap.get(alert.id);
+
+      return {
+        ...alert,
+        read: Boolean(readRecord),
+        readAt: readRecord?.readAt,
+        historyCleared: Boolean(readRecord?.clearedAt),
+      };
+    };
 
     const highRiskAlerts = positions
       .filter(
@@ -34,7 +49,7 @@ export function useAlerts(
         const createdAt = position.cacheGeneratedAt ?? now;
         const id = buildAlertId("risk", position.ticker, createdAt);
 
-        return {
+        return withReadStatus({
           id,
           ticker: position.ticker,
           title: `${position.ticker} high-risk signal`,
@@ -42,8 +57,7 @@ export function useAlerts(
           severity: "high" as AlertSeverity,
           type: "risk" as const,
           createdAt,
-          read: readAlertIds.includes(id),
-        };
+        });
       });
 
     const newsAlerts = positions
@@ -58,7 +72,7 @@ export function useAlerts(
         const createdAt = position.cacheGeneratedAt ?? now;
         const id = buildAlertId("news", position.ticker, createdAt);
 
-        return {
+        return withReadStatus({
           id,
           ticker: position.ticker,
           title: `${position.ticker} news risk detected`,
@@ -66,8 +80,7 @@ export function useAlerts(
           severity: "medium" as AlertSeverity,
           type: "news" as const,
           createdAt,
-          read: readAlertIds.includes(id),
-        };
+        });
       });
 
     const actionAlerts = positions
@@ -76,7 +89,7 @@ export function useAlerts(
         const createdAt = position.cacheGeneratedAt ?? now;
         const id = buildAlertId("action", position.ticker, createdAt);
 
-        return {
+        return withReadStatus({
           id,
           ticker: position.ticker,
           title: `${position.ticker} reduce signal`,
@@ -84,8 +97,7 @@ export function useAlerts(
           severity: "high" as AlertSeverity,
           type: "action" as const,
           createdAt,
-          read: readAlertIds.includes(id),
-        };
+        });
       });
 
     const portfolioCreatedAt = now;
@@ -93,30 +105,29 @@ export function useAlerts(
     const portfolioAlert =
       overallRisk >= settings.portfolioRiskThreshold
         ? [
-            {
+            withReadStatus({
               id: portfolioAlertId,
               title: "Portfolio risk requires attention",
               message: `Overall portfolio risk is ${overallRisk}/100. Review high-risk positions before adding more exposure.`,
               severity: overallRisk >= settings.highRiskThreshold ? ("high" as AlertSeverity) : ("medium" as AlertSeverity),
               type: "portfolio" as const,
               createdAt: portfolioCreatedAt,
-              read: readAlertIds.includes(portfolioAlertId),
-            },
+            }),
           ]
         : [];
 
     return [...portfolioAlert, ...highRiskAlerts, ...actionAlerts, ...newsAlerts];
-  }, [positions, overallRisk, readAlertIds, settings]);
+  }, [positions, overallRisk, readAlertMap, settings]);
 
   const unreadAlertsCount = alerts.filter((alert) => !alert.read).length;
   const latestAlerts = alerts.slice(0, 3);
 
   const markAlertAsRead = (alertId: string) => {
-    saveReadAlerts(Array.from(new Set([...readAlertIds, alertId])));
+    saveReadAlerts([alertId]);
   };
 
   const markAllAlertsAsRead = () => {
-    saveReadAlerts(Array.from(new Set([...readAlertIds, ...alerts.map((alert) => alert.id)])));
+    saveReadAlerts(alerts.filter((alert) => !alert.read).map((alert) => alert.id));
   };
 
   return {

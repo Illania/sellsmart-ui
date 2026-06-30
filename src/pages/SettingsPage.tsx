@@ -1,4 +1,6 @@
+import { useState } from "react";
 import type { AppearanceMode, AppSettings, ViewType } from "../types";
+import { DeleteConfirmDialog } from "../components/AssetComponents";
 
 
 const appearanceOptions: { value: AppearanceMode; icon: string; title: string; description: string }[] = [
@@ -22,13 +24,29 @@ const appearanceOptions: { value: AppearanceMode; icon: string; title: string; d
   },
 ];
 
+const alertHistoryOptions: { value: number | null; title: string; description: string }[] = [
+  { value: 7, title: "7 days", description: "Keep only recent acknowledgements." },
+  { value: 30, title: "30 days", description: "Good for short-term portfolio reviews." },
+  { value: 90, title: "90 days", description: "Recommended for most investors." },
+  { value: 180, title: "180 days", description: "Useful for longer audit trails." },
+  { value: null, title: "Forever", description: "Never remove alert history automatically." },
+];
+
 type Props = {
   settings: AppSettings;
   updateSetting: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
   resetDemoData: () => void;
+  clearAlertHistory: () => void;
 };
 
-export function SettingsPage({ settings, updateSetting, resetDemoData }: Props) {
+export function SettingsPage({ settings, updateSetting, resetDemoData, clearAlertHistory }: Props) {
+  const [isClearHistoryOpen, setIsClearHistoryOpen] = useState(false);
+
+  const handleClearHistory = () => {
+    clearAlertHistory();
+    setIsClearHistoryOpen(false);
+  };
+
   return (
     <section className="settings-page" data-tour="settings-page">
       <section className="settings-grid">
@@ -120,6 +138,35 @@ export function SettingsPage({ settings, updateSetting, resetDemoData }: Props) 
         </article>
 
         <article className="settings-card">
+          <h2>Alert History</h2>
+          <p>Choose how long acknowledged alerts should be kept before automatic cleanup.</p>
+
+          <div className="alert-history-options" role="radiogroup" aria-label="Alert history retention">
+            {alertHistoryOptions.map((option) => (
+              <label
+                key={option.title}
+                className={`alert-history-option ${settings.alertHistoryDays === option.value ? "active" : ""}`}
+              >
+                <input
+                  type="radio"
+                  name="alertHistoryDays"
+                  checked={settings.alertHistoryDays === option.value}
+                  onChange={() => updateSetting("alertHistoryDays", option.value)}
+                />
+                <span>
+                  <strong>{option.title}</strong>
+                  <small>{option.description}</small>
+                </span>
+              </label>
+            ))}
+          </div>
+
+          <button className="secondary-button danger-button compact settings-clear-history" type="button" onClick={() => setIsClearHistoryOpen(true)}>
+            Clear history
+          </button>
+        </article>
+
+        <article className="settings-card">
           <h2>Default View</h2>
           <p>Choose which page should open first in SellSmart.</p>
 
@@ -154,6 +201,16 @@ export function SettingsPage({ settings, updateSetting, resetDemoData }: Props) 
           <button className="secondary-button" onClick={resetDemoData}>Reset Demo Data</button>
         </article>
       </section>
+
+      {isClearHistoryOpen && (
+        <DeleteConfirmDialog
+          title="Clear Alert History"
+          description="This will permanently delete all acknowledged alerts. Active alerts will not be affected."
+          confirmText="Clear History"
+          onCancel={() => setIsClearHistoryOpen(false)}
+          onConfirm={handleClearHistory}
+        />
+      )}
     </section>
   );
 }

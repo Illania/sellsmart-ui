@@ -25,6 +25,8 @@ export function DeleteConfirmDialog({
   context,
   title,
   description,
+  confirmText,
+  cancelText,
   onCancel,
   onConfirm,
 }: {
@@ -32,6 +34,8 @@ export function DeleteConfirmDialog({
   context?: "portfolio" | "watchlist";
   title?: string;
   description?: string;
+  confirmText?: string;
+  cancelText?: string;
   onCancel: () => void;
   onConfirm: () => void;
 }) {
@@ -67,7 +71,7 @@ export function DeleteConfirmDialog({
           type="button"
           className="delete-dialog-close"
           onClick={onCancel}
-          aria-label="Cancel delete"
+          aria-label="Close confirmation dialog"
         >
           <X size={18} />
         </button>
@@ -85,10 +89,10 @@ export function DeleteConfirmDialog({
 
         <div className="delete-dialog-actions">
           <button type="button" className="secondary-button" onClick={onCancel}>
-            Cancel
+            {cancelText ?? "Cancel"}
           </button>
           <button type="button" className="secondary-button danger-button" onClick={onConfirm}>
-            Delete
+            {confirmText ?? "Delete"}
           </button>
         </div>
       </section>

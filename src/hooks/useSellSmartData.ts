@@ -8,12 +8,14 @@ import {
 import {
   ensureUserSettings,
   loadPositions,
-  loadReadAlertIds,
+  loadReadAlerts,
   loadSettings,
   loadWatchlist,
   deleteDemoData,
   replacePositions,
-  replaceReadAlertIds,
+  markAlertsAsRead,
+  clearReadAlertHistory,
+  deleteReadAlertState,
   replaceWatchlist,
   saveSettings,
   upsertTickerFromSearchResult,
@@ -22,7 +24,7 @@ import { searchSymbols } from "../api/symbols";
 import { defaultSettings } from "../config";
 import { applyAppearanceMode } from "../themeScript";
 import { demoPositions, demoWatchlist } from "../data/demoData";
-import type { AppSettings, Position, PredictionJob, SymbolSearchResult, ViewType, WatchItem } from "../types";
+import type { AppSettings, Position, PredictionJob, ReadAlertRecord, SymbolSearchResult, ViewType, WatchItem } from "../types";
 import { createBasePosition, createBaseWatchItem } from "../utils/risk";
 
 export function useSellSmartData(
@@ -32,7 +34,7 @@ export function useSellSmartData(
   const [positions, setPositions] = useState<Position[]>([]);
   const [watchlist, setWatchlist] = useState<WatchItem[]>([]);
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
-  const [readAlertIds, setReadAlertIds] = useState<string[]>([]);
+  const [readAlerts, setReadAlerts] = useState<ReadAlertRecord[]>([]);
   const [isLoadingPredictions, setIsLoadingPredictions] = useState(false);
   const [isUserDataReady, setIsUserDataReady] = useState(false);
   const activePredictionRequests = useRef(0);
@@ -196,8 +198,47 @@ export function useSellSmartData(
   };
 
   const saveReadAlerts = async (nextReadAlertIds: string[]) => {
-    setReadAlertIds(nextReadAlertIds);
-    await replaceReadAlertIds(nextReadAlertIds);
+    const uniqueAlertIds = Array.from(new Set(nextReadAlertIds)).filter(Boolean);
+    const existingAlertIds = new Set(readAlerts.map((alert) => alert.alertId));
+    const newAlertIds = uniqueAlertIds.filter((alertId) => !existingAlertIds.has(alertId));
+
+    if (!newAlertIds.length) return;
+
+    const now = new Date().toISOString();
+    const optimisticRecords = newAlertIds.map((alertId) => ({ alertId, readAt: now }));
+
+    setReadAlerts((current) => [...current, ...optimisticRecords]);
+
+    try {
+      const savedRecords = await markAlertsAsRead(newAlertIds);
+
+      if (savedRecords.length) {
+        setReadAlerts((current) => {
+          const recordsById = new Map(current.map((record) => [record.alertId, record]));
+          savedRecords.forEach((record) => recordsById.set(record.alertId, record));
+          return Array.from(recordsById.values());
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      setReadAlerts((current) => current.filter((record) => !newAlertIds.includes(record.alertId)));
+    }
+  };
+
+  const clearAlertHistory = async () => {
+    const previousReadAlerts = readAlerts;
+    const clearedAt = new Date().toISOString();
+
+    setReadAlerts((current) =>
+      current.map((record) => ({ ...record, clearedAt: record.clearedAt ?? clearedAt })),
+    );
+
+    try {
+      await clearReadAlertHistory();
+    } catch (error) {
+      console.error(error);
+      setReadAlerts(previousReadAlerts);
+    }
   };
 
   const refreshPositions = async (basePositions: Position[]) => {
@@ -293,11 +334,11 @@ export function useSellSmartData(
 
     setPositions(nextPositions);
     setWatchlist(nextWatchlist);
-    setReadAlertIds([]);
+    setReadAlerts([]);
 
     await Promise.all([
       deleteDemoData(),
-      replaceReadAlertIds([]),
+      deleteReadAlertState(),
     ]);
 
     if (nextPositions.length > 0) {
@@ -335,12 +376,12 @@ export function useSellSmartData(
 
     setPositions(nextPositions);
     setWatchlist(nextWatchlist);
-    setReadAlertIds([]);
+    setReadAlerts([]);
 
     await Promise.all([
       replacePositions(nextPositions),
       replaceWatchlist(nextWatchlist),
-      replaceReadAlertIds([]),
+      deleteReadAlertState(),
     ]);
 
     void refreshPositions(nextPositions);
@@ -537,7 +578,7 @@ export function useSellSmartData(
       setIsLoadingPredictions(false);
       setPositions([]);
       setWatchlist([]);
-      setReadAlertIds([]);
+      setReadAlerts([]);
       setSettings(defaultSettings);
       return;
     }
@@ -551,12 +592,12 @@ export function useSellSmartData(
           loadedSettings,
           loadedPositions,
           loadedWatchlist,
-          loadedReadAlertIds,
+          loadedReadAlerts,
         ] = await Promise.all([
           loadSettings(),
           loadPositions(),
           loadWatchlist(),
-          loadReadAlertIds(),
+          loadReadAlerts(),
         ]);
 
         applyAppearanceMode(loadedSettings.appearance);
@@ -573,7 +614,7 @@ export function useSellSmartData(
           loadedWatchlist,
         );
 
-        setReadAlertIds(loadedReadAlertIds);
+        setReadAlerts(loadedReadAlerts);
         setPositions(hydratedAssets.positions);
         setWatchlist(hydratedAssets.watchlist);
 
@@ -597,10 +638,11 @@ export function useSellSmartData(
     positions,
     watchlist,
     settings,
-    readAlertIds,
+    readAlerts,
     isLoadingPredictions,
     isUserDataReady,
     saveReadAlerts,
+    clearAlertHistory,
     updateSetting,
     resetDemoData,
     importDemoPortfolio,

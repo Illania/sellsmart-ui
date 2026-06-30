@@ -115,6 +115,8 @@ export type Position = RiskAsset & {
 
 export type WatchItem = RiskAsset;
 
+export type AlertQuickFilter = "all" | "unread" | "read" | "high" | "medium" | "low" | "today" | "7d" | "30d";
+
 export type AppSettings = {
   highRiskThreshold: number;
   portfolioRiskThreshold: number;
@@ -124,6 +126,7 @@ export type AppSettings = {
   defaultView: ViewType;
   appearance: AppearanceMode;
   alertHistoryDays: number | null;
+  alertQuickFilters: AlertQuickFilter[];
 };
 
 export type SymbolSearchResult = {

@@ -1,6 +1,6 @@
 import { supabase } from "../supabaseClient";
 import { defaultSettings } from "../config";
-import type { AppSettings, Position, ReadAlertRecord, SymbolSearchResult, WatchItem } from "../types";
+import type { AlertQuickFilter, AppSettings, Position, ReadAlertRecord, SymbolSearchResult, WatchItem } from "../types";
 import {
   createBasePosition,
   createBaseWatchItem,
@@ -22,6 +22,30 @@ type TickerRow = {
 };
 
 const normalizeTicker = (ticker: string) => ticker.trim().toUpperCase();
+
+const defaultAlertQuickFilters: AlertQuickFilter[] = ["all", "unread", "read", "high", "today"];
+
+const availableAlertQuickFilters: AlertQuickFilter[] = [
+  "all",
+  "unread",
+  "read",
+  "high",
+  "medium",
+  "low",
+  "today",
+  "7d",
+  "30d",
+];
+
+const normalizeAlertQuickFilters = (value: unknown): AlertQuickFilter[] => {
+  if (!Array.isArray(value)) return defaultAlertQuickFilters;
+
+  const allowed = new Set<AlertQuickFilter>(availableAlertQuickFilters);
+  const normalized = value.filter((item): item is AlertQuickFilter => allowed.has(item as AlertQuickFilter));
+
+  return normalized.length ? Array.from(new Set(normalized)) : defaultAlertQuickFilters;
+};
+
 
 const toTickerMetadata = (metadata: TickerMetadata): TickerMetadata | null => {
   const symbol = normalizeTicker(metadata.symbol);
@@ -158,6 +182,7 @@ export async function loadSettings(): Promise<AppSettings> {
     defaultView: data.default_view ?? defaultSettings.defaultView,
     appearance: data.appearance ?? defaultSettings.appearance,
     alertHistoryDays: data.alert_history_days ?? defaultSettings.alertHistoryDays,
+    alertQuickFilters: normalizeAlertQuickFilters(data.alert_quick_filters),
   };
 }
 
@@ -178,6 +203,7 @@ export async function saveSettings(settings: AppSettings) {
     default_view: settings.defaultView,
     appearance: settings.appearance,
     alert_history_days: settings.alertHistoryDays,
+    alert_quick_filters: settings.alertQuickFilters,
     updated_at: new Date().toISOString(),
   });
 

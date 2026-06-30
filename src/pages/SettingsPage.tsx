@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { AppearanceMode, AppSettings, ViewType } from "../types";
+import type { AlertQuickFilter, AppearanceMode, AppSettings, ViewType } from "../types";
 import { DeleteConfirmDialog } from "../components/AssetComponents";
 
 
@@ -22,6 +22,18 @@ const appearanceOptions: { value: AppearanceMode; icon: string; title: string; d
     title: "System",
     description: "Automatically follows your device appearance.",
   },
+];
+
+const alertQuickFilterOptions: { value: AlertQuickFilter; title: string; description: string }[] = [
+  { value: "all", title: "All", description: "Reset alert filters quickly." },
+  { value: "unread", title: "Unread", description: "Show only active alerts." },
+  { value: "read", title: "Read", description: "Jump directly to acknowledged alerts." },
+  { value: "high", title: "High", description: "Focus on high-severity risks." },
+  { value: "medium", title: "Medium", description: "Review medium-severity alerts." },
+  { value: "low", title: "Low", description: "Review low-severity alerts." },
+  { value: "today", title: "Today", description: "Review alerts created or acknowledged today." },
+  { value: "7d", title: "This Week", description: "Show alerts from the last 7 days." },
+  { value: "30d", title: "Last 30 Days", description: "Show alerts from the last 30 days." },
 ];
 
 const alertHistoryOptions: { value: number | null; title: string; description: string }[] = [
@@ -164,6 +176,40 @@ export function SettingsPage({ settings, updateSetting, resetDemoData, clearAler
           <button className="secondary-button danger-button compact settings-clear-history" type="button" onClick={() => setIsClearHistoryOpen(true)}>
             Clear history
           </button>
+
+          <div className="alert-quick-filter-settings">
+            <h3>Quick chips</h3>
+            <p>Choose which shortcuts appear on the Alerts page.</p>
+
+            <div className="alert-quick-filter-options">
+              {alertQuickFilterOptions.map((option) => {
+                const selected = settings.alertQuickFilters.includes(option.value);
+
+                return (
+                  <label
+                    key={option.value}
+                    className={`alert-history-option ${selected ? "active" : ""}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selected}
+                      onChange={(event) => {
+                        const nextFilters = event.target.checked
+                          ? Array.from(new Set([...settings.alertQuickFilters, option.value]))
+                          : settings.alertQuickFilters.filter((filter) => filter !== option.value);
+
+                        updateSetting("alertQuickFilters", nextFilters);
+                      }}
+                    />
+                    <span>
+                      <strong>{option.title}</strong>
+                      <small>{option.description}</small>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
         </article>
 
         <article className="settings-card">

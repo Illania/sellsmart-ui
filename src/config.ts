@@ -14,4 +14,5 @@ export const defaultSettings: AppSettings = {
   defaultView: "dashboard",
   appearance: "system",
   alertHistoryDays: 90,
+  alertQuickFilters: ["all", "unread", "read", "high", "today"],
 };

@@ -196,8 +196,7 @@ export function AlertsPage({ alerts, unreadAlertsCount, settings, markAlertAsRea
     tickerFilter !== "all" ||
     severityFilter !== "all" ||
     statusFilter !== "all" ||
-    dateFilter !== "all" ||
-    (dateFilter === "custom" && (customDateFrom.length > 0 || customDateTo.length > 0));
+    dateFilter !== "all";
 
   const showActiveSection = statusFilter !== "read";
   const showHistorySection = statusFilter !== "unread" && historyAlerts.length > 0;

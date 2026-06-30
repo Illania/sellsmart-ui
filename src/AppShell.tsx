@@ -339,7 +339,6 @@ const titles: Record<ViewType, string> = {
           markAlertAsRead={markAlertAsRead}
           markAllAlertsAsRead={markAllAlertsAsRead}
           clearAlertHistory={clearAlertHistory}
-          updateSetting={updateSetting}
         />
       )}
 
@@ -379,7 +378,6 @@ const titles: Record<ViewType, string> = {
           updateSetting={updateSetting}
           resetDemoData={resetDemoData}
           clearAlertHistory={clearAlertHistory}
-          updateSetting={updateSetting}
         />
       )}
 
